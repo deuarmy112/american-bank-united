@@ -1,7 +1,7 @@
 // API Configuration - use environment-specific URL
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000/api'
-    : 'https://your-backend-url.onrender.com/api'; // Update with your production backend URL
+    : 'https://american-bank-api.onrender.com/api';
 
 // API Client with JWT token management
 const apiClient = {
