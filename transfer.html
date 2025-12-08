@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transfer - American Bank United</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <div class="navbar-brand">
+                <h2><i class="fas fa-university"></i> American Bank United</h2>
+            </div>
+            <div class="navbar-menu">
+                <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="accounts.html" class="nav-link"><i class="fas fa-wallet"></i> Accounts</a>
+                <a href="cards.html" class="nav-link"><i class="fas fa-credit-card"></i> Cards</a>
+                <a href="transfer.html" class="nav-link active"><i class="fas fa-exchange-alt"></i> Transfer</a>
+                <a href="transactions.html" class="nav-link"><i class="fas fa-receipt"></i> Transactions</a>
+                <a href="bills.html" class="nav-link"><i class="fas fa-file-invoice-dollar"></i> Bills</a>
+                <div class="navbar-user">
+                    <span id="userName"><i class="fas fa-user-circle"></i> Loading...</span>
+                    <button onclick="logout()" class="btn btn-secondary btn-sm"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container main-content">
+        <div class="dashboard-header">
+            <h1>Transfer Money</h1>
+            <p class="subtitle">Move money between your accounts instantly</p>
+        </div>
+
+        <div id="alert" class="alert" style="display: none;"></div>
+
+        <div class="transfer-container">
+            <div class="transfer-card">
+                <h2>Make a Transfer</h2>
+                <form id="transferForm">
+                    <div class="form-group">
+                        <label for="fromAccount">From Account</label>
+                        <select id="fromAccount" name="fromAccount" required>
+                            <option value="">Select source account</option>
+                        </select>
+                        <small class="balance-display" id="fromBalance"></small>
+                    </div>
+
+                    <div class="transfer-icon-container">
+                        <div class="transfer-icon">↓</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="toAccount">To Account</label>
+                        <select id="toAccount" name="toAccount" required>
+                            <option value="">Select destination account</option>
+                        </select>
+                        <small class="balance-display" id="toBalance"></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="amount">Amount</label>
+                        <input type="number" id="amount" name="amount" required min="0.01" step="0.01" placeholder="0.00">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description (Optional)</label>
+                        <input type="text" id="description" name="description" placeholder="e.g., Rent payment">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">Transfer Money</button>
+                </form>
+            </div>
+
+            <div class="transfer-info">
+                <h3>💡 Transfer Information</h3>
+                <ul>
+                    <li><strong>Instant:</strong> Transfers are processed immediately</li>
+                    <li><strong>Secure:</strong> All transfers are encrypted and secure</li>
+                    <li><strong>No Fees:</strong> Free transfers between your accounts</li>
+                    <li><strong>24/7:</strong> Transfer money anytime, anywhere</li>
+                </ul>
+
+                <div class="recent-transfers">
+                    <h3>Recent Transfers</h3>
+                    <div id="recentTransfers">
+                        <!-- Recent transfers will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/transfer-api.js"></script>
+</body>
+</html>

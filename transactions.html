@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions - American Bank United</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <div class="navbar-brand">
+                <h2><i class="fas fa-university"></i> American Bank United</h2>
+            </div>
+            <div class="navbar-menu">
+                <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="accounts.html" class="nav-link"><i class="fas fa-wallet"></i> Accounts</a>
+                <a href="cards.html" class="nav-link"><i class="fas fa-credit-card"></i> Cards</a>
+                <a href="transfer.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Transfer</a>
+                <a href="transactions.html" class="nav-link active"><i class="fas fa-receipt"></i> Transactions</a>
+                <a href="bills.html" class="nav-link"><i class="fas fa-file-invoice-dollar"></i> Bills</a>
+                <div class="navbar-user">
+                    <span id="userName"><i class="fas fa-user-circle"></i> Loading...</span>
+                    <button onclick="logout()" class="btn btn-secondary btn-sm"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container main-content">
+        <div class="dashboard-header">
+            <h1>Transaction History</h1>
+            <p class="subtitle">View all your banking activities</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-card">
+            <div class="filter-group">
+                <label for="filterAccount">Filter by Account</label>
+                <select id="filterAccount" onchange="filterTransactions()">
+                    <option value="">All Accounts</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="filterType">Transaction Type</label>
+                <select id="filterType" onchange="filterTransactions()">
+                    <option value="">All Types</option>
+                    <option value="transfer">Transfers</option>
+                    <option value="deposit">Deposits</option>
+                    <option value="withdrawal">Withdrawals</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="searchTransaction">Search</label>
+                <input type="text" id="searchTransaction" placeholder="Search descriptions..." oninput="filterTransactions()">
+            </div>
+        </div>
+
+        <!-- Transaction Summary -->
+        <div class="summary-grid">
+            <div class="summary-card small">
+                <h4>Total Income</h4>
+                <p class="summary-amount green" id="totalIncome">$0.00</p>
+            </div>
+            <div class="summary-card small">
+                <h4>Total Expenses</h4>
+                <p class="summary-amount red" id="totalExpenses">$0.00</p>
+            </div>
+            <div class="summary-card small">
+                <h4>Net Change</h4>
+                <p class="summary-amount" id="netChange">$0.00</p>
+            </div>
+        </div>
+
+        <!-- Transactions List -->
+        <div class="transactions-section">
+            <h2>All Transactions</h2>
+            <div id="transactionsList" class="transactions-list">
+                <!-- Transactions will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/transactions-api.js"></script>
+</body>
+</html>

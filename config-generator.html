@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Config Generator - American Bank United</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            display: none;
+        }
+        .copy-btn {
+            margin-top: 10px;
+            background: #28a745;
+        }
+        .copy-btn:hover {
+            background: #218838;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+        .success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            color: #155724;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Production Configuration Generator</h1>
+        <p class="subtitle">Generate secure environment variables for your deployment</p>
+
+        <div class="warning">
+            ⚠️ <strong>Security Warning:</strong> Never commit these values to Git. Use your hosting platform's environment variable settings.
+        </div>
+
+        <div class="section">
+            <h2>1️⃣ Generate JWT Secret</h2>
+            <button onclick="generateJWTSecret()">Generate Secure JWT Secret</button>
+            <input type="text" id="jwtSecret" readonly placeholder="Click to generate...">
+        </div>
+
+        <div class="section">
+            <h2>2️⃣ Database Configuration</h2>
+            <p style="margin-bottom: 15px; color: #666;">Your hosting platform will provide this URL</p>
+            <label>Database URL (from Render/Railway/Heroku):</label>
+            <input type="text" id="databaseUrl" placeholder="postgresql://user:password@host:5432/database">
+            
+            <p style="margin: 15px 0; color: #666;"><strong>OR</strong> use individual variables:</p>
+            
+            <label>DB Host:</label>
+            <input type="text" id="dbHost" placeholder="your-db-host.provider.com">
+            
+            <label>DB User:</label>
+            <input type="text" id="dbUser" placeholder="postgres">
+            
+            <label>DB Password:</label>
+            <input type="password" id="dbPassword" placeholder="your-secure-password">
+            
+            <label>DB Name:</label>
+            <input type="text" id="dbName" value="american_bank_united">
+            
+            <label>DB Port:</label>
+            <input type="text" id="dbPort" value="5432">
+        </div>
+
+        <div class="section">
+            <h2>3️⃣ Frontend URL</h2>
+            <label>Production Frontend URL (from Vercel/Netlify):</label>
+            <input type="text" id="frontendUrl" placeholder="https://your-app.vercel.app">
+        </div>
+
+        <div class="section">
+            <h2>4️⃣ Generate Configuration</h2>
+            <button onclick="generateConfig()">Generate Environment Variables</button>
+            
+            <div class="success" id="successMsg">
+                ✅ Configuration generated! Copy and paste into your hosting platform's environment variables.
+            </div>
+            
+            <div class="output" id="output"></div>
+            <button class="copy-btn" id="copyBtn" onclick="copyToClipboard()" style="display: none;">
+                📋 Copy to Clipboard
+            </button>
+        </div>
+
+        <div class="section">
+            <h2>📝 Next Steps</h2>
+            <ol style="margin-left: 20px; line-height: 2;">
+                <li>Generate JWT secret above</li>
+                <li>Get database URL from your hosting platform</li>
+                <li>Get frontend URL after deploying to Vercel/Netlify</li>
+                <li>Click "Generate Environment Variables"</li>
+                <li>Copy and paste into your hosting platform</li>
+                <li>Update <code>js/api.js</code> with your backend URL</li>
+                <li>Deploy and test!</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function generateJWTSecret() {
+            const array = new Uint8Array(64);
+            crypto.getRandomValues(array);
+            const secret = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+            document.getElementById('jwtSecret').value = secret;
+        }
+
+        function generateConfig() {
+            const jwtSecret = document.getElementById('jwtSecret').value;
+            const databaseUrl = document.getElementById('databaseUrl').value;
+            const dbHost = document.getElementById('dbHost').value;
+            const dbUser = document.getElementById('dbUser').value;
+            const dbPassword = document.getElementById('dbPassword').value;
+            const dbName = document.getElementById('dbName').value;
+            const dbPort = document.getElementById('dbPort').value;
+            const frontendUrl = document.getElementById('frontendUrl').value;
+
+            if (!jwtSecret) {
+                alert('Please generate a JWT secret first!');
+                return;
+            }
+
+            if (!databaseUrl && (!dbHost || !dbUser || !dbPassword)) {
+                alert('Please provide either DATABASE_URL or individual database credentials!');
+                return;
+            }
+
+            if (!frontendUrl) {
+                alert('Please provide your frontend URL!');
+                return;
+            }
+
+            let config = `# Production Environment Variables
+# Copy these to your hosting platform (Render/Railway/Vercel)
+
+NODE_ENV=production
+PORT=5000
+
+# JWT Configuration
+JWT_SECRET=${jwtSecret}
+JWT_EXPIRES_IN=24h
+
+# Security
+BCRYPT_ROUNDS=10
+
+# Frontend URL (CORS)
+FRONTEND_URL=${frontendUrl}
+
+`;
+
+            if (databaseUrl) {
+                config += `# Database (using DATABASE_URL)
+DATABASE_URL=${databaseUrl}
+`;
+            } else {
+                config += `# Database (using individual variables)
+DB_HOST=${dbHost}
+DB_USER=${dbUser}
+DB_PASSWORD=${dbPassword}
+DB_NAME=${dbName}
+DB_PORT=${dbPort}
+`;
+            }
+
+            document.getElementById('output').textContent = config;
+            document.getElementById('output').style.display = 'block';
+            document.getElementById('copyBtn').style.display = 'inline-block';
+            document.getElementById('successMsg').style.display = 'block';
+        }
+
+        function copyToClipboard() {
+            const output = document.getElementById('output').textContent;
+            navigator.clipboard.writeText(output).then(() => {
+                const btn = document.getElementById('copyBtn');
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        // Auto-generate JWT secret on load
+        window.addEventListener('load', generateJWTSecret);
+    </script>
+</body>
+</html>
