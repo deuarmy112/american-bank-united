@@ -10,22 +10,46 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 async function loadData() {
     try {
-        const [accounts, transactions] = await Promise.all([
+        const [accounts, transactions, externalTransfers] = await Promise.all([
             accountsAPI.getAll(),
-            transactionsAPI.getAll()
+            transactionsAPI.getAll(),
+            fetch(`${API_BASE_URL}/external-transfers/external`, {
+                headers: { 'Authorization': `Bearer ${apiClient.getToken()}` }
+            }).then(r => r.json()).catch(() => [])
         ]);
         
         window.accountsData = accounts;
         window.transactionsData = transactions;
+        window.externalTransfers = externalTransfers || [];
+        
+        // Merge transactions with external transfers
+        const allTransactions = mergeTransactions(transactions, externalTransfers);
         
         populateAccountFilter(accounts);
-        displayTransactions(transactions);
-        calculateSummary(transactions);
+        displayTransactions(allTransactions);
+        calculateSummary(allTransactions);
         
     } catch (error) {
         console.error('Failed to load data:', error);
         showAlert('Failed to load transactions', 'error');
     }
+}
+
+function mergeTransactions(transactions, externalTransfers) {
+    // Convert external transfers to transaction format
+    const externalTxs = externalTransfers.map(transfer => ({
+        ...transfer,
+        type: transfer.direction === 'outgoing' ? 'external_out' : 'external_in',
+        amount: transfer.amount,
+        description: `${transfer.transfer_type.toUpperCase()}: ${transfer.recipient_name || 'Unknown'} ${transfer.bank_name ? '('+transfer.bank_name+')' : ''}`,
+        created_at: transfer.created_at,
+        isExternal: true
+    }));
+    
+    // Merge and sort by date
+    return [...transactions, ...externalTxs].sort((a, b) => 
+        new Date(b.created_at) - new Date(a.created_at)
+    );
 }
 
 function populateAccountFilter(accounts) {
@@ -77,6 +101,16 @@ function displayTransactions(transactions) {
                 icon = '<i class="fas fa-file-invoice-dollar" style="color: #f59e0b;"></i>';
                 amountClass = 'negative';
                 sign = '-';
+                break;
+            case 'external_out':
+                icon = '<i class="fas fa-paper-plane" style="color: #8b5cf6;"></i>';
+                amountClass = 'negative';
+                sign = '-';
+                break;
+            case 'external_in':
+                icon = '<i class="fas fa-download" style="color: #10b981;"></i>';
+                amountClass = 'positive';
+                sign = '+';
                 break;
         }
         

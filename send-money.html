@@ -8,57 +8,78 @@
     <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
+    <!-- Navigation -->
     <nav class="navbar">
-        <div class="nav-brand">American Bank United</div>
-        <div class="nav-menu">
-            <a href="dashboard.html">Dashboard</a>
-            <a href="accounts.html">Accounts</a>
-            <a href="transfer.html">Internal Transfer</a>
-            <a href="send-money.html" class="active">Send Money</a>
-            <a href="transactions.html">Transactions</a>
-            <a href="cards.html">Cards</a>
-            <a href="bills.html">Bills</a>
-            <a href="#" onclick="logout()">Logout</a>
+        <div class="container navbar-container">
+            <div class="navbar-brand">
+                <h2><i class="fas fa-university"></i> American Bank United</h2>
+            </div>
+            <div class="navbar-menu">
+                <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="accounts.html" class="nav-link"><i class="fas fa-wallet"></i> Accounts</a>
+                <a href="cards.html" class="nav-link"><i class="fas fa-credit-card"></i> Cards</a>
+                <a href="transfer.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Transfer</a>
+                <a href="transactions.html" class="nav-link"><i class="fas fa-receipt"></i> Transactions</a>
+                <a href="send-money.html" class="nav-link active"><i class="fas fa-paper-plane"></i> Send Money</a>
+                <a href="bills.html" class="nav-link"><i class="fas fa-file-invoice-dollar"></i> Bills</a>
+                <div class="navbar-user">
+                    <span id="userName">User</span>
+                    <a href="#" onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </div>
+            </div>
         </div>
     </nav>
 
-    <div class="dashboard-container">
-        <h1>💸 Send Money</h1>
-        <p class="subtitle">Send money to other users or external bank accounts</p>
-
-        <div class="cards-grid" style="grid-template-columns: 1fr 1fr;">
+    <!-- Main Content -->
+    <div class="container main-content">
+        <div class="page-header">
+            <h1><i class="fas fa-paper-plane"></i> Send Money</h1>
+            <p>Send money to other users or external bank accounts</p>
             <!-- Send to User -->
-            <div class="account-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <div class="card-header">
-                    <h3>👤 Send to User</h3>
-                    <p>Send money to another American Bank United user</p>
+            <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); cursor: pointer;" onclick="showSendToUserModal()">
+                <div class="stat-icon">
+                    <i class="fas fa-user"></i>
                 </div>
-                <button class="btn btn-light" onclick="showSendToUserModal()">Send to User</button>
+                <div class="stat-details">
+                    <h3>Send to User</h3>
+                    <p>Transfer to another user by email</p>
+                </div>
             </div>
 
             <!-- Send to External Bank -->
-            <div class="account-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                <div class="card-header">
-                    <h3>🏦 Send to Bank</h3>
-                    <p>Transfer to an external bank account</p>
+            <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); cursor: pointer;" onclick="showSendToBankModal()">
+                <div class="stat-icon">
+                    <i class="fas fa-university"></i>
                 </div>
-                <button class="btn btn-light" onclick="showSendToBankModal()">Send to Bank</button>
+                <div class="stat-details">
+                    <h3>Send to Bank</h3>
+                    <p>ACH or Wire transfer to any bank</p>
+                </div>
             </div>
 
             <!-- Request Money -->
-            <div class="account-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                <div class="card-header">
-                    <h3>💵 Request Money</h3>
+            <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); cursor: pointer;" onclick="showRequestMoneyModal()">
+                <div class="stat-icon">
+                    <i class="fas fa-hand-holding-usd"></i>
+                </div>
+                <div class="stat-details">
+                    <h3>Request Money</h3>
                     <p>Request payment from another user</p>
                 </div>
-                <button class="btn btn-light" onclick="showRequestMoneyModal()">Request Money</button>
             </div>
 
             <!-- Money Requests -->
-            <div class="account-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
-                <div class="card-header">
-                    <h3>📬 Money Requests</h3>
-                    <p>View and manage payment requests</p>
+            <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); cursor: pointer;" onclick="showRequestsModal()">
+                <div class="stat-icon">
+                    <i class="fas fa-inbox"></i>
+        <!-- Recent External Transfers -->
+        <div class="transactions-section">
+            <div class="section-header">
+                <h2><i class="fas fa-history"></i> Recent External Transfers</h2>
+            </div>
+            <div class="transactions-list" id="transfersList"></div>
+        </div>
+    </div>  </div>  <p>View and manage payment requests</p>
                 </div>
                 <button class="btn btn-light" onclick="showRequestsModal()">View Requests</button>
             </div>
