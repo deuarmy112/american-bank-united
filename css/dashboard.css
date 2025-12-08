@@ -648,6 +648,26 @@
     }
 }
 
+/* Send Money Action Cards */
+.summary-card[style*="gradient"] {
+    color: white;
+}
+
+.summary-card[style*="gradient"] .summary-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.summary-card[style*="gradient"] .summary-details h3 {
+    color: white;
+    font-weight: 600;
+}
+
+.summary-card[style*="gradient"] .summary-details p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+}
+
 @media (max-width: 768px) {
     .summary-grid {
         grid-template-columns: 1fr;
