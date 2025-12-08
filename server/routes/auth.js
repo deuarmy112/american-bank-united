@@ -74,15 +74,26 @@ router.post('/login', loginValidation, validate, async (req, res) => {
 
         const user = users.rows[0];
 
+        // Check if user is active
+        if (user.status && user.status !== 'active') {
+            return res.status(403).json({ error: 'Account is inactive or suspended' });
+        }
+
         // Verify password
         const isValidPassword = await bcrypt.compare(password, user.password_hash);
         if (!isValidPassword) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
+        // Update last login
+        await pool.query(
+            'UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1',
+            [user.id]
+        );
+
         // Generate JWT token
         const token = jwt.sign(
-            { userId: user.id, email: user.email },
+            { userId: user.id, email: user.email, role: user.role || 'customer' },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN }
         );
@@ -94,7 +105,8 @@ router.post('/login', loginValidation, validate, async (req, res) => {
                 id: user.id,
                 email: user.email,
                 firstName: user.first_name,
-                lastName: user.last_name
+                lastName: user.last_name,
+                role: user.role || 'customer'
             }
         });
 
@@ -108,7 +120,7 @@ router.post('/login', loginValidation, validate, async (req, res) => {
 router.get('/profile', require('../middleware/auth').authenticateToken, async (req, res) => {
     try {
         const users = await pool.query(
-            'SELECT id, first_name, last_name, email, phone, date_of_birth, created_at FROM users WHERE id = $1',
+            'SELECT id, first_name, last_name, email, phone, date_of_birth, role, status, created_at FROM users WHERE id = $1',
             [req.user.userId]
         );
 

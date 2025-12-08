@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Management - Admin Portal</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <div class="navbar-brand">
+                <h2><i class="fas fa-shield-alt"></i> Admin Portal</h2>
+            </div>
+            <div class="navbar-menu">
+                <a href="admin-dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="admin-users.html" class="nav-link"><i class="fas fa-users"></i> Users</a>
+                <a href="admin-accounts.html" class="nav-link active"><i class="fas fa-wallet"></i> Accounts</a>
+                <a href="admin-transactions.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Transactions</a>
+                <a href="admin-audit.html" class="nav-link"><i class="fas fa-history"></i> Audit Log</a>
+                <div class="navbar-user">
+                    <span id="adminName"><i class="fas fa-user-shield"></i> Admin</span>
+                    <button onclick="logout()" class="btn btn-secondary btn-sm"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container main-content">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-wallet"></i> Account Management</h1>
+            <p class="subtitle">Review and manage account requests</p>
+        </div>
+
+        <div id="alert" class="alert" style="display: none;"></div>
+
+        <!-- Pending Approvals -->
+        <div class="section">
+            <div class="section-header">
+                <h2><i class="fas fa-clock"></i> Pending Approvals (<span id="pendingCount">0</span>)</h2>
+            </div>
+            <div id="pendingAccountsList"></div>
+        </div>
+    </div>
+
+    <!-- Reject Account Modal -->
+    <div id="rejectModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeRejectModal()">&times;</span>
+            <h2>Reject Account</h2>
+            
+            <form id="rejectForm">
+                <input type="hidden" id="rejectAccountId">
+                <div class="form-group">
+                    <label>Reason for Rejection *</label>
+                    <textarea id="rejectReason" rows="4" required placeholder="Enter reason for rejecting this account..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-danger">Reject Account</button>
+                <button type="button" onclick="closeRejectModal()" class="btn btn-secondary">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Adjust Balance Modal -->
+    <div id="adjustBalanceModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAdjustBalanceModal()">&times;</span>
+            <h2>Adjust Account Balance</h2>
+            
+            <form id="adjustBalanceForm">
+                <input type="hidden" id="adjustAccountId">
+                <div id="adjustAccountInfo"></div>
+                
+                <div class="form-group">
+                    <label>Adjustment Type *</label>
+                    <select id="adjustmentType" required>
+                        <option value="credit">Credit (Add Money)</option>
+                        <option value="debit">Debit (Subtract Money)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Amount ($) *</label>
+                    <input type="number" id="adjustmentAmount" step="0.01" min="0.01" required placeholder="0.00">
+                </div>
+                
+                <div class="form-group">
+                    <label>Reason *</label>
+                    <textarea id="adjustmentReason" rows="3" required placeholder="Enter reason for adjustment..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Adjust Balance</button>
+                <button type="button" onclick="closeAdjustBalanceModal()" class="btn btn-secondary">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/admin-api.js"></script>
+    <script>
+        // Check admin authentication
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (!token || (user.role !== 'admin' && user.role !== 'super_admin')) {
+                window.location.href = 'admin-login.html';
+                return false;
+            }
+            
+            document.getElementById('adminName').innerHTML = 
+                `<i class="fas fa-user-shield"></i> ${user.firstName} ${user.lastName}`;
+            return true;
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'admin-login.html';
+        }
+
+        async function loadPendingAccounts() {
+            if (!checkAuth()) return;
+
+            try {
+                const data = await adminAPI.getPendingAccounts();
+                
+                document.getElementById('pendingCount').textContent = data.accounts.length;
+                
+                const container = document.getElementById('pendingAccountsList');
+                
+                if (data.accounts.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; padding: 20px; color: #666;">No pending accounts</p>';
+                    return;
+                }
+
+                container.innerHTML = data.accounts.map(account => `
+                    <div class="account-approval-card" style="border: 1px solid #ddd; padding: 20px; margin-bottom: 15px; border-radius: 8px; background: white;">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0 0 10px 0;">
+                                    <i class="fas fa-wallet"></i> ${account.account_type.toUpperCase()} Account
+                                </h3>
+                                <p style="margin: 5px 0;"><strong>Account Number:</strong> ${account.account_number}</p>
+                                <p style="margin: 5px 0;"><strong>User:</strong> ${account.first_name} ${account.last_name}</p>
+                                <p style="margin: 5px 0;"><strong>Email:</strong> ${account.email}</p>
+                                <p style="margin: 5px 0;"><strong>Requested:</strong> ${formatDate(account.created_at)}</p>
+                                <p style="margin: 5px 0;"><strong>Initial Balance:</strong> ${formatCurrency(account.balance)}</p>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button onclick="approveAccount('${account.id}')" class="btn btn-success">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                                <button onclick="showRejectModal('${account.id}')" class="btn btn-danger">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                                <button onclick="showAdjustBalanceModal('${account.id}', '${account.account_number}', ${account.balance})" class="btn btn-primary">
+                                    <i class="fas fa-dollar-sign"></i> Adjust
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Load pending accounts error:', error);
+                showAlert('Failed to load pending accounts', 'error');
+            }
+        }
+
+        async function approveAccount(accountId) {
+            if (!confirm('Are you sure you want to approve this account?')) return;
+
+            try {
+                await adminAPI.approveAccount(accountId);
+                showAlert('Account approved successfully', 'success');
+                loadPendingAccounts();
+            } catch (error) {
+                console.error('Approve account error:', error);
+                showAlert('Failed to approve account', 'error');
+            }
+        }
+
+        function showRejectModal(accountId) {
+            document.getElementById('rejectAccountId').value = accountId;
+            document.getElementById('rejectReason').value = '';
+            document.getElementById('rejectModal').style.display = 'block';
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectModal').style.display = 'none';
+        }
+
+        document.getElementById('rejectForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const accountId = document.getElementById('rejectAccountId').value;
+            const reason = document.getElementById('rejectReason').value;
+
+            try {
+                await adminAPI.rejectAccount(accountId, reason);
+                showAlert('Account rejected successfully', 'success');
+                closeRejectModal();
+                loadPendingAccounts();
+            } catch (error) {
+                console.error('Reject account error:', error);
+                showAlert('Failed to reject account', 'error');
+            }
+        });
+
+        function showAdjustBalanceModal(accountId, accountNumber, currentBalance) {
+            document.getElementById('adjustAccountId').value = accountId;
+            document.getElementById('adjustAccountInfo').innerHTML = `
+                <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                    <p><strong>Account:</strong> ${accountNumber}</p>
+                    <p><strong>Current Balance:</strong> ${formatCurrency(currentBalance)}</p>
+                </div>
+            `;
+            document.getElementById('adjustmentType').value = 'credit';
+            document.getElementById('adjustmentAmount').value = '';
+            document.getElementById('adjustmentReason').value = '';
+            document.getElementById('adjustBalanceModal').style.display = 'block';
+        }
+
+        function closeAdjustBalanceModal() {
+            document.getElementById('adjustBalanceModal').style.display = 'none';
+        }
+
+        document.getElementById('adjustBalanceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const accountId = document.getElementById('adjustAccountId').value;
+            const amount = parseFloat(document.getElementById('adjustmentAmount').value);
+            const type = document.getElementById('adjustmentType').value;
+            const reason = document.getElementById('adjustmentReason').value;
+
+            if (!confirm(`Are you sure you want to ${type} $${amount.toFixed(2)}?`)) return;
+
+            try {
+                const result = await adminAPI.adjustBalance(accountId, amount, type, reason);
+                showAlert(`Balance adjusted successfully. New balance: ${formatCurrency(result.balanceAfter)}`, 'success');
+                closeAdjustBalanceModal();
+                loadPendingAccounts();
+            } catch (error) {
+                console.error('Adjust balance error:', error);
+                showAlert(error.message || 'Failed to adjust balance', 'error');
+            }
+        });
+
+        // Load pending accounts on page load
+        loadPendingAccounts();
+
+        // Check URL parameters for filters
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('filter') === 'pending') {
+            // Already showing pending by default
+        }
+    </script>
+</body>
+</html>

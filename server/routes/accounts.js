@@ -54,8 +54,8 @@ router.post('/', authenticateToken, async (req, res) => {
         const accountNumber = generateAccountNumber();
 
         await pool.query(
-            `INSERT INTO accounts (id, user_id, account_number, account_type, balance, status) 
-             VALUES ($1, $2, $3, $4, 0.00, 'active')`,
+            `INSERT INTO accounts (id, user_id, account_number, account_type, balance, status, approval_status) 
+             VALUES ($1, $2, $3, $4, 0.00, 'inactive', 'pending')`,
             [accountId, req.user.userId, accountNumber, accountType]
         );
 
@@ -65,7 +65,7 @@ router.post('/', authenticateToken, async (req, res) => {
         );
 
         res.status(201).json({
-            message: 'Account created successfully',
+            message: 'Account created successfully. Pending admin approval.',
             account: result.rows[0]
         });
 
