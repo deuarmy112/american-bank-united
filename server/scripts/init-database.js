@@ -5,43 +5,23 @@ async function initializeDatabase() {
     let client;
     
     try {
-        // Connect to postgres database first
-        client = new Client({
-            host: process.env.DB_HOST || 'localhost',
-            user: process.env.DB_USER || 'postgres',
-            password: process.env.DB_PASSWORD || '',
-            port: process.env.DB_PORT || 5432,
-            database: 'postgres'
-        });
-
-        await client.connect();
-        console.log('📡 Connected to PostgreSQL server');
-
-        // Create database if it doesn't exist
-        const dbName = process.env.DB_NAME || 'american_bank_united';
-        try {
-            await client.query(`CREATE DATABASE ${dbName}`);
-            console.log(`✅ Database '${dbName}' created`);
-        } catch (error) {
-            if (error.code === '42P04') {
-                console.log(`✅ Database '${dbName}' already exists`);
-            } else {
-                throw error;
+        // Connect using DATABASE_URL if available (production) or individual vars (development)
+        const connectionConfig = process.env.DATABASE_URL ? {
+            connectionString: process.env.DATABASE_URL,
+            ssl: {
+                rejectUnauthorized: false
             }
-        }
-
-        await client.end();
-
-        // Connect to the new database
-        client = new Client({
+        } : {
             host: process.env.DB_HOST || 'localhost',
             user: process.env.DB_USER || 'postgres',
             password: process.env.DB_PASSWORD || '',
             port: process.env.DB_PORT || 5432,
             database: process.env.DB_NAME || 'american_bank_united'
-        });
+        };
 
+        client = new Client(connectionConfig);
         await client.connect();
+        console.log('📡 Connected to PostgreSQL database');
 
         // Create users table
         await client.query(`
