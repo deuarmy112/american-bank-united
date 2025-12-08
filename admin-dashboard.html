@@ -19,6 +19,7 @@
                 <a href="admin-dashboard.html" class="nav-link active"><i class="fas fa-home"></i> Dashboard</a>
                 <a href="admin-users.html" class="nav-link"><i class="fas fa-users"></i> Users</a>
                 <a href="admin-accounts.html" class="nav-link"><i class="fas fa-wallet"></i> Accounts</a>
+                <a href="admin-approvals.html" class="nav-link"><i class="fas fa-check-circle"></i> Approvals</a>
                 <a href="admin-transactions.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Transactions</a>
                 <a href="admin-audit.html" class="nav-link"><i class="fas fa-history"></i> Audit Log</a>
                 <div class="navbar-user">
@@ -109,23 +110,23 @@
                     </div>
                 </div>
 
-                <div class="summary-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; cursor: pointer;" onclick="window.location.href='admin-transactions.html'">
+                <div class="summary-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; cursor: pointer;" onclick="window.location.href='admin-approvals.html'">
+                    <div class="summary-icon" style="background: rgba(255,255,255,0.2); color: white;">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="summary-details" style="color: white;">
+                        <h3 style="color: white;">Transaction Approvals</h3>
+                        <p style="color: rgba(255,255,255,0.9);">Review pending transactions</p>
+                    </div>
+                </div>
+
+                <div class="summary-card" style="background: linear-gradient(135deg, #fa709a, #fee140); color: white; cursor: pointer;" onclick="window.location.href='admin-transactions.html'">
                     <div class="summary-icon" style="background: rgba(255,255,255,0.2); color: white;">
                         <i class="fas fa-search-dollar"></i>
                     </div>
                     <div class="summary-details" style="color: white;">
-                        <h3 style="color: white;">View Transactions</h3>
-                        <p style="color: rgba(255,255,255,0.9);">Monitor all transactions</p>
-                    </div>
-                </div>
-
-                <div class="summary-card" style="background: linear-gradient(135deg, #fa709a, #fee140); color: white; cursor: pointer;" onclick="window.location.href='admin-audit.html'">
-                    <div class="summary-icon" style="background: rgba(255,255,255,0.2); color: white;">
-                        <i class="fas fa-file-alt"></i>
-                    </div>
-                    <div class="summary-details" style="color: white;">
-                        <h3 style="color: white;">Audit Log</h3>
-                        <p style="color: rgba(255,255,255,0.9);">Review admin actions</p>
+                        <h3 style="color: white;">All Transactions</h3>
+                        <p style="color: rgba(255,255,255,0.9);">Monitor system activity</p>
                     </div>
                 </div>
             </div>

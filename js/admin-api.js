@@ -109,5 +109,64 @@ const adminAPI = {
         });
         if (!response.ok) throw new Error('Failed to fetch audit log');
         return await response.json();
+    },
+
+    // Get pending transactions
+    async getPendingTransactions() {
+        const response = await fetch(`${API_URL}/admin/transactions/pending`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch pending transactions');
+        return await response.json();
+    },
+
+    // Approve transaction
+    async approveTransaction(transactionId) {
+        const response = await fetch(`${API_URL}/admin/transactions/${transactionId}/approve`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        if (!response.ok) throw new Error('Failed to approve transaction');
+        return await response.json();
+    },
+
+    // Reject transaction
+    async rejectTransaction(transactionId, reason) {
+        const response = await fetch(`${API_URL}/admin/transactions/${transactionId}/reject`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({ reason })
+        });
+        if (!response.ok) throw new Error('Failed to reject transaction');
+        return await response.json();
+    },
+
+    // Get approval settings
+    async getApprovalSettings() {
+        const response = await fetch(`${API_URL}/admin/settings/approval-thresholds`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        if (!response.ok) throw new Error('Failed to fetch approval settings');
+        return await response.json();
+    },
+
+    // Update approval settings
+    async updateApprovalSettings(settings) {
+        const response = await fetch(`${API_URL}/admin/settings/approval-thresholds`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({ settings })
+        });
+        if (!response.ok) throw new Error('Failed to update approval settings');
+        return await response.json();
     }
 };

@@ -465,4 +465,253 @@ router.get('/audit-log', authenticateToken, requireAdmin, async (req, res) => {
     }
 });
 
+// GET /api/admin/transactions/pending - Get pending transaction approvals
+router.get('/transactions/pending', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT t.*, a.account_number, a.account_type, u.first_name, u.last_name, u.email
+             FROM transactions t
+             JOIN accounts a ON t.account_id = a.id
+             JOIN users u ON a.user_id = u.id
+             WHERE t.approval_status = 'pending'
+             ORDER BY t.created_at ASC`
+        );
+
+        res.json({ transactions: result.rows });
+    } catch (error) {
+        console.error('Get pending transactions error:', error);
+        res.status(500).json({ error: 'Failed to fetch pending transactions' });
+    }
+});
+
+// POST /api/admin/transactions/:id/approve - Approve transaction
+router.post('/transactions/:id/approve', authenticateToken, requireAdmin, async (req, res) => {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        const { id } = req.params;
+
+        // Get transaction details
+        const txnResult = await client.query(
+            `SELECT t.*, a.balance as current_balance, a.user_id
+             FROM transactions t
+             JOIN accounts a ON t.account_id = a.id
+             WHERE t.id = $1 AND t.approval_status = 'pending'`,
+            [id]
+        );
+
+        if (txnResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Pending transaction not found' });
+        }
+
+        const transaction = txnResult.rows[0];
+        const amount = parseFloat(transaction.amount);
+        const currentBalance = parseFloat(transaction.current_balance);
+
+        // Check if it's a transfer (has related_account_id)
+        if (transaction.type === 'transfer') {
+            // Verify sufficient funds still available
+            if (currentBalance < amount) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ error: 'Insufficient funds in account' });
+            }
+
+            // Deduct from source account
+            const newFromBalance = currentBalance - amount;
+            await client.query(
+                'UPDATE accounts SET balance = $1 WHERE id = $2',
+                [newFromBalance, transaction.account_id]
+            );
+
+            // Get destination account
+            const toAccountResult = await client.query(
+                'SELECT * FROM accounts WHERE id = $1',
+                [transaction.related_account_id]
+            );
+
+            if (toAccountResult.rows.length > 0) {
+                const toAccount = toAccountResult.rows[0];
+                const newToBalance = parseFloat(toAccount.balance) + amount;
+                
+                // Add to destination account
+                await client.query(
+                    'UPDATE accounts SET balance = $1 WHERE id = $2',
+                    [newToBalance, transaction.related_account_id]
+                );
+
+                // Create deposit transaction
+                const depositId = 'txn-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                await client.query(
+                    `INSERT INTO transactions (id, account_id, type, amount, description, related_account_id, balance_after, approval_status, approved_by, approved_at)
+                     VALUES ($1, $2, 'deposit', $3, $4, $5, $6, 'approved', $7, CURRENT_TIMESTAMP)`,
+                    [depositId, transaction.related_account_id, amount, transaction.description.replace('Pending Approval', 'Approved'), transaction.account_id, newToBalance, req.user.userId]
+                );
+            }
+
+            // Update withdrawal transaction status and balance_after
+            await client.query(
+                `UPDATE transactions 
+                 SET approval_status = 'approved', approved_by = $1, approved_at = CURRENT_TIMESTAMP, balance_after = $2, description = $3
+                 WHERE id = $4`,
+                [req.user.userId, newFromBalance, transaction.description.replace('Pending Approval', 'Approved'), id]
+            );
+
+        } else if (transaction.type === 'withdrawal') {
+            // Handle withdrawal approval
+            if (currentBalance < amount) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ error: 'Insufficient funds in account' });
+            }
+
+            const newBalance = currentBalance - amount;
+            await client.query(
+                'UPDATE accounts SET balance = $1 WHERE id = $2',
+                [newBalance, transaction.account_id]
+            );
+
+            await client.query(
+                `UPDATE transactions 
+                 SET approval_status = 'approved', approved_by = $1, approved_at = CURRENT_TIMESTAMP, balance_after = $2
+                 WHERE id = $3`,
+                [req.user.userId, newBalance, id]
+            );
+        }
+
+        await logAdminAction(
+            req.user.userId,
+            'TRANSACTION_APPROVED',
+            `Approved ${transaction.type} of $${amount.toFixed(2)}`,
+            { transactionId: id, userId: transaction.user_id, amount, type: transaction.type }
+        );
+
+        await client.query('COMMIT');
+        res.json({ message: 'Transaction approved successfully' });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Approve transaction error:', error);
+        res.status(500).json({ error: 'Failed to approve transaction' });
+    } finally {
+        client.release();
+    }
+});
+
+// POST /api/admin/transactions/:id/reject - Reject transaction
+router.post('/transactions/:id/reject',
+    authenticateToken,
+    requireAdmin,
+    [body('reason').notEmpty()],
+    async (req, res) => {
+        const client = await pool.connect();
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ errors: errors.array() });
+            }
+
+            await client.query('BEGIN');
+
+            const { id } = req.params;
+            const { reason } = req.body;
+
+            // Get transaction details
+            const txnResult = await client.query(
+                `SELECT t.*, a.user_id
+                 FROM transactions t
+                 JOIN accounts a ON t.account_id = a.id
+                 WHERE t.id = $1 AND t.approval_status = 'pending'`,
+                [id]
+            );
+
+            if (txnResult.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ error: 'Pending transaction not found' });
+            }
+
+            const transaction = txnResult.rows[0];
+
+            // Update transaction status
+            await client.query(
+                `UPDATE transactions 
+                 SET approval_status = 'rejected', approved_by = $1, approved_at = CURRENT_TIMESTAMP, rejection_reason = $2
+                 WHERE id = $3`,
+                [req.user.userId, reason, id]
+            );
+
+            await logAdminAction(
+                req.user.userId,
+                'TRANSACTION_REJECTED',
+                `Rejected ${transaction.type} of $${parseFloat(transaction.amount).toFixed(2)}: ${reason}`,
+                { transactionId: id, userId: transaction.user_id, amount: transaction.amount, reason }
+            );
+
+            await client.query('COMMIT');
+            res.json({ message: 'Transaction rejected successfully' });
+
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('Reject transaction error:', error);
+            res.status(500).json({ error: 'Failed to reject transaction' });
+        } finally {
+            client.release();
+        }
+    }
+);
+
+// GET /api/admin/settings/approval-thresholds - Get approval settings
+router.get('/settings/approval-thresholds', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const result = await pool.query(
+            'SELECT * FROM transaction_approval_settings ORDER BY setting_name'
+        );
+
+        res.json({ settings: result.rows });
+    } catch (error) {
+        console.error('Get approval settings error:', error);
+        res.status(500).json({ error: 'Failed to fetch approval settings' });
+    }
+});
+
+// PUT /api/admin/settings/approval-thresholds - Update approval settings
+router.put('/settings/approval-thresholds',
+    authenticateToken,
+    requireAdmin,
+    async (req, res) => {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            const { settings } = req.body;
+
+            for (const [key, value] of Object.entries(settings)) {
+                await client.query(
+                    `UPDATE transaction_approval_settings 
+                     SET setting_value = $1, updated_at = CURRENT_TIMESTAMP 
+                     WHERE setting_name = $2`,
+                    [value.toString(), key]
+                );
+            }
+
+            await logAdminAction(
+                req.user.userId,
+                'SETTINGS_UPDATED',
+                'Updated transaction approval settings',
+                { settings }
+            );
+
+            await client.query('COMMIT');
+            res.json({ message: 'Approval settings updated successfully' });
+
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('Update approval settings error:', error);
+            res.status(500).json({ error: 'Failed to update approval settings' });
+        } finally {
+            client.release();
+        }
+    }
+);
+
 module.exports = router;

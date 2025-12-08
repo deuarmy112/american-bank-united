@@ -6,6 +6,44 @@ const { generateId } = require('../utils/helpers');
 
 const router = express.Router();
 
+// Helper function to check if transaction needs approval
+async function needsApproval(type, amount) {
+    try {
+        // Get approval settings
+        const settings = await pool.query(
+            'SELECT setting_name, setting_value FROM transaction_approval_settings'
+        );
+        
+        const settingsMap = {};
+        settings.rows.forEach(row => {
+            settingsMap[row.setting_name] = row.setting_value;
+        });
+
+        // If require all approvals is enabled
+        if (settingsMap.require_all_approvals === 'true') {
+            return true;
+        }
+
+        // Check thresholds
+        const transferThreshold = parseFloat(settingsMap.transfer_threshold || 5000);
+        const withdrawalThreshold = parseFloat(settingsMap.withdrawal_threshold || 1000);
+
+        if (type === 'transfer' && parseFloat(amount) >= transferThreshold) {
+            return true;
+        }
+
+        if (type === 'withdrawal' && parseFloat(amount) >= withdrawalThreshold) {
+            return true;
+        }
+
+        return false;
+    } catch (error) {
+        console.error('Error checking approval:', error);
+        // Default to not requiring approval if settings table doesn't exist yet
+        return false;
+    }
+}
+
 // Get all transactions for current user
 router.get('/', authenticateToken, async (req, res) => {
     try {
@@ -28,10 +66,10 @@ router.get('/', authenticateToken, async (req, res) => {
 
 // Transfer money between accounts
 router.post('/transfer', authenticateToken, transferValidation, validate, async (req, res) => {
-    const connection = await pool.getConnection();
+    const client = await pool.connect();
     
     try {
-        await connection.beginTransaction();
+        await client.query('BEGIN');
 
         const { fromAccountId, toAccountId, amount, description } = req.body;
 
@@ -40,9 +78,9 @@ router.post('/transfer', authenticateToken, transferValidation, validate, async 
         }
 
         // Verify from account belongs to user
-        const fromResult = await connection.query(
-            'SELECT * FROM accounts WHERE id = $1 AND user_id = $2 AND status = \'active\'',
-            [fromAccountId, req.user.userId]
+        const fromResult = await client.query(
+            'SELECT * FROM accounts WHERE id = $1 AND user_id = $2 AND status = $3',
+            [fromAccountId, req.user.userId, 'active']
         );
 
         if (fromResult.rows.length === 0) {
@@ -56,9 +94,9 @@ router.post('/transfer', authenticateToken, transferValidation, validate, async 
         }
 
         // Verify to account exists
-        const toResult = await connection.query(
-            'SELECT * FROM accounts WHERE id = $1 AND status = \'active\'',
-            [toAccountId]
+        const toResult = await client.query(
+            'SELECT * FROM accounts WHERE id = $1 AND status = $2',
+            [toAccountId, 'active']
         );
 
         if (toResult.rows.length === 0) {
@@ -67,51 +105,73 @@ router.post('/transfer', authenticateToken, transferValidation, validate, async 
 
         const toAccount = toResult.rows[0];
 
-        // Deduct from source account
+        // Check if approval is needed
+        const requiresApproval = await needsApproval('transfer', amount);
+
+        if (requiresApproval) {
+            // Create pending transaction records without updating balances
+            const withdrawalId = generateId();
+            await client.query(
+                `INSERT INTO transactions (id, account_id, type, amount, description, related_account_id, balance_after, approval_status)
+                 VALUES ($1, $2, 'transfer', $3, $4, $5, $6, 'pending')`,
+                [withdrawalId, fromAccountId, amount, description || 'Transfer out (Pending Approval)', toAccountId, fromAccount.balance]
+            );
+
+            await client.query('COMMIT');
+
+            return res.json({
+                message: 'Transfer submitted for admin approval',
+                status: 'pending_approval',
+                transactionId: withdrawalId,
+                requiresApproval: true
+            });
+        }
+
+        // Auto-approved: Execute transfer immediately
         const newFromBalance = parseFloat(fromAccount.balance) - parseFloat(amount);
-        await connection.query(
+        await client.query(
             'UPDATE accounts SET balance = $1 WHERE id = $2',
             [newFromBalance, fromAccountId]
         );
 
-        // Add to destination account
         const newToBalance = parseFloat(toAccount.balance) + parseFloat(amount);
-        await connection.query(
+        await client.query(
             'UPDATE accounts SET balance = $1 WHERE id = $2',
             [newToBalance, toAccountId]
         );
 
         // Create withdrawal transaction
         const withdrawalId = generateId();
-        await connection.query(
-            `INSERT INTO transactions (id, account_id, type, amount, description, related_account_id, balance_after)
-             VALUES ($1, $2, 'withdrawal', $3, $4, $5, $6)`,
+        await client.query(
+            `INSERT INTO transactions (id, account_id, type, amount, description, related_account_id, balance_after, approval_status)
+             VALUES ($1, $2, 'transfer', $3, $4, $5, $6, 'approved')`,
             [withdrawalId, fromAccountId, amount, description || 'Transfer out', toAccountId, newFromBalance]
         );
 
         // Create deposit transaction
         const depositId = generateId();
-        await connection.query(
-            `INSERT INTO transactions (id, account_id, type, amount, description, related_account_id, balance_after)
-             VALUES ($1, $2, 'deposit', $3, $4, $5, $6)`,
+        await client.query(
+            `INSERT INTO transactions (id, account_id, type, amount, description, related_account_id, balance_after, approval_status)
+             VALUES ($1, $2, 'deposit', $3, $4, $5, $6, 'approved')`,
             [depositId, toAccountId, amount, description || 'Transfer in', fromAccountId, newToBalance]
         );
 
-        await connection.commit();
+        await client.query('COMMIT');
 
         res.json({
             message: 'Transfer completed successfully',
+            status: 'approved',
             withdrawalId,
             depositId,
             newBalance: newFromBalance
         });
 
     } catch (error) {
-        await connection.rollback();
+        await client.query('ROLLBACK');
         console.error('Transfer error:', error);
         res.status(400).json({ error: error.message || 'Transfer failed' });
     } finally {
-        connection.release();
+        client.release();
     }
 });
 
