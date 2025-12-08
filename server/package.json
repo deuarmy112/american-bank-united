@@ -12,6 +12,7 @@
     "init-db": "node scripts/init-database.js",
     "quick-init": "node scripts/quick-init.js",
     "fresh-init": "node scripts/fresh-init.js",
+    "add-external-transfers": "node scripts/add-external-transfers.js",
     "generate-secret": "node scripts/generate-secret.js"
   },
   "keywords": ["banking", "api", "express"],

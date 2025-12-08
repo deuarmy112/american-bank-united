@@ -63,6 +63,7 @@ app.use('/api/accounts', require('./routes/accounts'));
 app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/cards', require('./routes/cards'));
 app.use('/api/bills', require('./routes/bills'));
+app.use('/api/external-transfers', require('./routes/external-transfers'));
 
 // 404 handler
 app.use((req, res) => {
