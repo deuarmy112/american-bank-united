@@ -11,6 +11,7 @@
     "dev": "nodemon server.js",
     "init-db": "node scripts/init-database.js",
     "quick-init": "node scripts/quick-init.js",
+    "fresh-init": "node scripts/fresh-init.js",
     "generate-secret": "node scripts/generate-secret.js"
   },
   "keywords": ["banking", "api", "express"],
