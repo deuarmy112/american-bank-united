@@ -60,7 +60,7 @@ CREATE INDEX IF NOT EXISTS idx_transaction_reviews_status ON transaction_reviews
 -- Step 5: Insert default admin user (Password: Admin@123)
 INSERT INTO users (id, first_name, last_name, email, password_hash, role, status, created_at)
 VALUES (
-    'admin-' || gen_random_uuid()::text,
+    gen_random_uuid()::text,
     'System',
     'Administrator',
     'admin@americanbankunited.com',
