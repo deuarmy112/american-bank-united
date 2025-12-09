@@ -53,8 +53,10 @@ function mergeTransactions(transactions, externalTransfers) {
 }
 
 function populateAccountFilter(accounts) {
-    const accountFilter = document.getElementById('accountFilter');
-    accountFilter.innerHTML = '<option value="all">All Accounts</option>';
+    const accountFilter = document.getElementById('filterAccount');
+    if (!accountFilter) return;
+    
+    accountFilter.innerHTML = '<option value="">All Accounts</option>';
     
     accounts.forEach(account => {
         const option = new Option(
