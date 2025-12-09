@@ -1,4 +1,8 @@
 // Admin API Functions
+const API_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:5000/api'
+    : 'https://american-bank-api.onrender.com/api';
+
 const adminAPI = {
     // Get dashboard statistics
     async getDashboard() {
