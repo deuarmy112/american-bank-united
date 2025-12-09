@@ -39,12 +39,24 @@
 
         <div id="alert" class="alert" style="display: none;"></div>
 
+        <!-- Tabs -->
+        <div style="margin-bottom: 20px; border-bottom: 2px solid #e5e7eb;">
+            <button onclick="showTab('pending')" id="pendingTab" class="tab-btn active" style="padding: 12px 24px; border: none; background: none; cursor: pointer; font-size: 16px; font-weight: 500; border-bottom: 3px solid #667eea; color: #667eea;">
+                Pending Approvals (<span id="pendingCount">0</span>)
+            </button>
+            <button onclick="showTab('all')" id="allTab" class="tab-btn" style="padding: 12px 24px; border: none; background: none; cursor: pointer; font-size: 16px; font-weight: 500; color: #666;">
+                All Accounts (<span id="allCount">0</span>)
+            </button>
+        </div>
+
         <!-- Pending Approvals -->
-        <div class="section">
-            <div class="section-header">
-                <h2><i class="fas fa-clock"></i> Pending Approvals (<span id="pendingCount">0</span>)</h2>
-            </div>
+        <div class="section" id="pendingSection">
             <div id="pendingAccountsList"></div>
+        </div>
+
+        <!-- All Accounts -->
+        <div class="section" id="allSection" style="display: none;">
+            <div id="allAccountsList"></div>
         </div>
     </div>
 
@@ -246,11 +258,93 @@
                 showAlert(`Balance adjusted successfully. New balance: ${formatCurrency(result.balanceAfter)}`, 'success');
                 closeAdjustBalanceModal();
                 loadPendingAccounts();
+                loadAllAccounts();
             } catch (error) {
                 console.error('Adjust balance error:', error);
                 showAlert(error.message || 'Failed to adjust balance', 'error');
             }
         });
+
+        async function loadAllAccounts() {
+            try {
+                // Use admin users endpoint to get all accounts
+                const response = await fetch(`${API_URL}/admin/users`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                const data = await response.json();
+                
+                // Get all user accounts
+                let allAccounts = [];
+                for (const user of data.users) {
+                    const userDetail = await adminAPI.getUserDetails(user.id);
+                    if (userDetail.accounts && userDetail.accounts.length > 0) {
+                        allAccounts = allAccounts.concat(userDetail.accounts.map(acc => ({
+                            ...acc,
+                            user_name: `${user.first_name} ${user.last_name}`,
+                            user_email: user.email
+                        })));
+                    }
+                }
+                
+                document.getElementById('allCount').textContent = allAccounts.length;
+                
+                const container = document.getElementById('allAccountsList');
+                
+                if (allAccounts.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; padding: 20px; color: #666;">No accounts found</p>';
+                    return;
+                }
+
+                container.innerHTML = allAccounts.map(account => `
+                    <div class="account-card" style="border: 1px solid #ddd; padding: 20px; margin-bottom: 15px; border-radius: 8px; background: white;">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0 0 10px 0;">
+                                    <i class="fas fa-wallet"></i> ${account.account_type.toUpperCase()} Account
+                                </h3>
+                                <p style="margin: 5px 0;"><strong>Account Number:</strong> ${account.account_number}</p>
+                                <p style="margin: 5px 0;"><strong>User:</strong> ${account.user_name}</p>
+                                <p style="margin: 5px 0;"><strong>Email:</strong> ${account.user_email}</p>
+                                <p style="margin: 5px 0;"><strong>Balance:</strong> <span style="font-size: 24px; color: #10b981; font-weight: bold;">${formatCurrency(account.balance)}</span></p>
+                                <p style="margin: 5px 0;"><strong>Status:</strong> <span class="badge ${account.status === 'active' ? 'badge-success' : 'badge-warning'}">${account.status.toUpperCase()}</span></p>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button onclick="openAdjustBalanceModal('${account.id}', '${account.account_number}', ${account.balance})" class="btn btn-primary">
+                                    <i class="fas fa-edit"></i> Adjust Balance
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Load all accounts error:', error);
+                showAlert('Failed to load accounts', 'error');
+            }
+        }
+
+        function showTab(tab) {
+            if (tab === 'pending') {
+                document.getElementById('pendingSection').style.display = 'block';
+                document.getElementById('allSection').style.display = 'none';
+                document.getElementById('pendingTab').classList.add('active');
+                document.getElementById('allTab').classList.remove('active');
+                document.getElementById('pendingTab').style.borderBottom = '3px solid #667eea';
+                document.getElementById('pendingTab').style.color = '#667eea';
+                document.getElementById('allTab').style.borderBottom = 'none';
+                document.getElementById('allTab').style.color = '#666';
+            } else {
+                document.getElementById('pendingSection').style.display = 'none';
+                document.getElementById('allSection').style.display = 'block';
+                document.getElementById('pendingTab').classList.remove('active');
+                document.getElementById('allTab').classList.add('active');
+                document.getElementById('pendingTab').style.borderBottom = 'none';
+                document.getElementById('pendingTab').style.color = '#666';
+                document.getElementById('allTab').style.borderBottom = '3px solid #667eea';
+                document.getElementById('allTab').style.color = '#667eea';
+                loadAllAccounts();
+            }
+        }
 
         // Load pending accounts on page load
         loadPendingAccounts();
