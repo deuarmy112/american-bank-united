@@ -6,27 +6,24 @@
         <title>Dashboard - American Bank United</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="css/opay.css">
         <style>
             body { background: #f8fafc }
         </style>
 </head>
-<body>
+<body class="opay-ui">
         <!-- Navigation -->
-        <header class="bg-white shadow">
+        <header class="opay-header">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center py-4">
+                <div class="flex justify-between items-center">
                     <div class="flex items-center gap-4">
-                        <a href="/" class="text-xl font-semibold text-slate-900 inline-flex items-center gap-2"><i class="fas fa-university text-indigo-600"></i> American Bank United</a>
-                        <nav class="hidden md:flex items-center gap-3 text-sm text-slate-600">
-                            <a href="dashboard.html" class="text-indigo-600">Dashboard</a>
-                            <a href="accounts.html">Accounts</a>
-                            <a href="transactions.html">Transactions</a>
-                            <a href="transfer.html">Transfer</a>
-                        </nav>
+                        <a href="/" class="opay-brand"><div class="opay-logo">AB</div><div>
+                          <div class="opay-name">American Bank United</div>
+                          <div class="opay-sub">Everyday banking</div>
+                        </div></a>
                     </div>
                     <div class="flex items-center gap-3">
-                        <span id="userName" class="text-slate-700 text-sm"><i class="fas fa-user-circle mr-1 text-lg text-indigo-500"></i> Loading...</span>
-                        <button onclick="logout()" class="text-sm px-3 py-1 rounded-md border">Logout</button>
+                        <button onclick="logout()" class="opay-btn">Logout</button>
                     </div>
                 </div>
             </div>

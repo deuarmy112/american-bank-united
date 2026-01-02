@@ -6,9 +6,10 @@
     <title>Accounts - American Bank United</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/opay.css">
     <style>body{background:#f8fafc}</style>
 </head>
-<body>
+<body class="opay-ui">
         <header class="fixed top-0 left-0 right-0 bg-white shadow z-20">
             <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -17,6 +18,16 @@
                 </div>
                 <div>
                     <button onclick="logout()" class="text-sm text-slate-600">Logout</button>
+                </div>
+            </div>
+        </header>
+        <header class="opay-header fixed top-0 left-0 right-0 z-20">
+            <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <a href="dashboard.html" class="opay-brand"><div class="opay-logo">AB</div><div style="margin-left:.5rem"><div class="opay-name">Accounts</div><div class="opay-sub">Manage your accounts</div></div></a>
+                </div>
+                <div>
+                    <button onclick="logout()" class="opay-btn">Logout</button>
                 </div>
             </div>
         </header>
