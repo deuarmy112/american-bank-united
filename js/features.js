@@ -10,6 +10,7 @@ async function openFeatureModal(id) {
   // populate selects for billers and accounts when bill modal opens
   if (id === 'bill') await populateBillModal();
   if (id === 'deposit' || id === 'withdraw') await populateAccountSelectsForCashOp(id);
+  if (id === 'qr') await populateQRFromAccounts();
 }
 
 function closeFeatureModal(id) {
@@ -90,6 +91,101 @@ async function submitWithdraw(e) {
     closeFeatureModal('withdraw');
     if (window.loadDashboardData) window.loadDashboardData();
   } catch (e) { console.error(e); alert('Withdraw failed: ' + e.message); }
+}
+
+// Beneficiaries management
+async function loadBeneficiaries() {
+  try {
+    const token = localStorage.getItem('token'); if (!token) return;
+    const r = await fetch('/api/beneficiaries', { headers: { Authorization: 'Bearer ' + token } });
+    const list = await r.json();
+    const container = document.getElementById('beneficiariesList');
+    container.innerHTML = list.map(b => `
+      <div class="flex items-center justify-between p-2 border rounded">
+        <div>
+          <div class="font-medium">${b.name} ${b.nickname?`• ${b.nickname}`:''}</div>
+          <div class="text-xs text-slate-500">${b.account_number || ''} ${b.bank_name? '• '+b.bank_name : ''}</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="payBeneficiary('${b.id}')" class="text-sm px-2 py-1 bg-indigo-600 text-white rounded">Pay</button>
+          <button onclick="deleteBeneficiary('${b.id}')" class="text-sm px-2 py-1 border rounded">Remove</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) { console.error('Load beneficiaries error', e); }
+}
+
+async function createBeneficiary(e) {
+  e.preventDefault();
+  const token = localStorage.getItem('token'); if (!token) return alert('Sign in');
+  const name = document.getElementById('benName').value;
+  const accountNumber = document.getElementById('benAccountNumber').value;
+  const bank = document.getElementById('benBank').value;
+  const nick = document.getElementById('benNickname').value;
+  try {
+    const res = await fetch('/api/beneficiaries', { method: 'POST', headers: { 'content-type':'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ name, accountNumber, bankName: bank, nickname: nick }) });
+    const j = await res.json(); if (!res.ok) throw new Error(j.error || 'Failed');
+    showToast('Beneficiary added');
+    document.getElementById('beneficiaryForm').reset();
+    loadBeneficiaries();
+  } catch (e) { console.error(e); alert('Failed to add beneficiary') }
+}
+
+async function deleteBeneficiary(id) {
+  if (!confirm('Remove beneficiary?')) return;
+  const token = localStorage.getItem('token'); if (!token) return;
+  try {
+    const res = await fetch('/api/beneficiaries/' + id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
+    if (!res.ok) throw new Error('Failed');
+    showToast('Beneficiary removed');
+    loadBeneficiaries();
+  } catch (e) { console.error(e); alert('Delete failed') }
+}
+
+async function payBeneficiary(id) {
+  // Find beneficiary and open QR pay modal prefilled
+  const token = localStorage.getItem('token'); if (!token) return;
+  try {
+    const r = await fetch('/api/beneficiaries', { headers: { Authorization: 'Bearer ' + token } });
+    const list = await r.json();
+    const b = list.find(x=>x.id===id);
+    if (!b) return alert('Beneficiary not found');
+    openFeatureModal('qr');
+    // wait a tick for modal fields
+    setTimeout(()=>{
+      document.getElementById('qrAccountNumber').value = b.account_number || '';
+    }, 200);
+  } catch (e) { console.error(e); }
+}
+
+async function populateQRFromAccounts() {
+  try {
+    const token = localStorage.getItem('token'); if (!token) return;
+    const r = await fetch('/api/accounts', { headers: { Authorization: 'Bearer ' + token } });
+    const accounts = await r.json();
+    const sel = document.getElementById('qrFromAccount');
+    sel.innerHTML = '<option value="">From account</option>' + accounts.map(a=>`<option value="${a.id}">${a.account_number} • ${a.account_type} • $${Number(a.balance).toFixed(2)}</option>`).join('');
+  } catch (e) { console.error('Populate QR accounts error', e); }
+}
+
+async function submitQRPay(e) {
+  e.preventDefault();
+  const token = localStorage.getItem('token'); if (!token) return alert('Sign in');
+  const fromId = document.getElementById('qrFromAccount').value;
+  const accNum = document.getElementById('qrAccountNumber').value;
+  const amount = parseFloat(document.getElementById('qrAmount').value);
+  if (!fromId || !accNum || !amount) return alert('Complete form');
+  try {
+    // lookup account
+    const lookup = await fetch('/api/accounts/lookup', { method: 'POST', headers: { 'content-type':'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ accountNumber: accNum }) });
+    const dest = await lookup.json(); if (!lookup.ok) throw new Error(dest.error || 'No account');
+
+    const transfer = await fetch('/api/transactions/transfer', { method: 'POST', headers: { 'content-type':'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ fromAccountId: fromId, toAccountId: dest.id, amount, description: 'QR Pay' }) });
+    const tj = await transfer.json(); if (!transfer.ok) throw new Error(tj.error || 'Transfer failed');
+    showToast('Payment sent');
+    closeFeatureModal('qr');
+    if (window.loadDashboardData) window.loadDashboardData();
+  } catch (e) { console.error(e); alert('Payment failed: ' + (e.message||e)); }
 }
 
 async function submitBill(e) {

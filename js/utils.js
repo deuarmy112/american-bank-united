@@ -80,3 +80,17 @@ function calculateAge(dateOfBirth) {
     
     return age;
 }
+
+// Simple toast notification
+function showToast(message, timeout = 3500) {
+    let toast = document.getElementById('app-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'app-toast';
+        toast.className = 'fixed left-1/2 -translate-x-1/2 bottom-8 bg-slate-800 text-white px-4 py-2 rounded shadow-lg z-50 opacity-0 transition-opacity';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.style.opacity = '1';
+    setTimeout(() => { toast.style.opacity = '0'; }, timeout);
+}
