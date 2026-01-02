@@ -9,6 +9,7 @@ async function openFeatureModal(id) {
 
   // populate selects for billers and accounts when bill modal opens
   if (id === 'bill') await populateBillModal();
+  if (id === 'deposit' || id === 'withdraw') await populateAccountSelectsForCashOp(id);
 }
 
 function closeFeatureModal(id) {
@@ -36,6 +37,59 @@ async function populateBillModal() {
   } catch (e) {
     console.error('Populate bill modal error', e);
   }
+}
+
+async function populateAccountSelectsForCashOp(kind) {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const r = await fetch('/api/accounts', { headers: { Authorization: 'Bearer ' + token } });
+    const accounts = await r.json();
+    const sel = document.getElementById(kind === 'deposit' ? 'depositAccount' : 'withdrawAccount');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Select account</option>' + accounts.map(a=>`<option value="${a.id}">${a.account_number} • ${a.account_type} • $${Number(a.balance).toFixed(2)}</option>`).join('');
+  } catch (e) {
+    console.error('Populate accounts for cash op error', e);
+  }
+}
+
+async function submitDeposit(e) {
+  e.preventDefault();
+  const token = localStorage.getItem('token'); if (!token) return alert('Not signed in');
+  const accountId = document.getElementById('depositAccount').value;
+  const amount = parseFloat(document.getElementById('depositAmount').value);
+  if (!accountId || !amount || amount <= 0) return alert('Complete form');
+
+  try {
+    const res = await fetch('/api/accounts/deposit', {
+      method: 'POST', headers: { 'content-type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ accountId, amount })
+    });
+    const json = await res.json(); if (!res.ok) throw new Error(json.error || 'Deposit failed');
+    alert('Deposit successful — new balance: ' + json.newBalance);
+    closeFeatureModal('deposit');
+    // refresh dashboard
+    if (window.loadDashboardData) window.loadDashboardData();
+  } catch (e) { console.error(e); alert('Deposit failed: ' + e.message); }
+}
+
+async function submitWithdraw(e) {
+  e.preventDefault();
+  const token = localStorage.getItem('token'); if (!token) return alert('Not signed in');
+  const accountId = document.getElementById('withdrawAccount').value;
+  const amount = parseFloat(document.getElementById('withdrawAmount').value);
+  if (!accountId || !amount || amount <= 0) return alert('Complete form');
+
+  try {
+    const res = await fetch('/api/accounts/withdraw', {
+      method: 'POST', headers: { 'content-type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ accountId, amount })
+    });
+    const json = await res.json(); if (!res.ok) throw new Error(json.error || 'Withdraw failed');
+    alert('Withdrawal successful — new balance: ' + json.newBalance);
+    closeFeatureModal('withdraw');
+    if (window.loadDashboardData) window.loadDashboardData();
+  } catch (e) { console.error(e); alert('Withdraw failed: ' + e.message); }
 }
 
 async function submitBill(e) {
@@ -91,3 +145,5 @@ window.closeFeatureModal = closeFeatureModal;
 window.submitBill = submitBill;
 window.submitAirtime = submitAirtime;
 window.submitBet = submitBet;
+window.submitDeposit = submitDeposit;
+window.submitWithdraw = submitWithdraw;

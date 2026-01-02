@@ -49,9 +49,12 @@ async function loadDashboardData() {
         
         // Load accounts
         loadDashboardAccounts(accounts);
-        
-        // Load recent transactions (last 5)
-        loadRecentTransactions(transactions.slice(0, 5));
+
+        // Start accounts carousel autoplay
+        startAccountsCarousel();
+
+        // Load recent transactions (last 6)
+        loadRecentTransactions(transactions.slice(0, 6));
         
     } catch (error) {
         console.error('Failed to load dashboard data:', error);
@@ -70,19 +73,51 @@ function loadDashboardAccounts(accounts) {
     accountsList.innerHTML = '';
     
     accounts.forEach(account => {
-        const accountCard = document.createElement('div');
-        accountCard.className = 'account-card';
-        accountCard.innerHTML = `
-            <h3>${account.account_type.charAt(0).toUpperCase() + account.account_type.slice(1)} Account</h3>
-            <p class="account-number">****${account.account_number.slice(-4)}</p>
-            <p class="account-balance">${formatCurrency(account.balance)}</p>
+        const card = document.createElement('div');
+        card.className = 'min-w-[220px] flex-none bg-white rounded-xl p-4 shadow flex flex-col gap-2';
+        card.innerHTML = `
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-slate-500">${capitalize(account.account_type)} • ****${account.account_number.slice(-4)}</p>
+                    <p class="text-lg font-semibold mt-2">${formatCurrency(account.balance)}</p>
+                </div>
+                <div class="text-slate-400"> <i class="fas fa-wallet text-2xl"></i> </div>
+            </div>
+            <div class="mt-2 text-xs text-slate-500">Available balance</div>
         `;
-        accountsList.appendChild(accountCard);
+        accountsList.appendChild(card);
     });
 }
 
+let _carouselInterval = null;
+function startAccountsCarousel() {
+    const el = document.getElementById('accountsList');
+    if (!el) return;
+    // clear existing
+    if (_carouselInterval) clearInterval(_carouselInterval);
+
+    const scrollStep = () => {
+        if (el.scrollWidth <= el.clientWidth) return; // no scroll needed
+        const card = el.querySelector(':scope > *');
+        if (!card) return;
+        const cardWidth = card.clientWidth + 12; // include gap
+        const maxScroll = el.scrollWidth - el.clientWidth;
+        if (Math.ceil(el.scrollLeft + cardWidth) > maxScroll) {
+            // loop back
+            el.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+            el.scrollBy({ left: cardWidth, behavior: 'smooth' });
+        }
+    };
+
+    _carouselInterval = setInterval(scrollStep, 3000);
+    // pause on hover/touch
+    el.addEventListener('mouseenter', () => clearInterval(_carouselInterval));
+    el.addEventListener('mouseleave', () => { if (_carouselInterval) clearInterval(_carouselInterval); _carouselInterval = setInterval(scrollStep, 3000); });
+}
+
 function loadRecentTransactions(transactions) {
-    const transactionsList = document.getElementById('recentTransactionsList');
+    const transactionsList = document.getElementById('recentTransactions');
     
     if (transactions.length === 0) {
         transactionsList.innerHTML = '<p class="no-data">No recent transactions</p>';
@@ -92,45 +127,30 @@ function loadRecentTransactions(transactions) {
     transactionsList.innerHTML = '';
     
     transactions.forEach(txn => {
-        const txnRow = document.createElement('div');
-        txnRow.className = 'transaction-item';
-        
-        let icon = '';
-        let amountClass = '';
-        let sign = '';
-        
-        switch (txn.type) {
-            case 'deposit':
-                icon = '<i class="fas fa-arrow-down" style="color: #10b981;"></i>';
-                amountClass = 'positive';
-                sign = '+';
-                break;
-            case 'withdrawal':
-                icon = '<i class="fas fa-arrow-up" style="color: #ef4444;"></i>';
-                amountClass = 'negative';
-                sign = '-';
-                break;
-            case 'transfer':
-                icon = '<i class="fas fa-exchange-alt" style="color: #3b82f6;"></i>';
-                amountClass = 'negative';
-                sign = '-';
-                break;
-            case 'bill_payment':
-                icon = '<i class="fas fa-file-invoice-dollar" style="color: #f59e0b;"></i>';
-                amountClass = 'negative';
-                sign = '-';
-                break;
-        }
-        
-        txnRow.innerHTML = `
-            <div class="txn-icon">${icon}</div>
-            <div class="txn-details">
-                <p class="txn-desc">${txn.description || txn.type}</p>
-                <p class="txn-date">${formatDate(txn.created_at)}</p>
+        const item = document.createElement('div');
+        item.className = 'bg-white rounded-lg p-3 shadow flex items-center justify-between';
+
+        let iconClass = 'fas fa-exchange-alt text-slate-600';
+        let amountSign = '-';
+        let amountColor = 'text-slate-700';
+        if (txn.type === 'deposit') { iconClass = 'fas fa-arrow-down text-green-500'; amountSign = '+'; amountColor='text-green-600'; }
+        if (txn.type === 'withdrawal') { iconClass = 'fas fa-arrow-up text-rose-500'; amountSign='-'; amountColor='text-rose-600'; }
+        if (txn.type === 'transfer') { iconClass = 'fas fa-exchange-alt text-indigo-500'; amountSign='-'; amountColor='text-slate-700'; }
+        if (txn.type === 'bill_payment') { iconClass = 'fas fa-file-invoice-dollar text-yellow-500'; amountSign='-'; amountColor='text-slate-700'; }
+
+        item.innerHTML = `
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center">
+                    <i class="${iconClass} text-lg"></i>
+                </div>
+                <div>
+                    <div class="text-sm font-medium">${txn.description || capitalize(txn.type)}</div>
+                    <div class="text-xs text-slate-400">${formatDate(txn.created_at)}</div>
+                </div>
             </div>
-            <p class="txn-amount ${amountClass}">${sign}${formatCurrency(txn.amount)}</p>
+            <div class="text-sm font-semibold ${amountColor}">${amountSign}${formatCurrency(txn.amount)}</div>
         `;
-        
-        transactionsList.appendChild(txnRow);
+
+        transactionsList.appendChild(item);
     });
 }

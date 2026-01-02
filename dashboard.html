@@ -48,6 +48,40 @@
                 </div>
             </div>
 
+            <!-- Deposit Modal -->
+            <div id="modal-deposit" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50">
+                <div class="bg-white rounded-lg w-11/12 max-w-md p-4">
+                    <h3 class="text-lg font-semibold mb-2">Deposit Funds</h3>
+                    <form onsubmit="submitDeposit(event)">
+                        <label class="block text-sm">Account</label>
+                        <select id="depositAccount" class="w-full border rounded p-2 mb-2"></select>
+                        <label class="block text-sm">Amount</label>
+                        <input id="depositAmount" type="number" step="0.01" class="w-full border rounded p-2 mb-2" placeholder="0.00" />
+                        <div class="flex justify-end gap-2">
+                            <button type="button" onclick="closeFeatureModal('deposit')" class="px-4 py-2">Cancel</button>
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Deposit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Withdraw Modal -->
+            <div id="modal-withdraw" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50">
+                <div class="bg-white rounded-lg w-11/12 max-w-md p-4">
+                    <h3 class="text-lg font-semibold mb-2">Withdraw Funds</h3>
+                    <form onsubmit="submitWithdraw(event)">
+                        <label class="block text-sm">Account</label>
+                        <select id="withdrawAccount" class="w-full border rounded p-2 mb-2"></select>
+                        <label class="block text-sm">Amount</label>
+                        <input id="withdrawAmount" type="number" step="0.01" class="w-full border rounded p-2 mb-2" placeholder="0.00" />
+                        <div class="flex justify-end gap-2">
+                            <button type="button" onclick="closeFeatureModal('withdraw')" class="px-4 py-2">Cancel</button>
+                            <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded">Withdraw</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <!-- Balance card (Opay-like) -->
             <div class="bg-gradient-to-r from-orange-500 to-rose-500 text-white rounded-2xl p-4 shadow-lg mb-4">
                 <div class="flex justify-between items-start">
