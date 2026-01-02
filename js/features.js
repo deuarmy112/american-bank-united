@@ -97,7 +97,7 @@ async function submitWithdraw(e) {
 async function loadBeneficiaries() {
   try {
     const token = localStorage.getItem('token'); if (!token) return;
-    const r = await fetch('/api/recipients', { headers: { Authorization: 'Bearer ' + token } });
+    const r = await fetch('/api/beneficiaries', { headers: { Authorization: 'Bearer ' + token } });
     const list = await r.json();
     const container = document.getElementById('beneficiariesList');
     container.innerHTML = list.map(b => `
@@ -122,11 +122,8 @@ async function createBeneficiary(e) {
   const accountNumber = document.getElementById('benAccountNumber').value;
   const bank = document.getElementById('benBank').value;
   const nick = document.getElementById('benNickname').value;
-  const email = document.getElementById('benEmail') ? document.getElementById('benEmail').value : '';
-  const iban = document.getElementById('benIBAN') ? document.getElementById('benIBAN').value : '';
-  const phone = document.getElementById('benPhone') ? document.getElementById('benPhone').value : '';
   try {
-    const res = await fetch('/api/recipients', { method: 'POST', headers: { 'content-type':'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ name, accountNumber, iban, email, phone, bankName: bank, nickname: nick }) });
+    const res = await fetch('/api/beneficiaries', { method: 'POST', headers: { 'content-type':'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ name, accountNumber, bankName: bank, nickname: nick }) });
     const j = await res.json(); if (!res.ok) throw new Error(j.error || 'Failed');
     showToast('Beneficiary added');
     document.getElementById('beneficiaryForm').reset();
@@ -138,7 +135,7 @@ async function deleteBeneficiary(id) {
   if (!confirm('Remove beneficiary?')) return;
   const token = localStorage.getItem('token'); if (!token) return;
   try {
-    const res = await fetch('/api/recipients/' + id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
+    const res = await fetch('/api/beneficiaries/' + id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
     if (!res.ok) throw new Error('Failed');
     showToast('Beneficiary removed');
     loadBeneficiaries();
@@ -149,7 +146,7 @@ async function payBeneficiary(id) {
   // Find beneficiary and open QR pay modal prefilled
   const token = localStorage.getItem('token'); if (!token) return;
   try {
-    const r = await fetch('/api/recipients', { headers: { Authorization: 'Bearer ' + token } });
+    const r = await fetch('/api/beneficiaries', { headers: { Authorization: 'Bearer ' + token } });
     const list = await r.json();
     const b = list.find(x=>x.id===id);
     if (!b) return alert('Beneficiary not found');
@@ -157,7 +154,6 @@ async function payBeneficiary(id) {
     // wait a tick for modal fields
     setTimeout(()=>{
       document.getElementById('qrAccountNumber').value = b.account_number || '';
-      const rid = document.getElementById('qrRecipientId'); if (rid) rid.value = b.id;
     }, 200);
   } catch (e) { console.error(e); }
 }
@@ -177,16 +173,9 @@ async function submitQRPay(e) {
   const token = localStorage.getItem('token'); if (!token) return alert('Sign in');
   const fromId = document.getElementById('qrFromAccount').value;
   const accNum = document.getElementById('qrAccountNumber').value;
-  const qrRecipientId = document.getElementById('qrRecipientId') ? document.getElementById('qrRecipientId').value : null;
   const amount = parseFloat(document.getElementById('qrAmount').value);
   if (!fromId || !accNum || !amount) return alert('Complete form');
   try {
-    // If recipientId present, use external transfer endpoint
-    if (qrRecipientId) {
-      const res = await fetch('/api/recipients/transfer', { method: 'POST', headers: { 'content-type':'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ fromAccountId: fromId, recipientId: qrRecipientId, amount, description: 'QR Pay' }) });
-      const jr = await res.json(); if (!res.ok) throw new Error(jr.error || 'External transfer failed');
-      showToast('Payment sent'); closeFeatureModal('qr'); if (window.loadDashboardData) window.loadDashboardData(); return;
-    }
     // lookup account
     const lookup = await fetch('/api/accounts/lookup', { method: 'POST', headers: { 'content-type':'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ accountNumber: accNum }) });
     const dest = await lookup.json(); if (!lookup.ok) throw new Error(dest.error || 'No account');

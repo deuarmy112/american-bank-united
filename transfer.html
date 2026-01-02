@@ -24,12 +24,16 @@
             <div id="alert" class="hidden"></div>
 
             <form id="transferForm" class="space-y-3 bg-white rounded-lg p-4 shadow">
+                <div class="flex gap-2 items-center">
+                    <label class="inline-flex items-center"><input type="radio" name="transferType" value="internal" checked class="mr-2"> Internal</label>
+                    <label class="inline-flex items-center"><input type="radio" name="transferType" value="external" class="mr-2"> Other Bank</label>
+                </div>
                 <div>
                     <label class="text-sm text-slate-600">From</label>
                     <select id="fromAccount" name="fromAccount" required class="w-full rounded-md border px-3 py-2 text-sm">
                         <option value="">Select source account</option>
                     </select>
-                    <div id="fromBalance" class="text-xs text-slate-500 mt-1"></div>
+                    <div id="fromAccountBalance" class="text-xs text-slate-500 mt-1"></div>
                 </div>
 
                 <div>
@@ -37,6 +41,13 @@
                     <select id="toAccount" name="toAccount" required class="w-full rounded-md border px-3 py-2 text-sm">
                         <option value="">Select destination account</option>
                     </select>
+                    <div id="externalFields" class="mt-2 hidden">
+                        <input id="extRecipientName" type="text" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Recipient name">
+                        <input id="extAccountNumber" type="text" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Account number or IBAN">
+                        <input id="extBankName" type="text" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Bank name">
+                        <input id="extContact" type="text" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Phone or email (optional)">
+                        <label class="inline-flex items-center"><input id="saveAsBeneficiary" type="checkbox" class="mr-2"> Save as beneficiary</label>
+                    </div>
                     <div id="toBalance" class="text-xs text-slate-500 mt-1"></div>
                 </div>
 

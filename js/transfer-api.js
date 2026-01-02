@@ -6,7 +6,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (!requireAuth()) return;
     await displayUserName();
     await loadAccounts();
+    setupTransferTypeToggle();
 });
+
+function setupTransferTypeToggle() {
+    const radios = document.getElementsByName('transferType');
+    radios.forEach(r => r.addEventListener('change', () => {
+        const isExternal = document.querySelector('input[name="transferType"]:checked').value === 'external';
+        document.getElementById('toAccount').required = !isExternal;
+        document.getElementById('externalFields').classList.toggle('hidden', !isExternal);
+    }));
+}
 
 async function loadAccounts() {
     try {
@@ -39,6 +49,10 @@ async function loadAccounts() {
                 balanceDisplay.textContent = '';
             }
         });
+
+        // also populate toAccount select with internal accounts
+        const toSelect = document.getElementById('toAccount');
+        toSelect.innerHTML = '<option value="">Select Account</option>' + accounts.map(a=>`<option value="${a.id}">${a.account_type} - ${a.account_number} (${formatCurrency(a.balance)})</option>`).join('');
         
     } catch (error) {
         console.error('Failed to load accounts:', error);
@@ -51,19 +65,25 @@ document.getElementById('transferForm')?.addEventListener('submit', async functi
     e.preventDefault();
     
     const fromAccountId = document.getElementById('fromAccount').value;
+    const transferType = document.querySelector('input[name="transferType"]:checked').value;
     const toAccountId = document.getElementById('toAccount').value;
     const amount = parseFloat(document.getElementById('amount').value);
     const description = document.getElementById('description').value.trim();
     
     // Validation
-    if (!fromAccountId || !toAccountId) {
-        showAlert('Please select both accounts', 'error');
-        return;
+    if (!fromAccountId) { showAlert('Select source account', 'error'); return; }
+
+    if (transferType === 'internal') {
+        if (!toAccountId) { showAlert('Please select destination account', 'error'); return; }
+        if (fromAccountId === toAccountId) { showAlert('Cannot transfer to the same account', 'error'); return; }
     }
-    
-    if (fromAccountId === toAccountId) {
-        showAlert('Cannot transfer to the same account', 'error');
-        return;
+
+    if (transferType === 'external') {
+        // ensure external fields
+        const name = document.getElementById('extRecipientName').value.trim();
+        const acct = document.getElementById('extAccountNumber').value.trim();
+        const bank = document.getElementById('extBankName').value.trim();
+        if (!name || !acct || !bank) { showAlert('Please provide recipient name, account number/IBAN and bank name', 'error'); return; }
     }
     
     if (!amount || amount <= 0) {
@@ -76,7 +96,24 @@ document.getElementById('transferForm')?.addEventListener('submit', async functi
         submitBtn.textContent = 'Processing...';
         submitBtn.disabled = true;
         
-        await transactionsAPI.transfer(fromAccountId, toAccountId, amount, description);
+        if (transferType === 'internal') {
+            await transactionsAPI.transfer(fromAccountId, toAccountId, amount, description);
+        } else {
+            // external transfer
+            const recipientName = document.getElementById('extRecipientName').value.trim();
+            const accountNumber = document.getElementById('extAccountNumber').value.trim();
+            const bankName = document.getElementById('extBankName').value.trim();
+            const contact = document.getElementById('extContact').value.trim();
+            const saveAsBeneficiary = document.getElementById('saveAsBeneficiary').checked;
+
+            const token = localStorage.getItem('token');
+            const res = await fetch('/api/external-transfers', {
+                method: 'POST', headers: { 'content-type':'application/json', Authorization: 'Bearer ' + token },
+                body: JSON.stringify({ fromAccountId, recipientName, accountNumber, bankName, contact, amount, description, saveAsBeneficiary })
+            });
+            const jr = await res.json();
+            if (!res.ok) throw new Error(jr.error || 'External transfer failed');
+        }
         
         showAlert('Transfer completed successfully!', 'success');
         

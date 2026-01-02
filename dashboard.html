@@ -237,7 +237,6 @@
                         <option value="">From account</option>
                     </select>
                     <input id="qrAccountNumber" type="text" required class="w-full rounded-md border px-3 py-2" placeholder="Recipient account number">
-                    <input id="qrRecipientId" type="hidden">
                     <input id="qrAmount" type="number" step="0.01" min="0.1" required class="w-full rounded-md border px-3 py-2" placeholder="Amount">
                     <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-md">Pay</button>
                 </form>
@@ -255,10 +254,7 @@
                     <form id="beneficiaryForm" class="space-y-2" onsubmit="createBeneficiary(event)">
                         <input id="benName" type="text" required class="w-full rounded-md border px-3 py-2" placeholder="Full name">
                         <input id="benAccountNumber" type="text" class="w-full rounded-md border px-3 py-2" placeholder="Account number (optional)">
-                        <input id="benIBAN" type="text" class="w-full rounded-md border px-3 py-2" placeholder="IBAN (optional)">
                         <input id="benBank" type="text" class="w-full rounded-md border px-3 py-2" placeholder="Bank name (optional)">
-                        <input id="benEmail" type="email" class="w-full rounded-md border px-3 py-2" placeholder="Email (optional)">
-                        <input id="benPhone" type="tel" class="w-full rounded-md border px-3 py-2" placeholder="Phone (optional)">
                         <input id="benNickname" type="text" class="w-full rounded-md border px-3 py-2" placeholder="Nickname (optional)">
                         <div class="flex gap-2">
                             <button type="submit" class="flex-1 bg-indigo-600 text-white py-2 rounded-md">Add</button>
