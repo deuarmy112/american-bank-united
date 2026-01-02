@@ -4,89 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transactions - American Bank United</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>body{background:#f8fafc}</style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="container navbar-container">
-            <div class="navbar-brand">
-                <h2><i class="fas fa-university"></i> American Bank United</h2>
-            </div>
-            <div class="navbar-menu">
-                <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
-                <a href="accounts.html" class="nav-link"><i class="fas fa-wallet"></i> Accounts</a>
-                <a href="cards.html" class="nav-link"><i class="fas fa-credit-card"></i> Cards</a>
-                <a href="transfer.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Transfer</a>
-                <a href="transactions.html" class="nav-link active"><i class="fas fa-receipt"></i> Transactions</a>
-                <a href="send-money.html" class="nav-link"><i class="fas fa-paper-plane"></i> Send Money</a>
-                <a href="bills.html" class="nav-link"><i class="fas fa-file-invoice-dollar"></i> Bills</a>
-                <div class="navbar-user">
-                    <span id="userName"><i class="fas fa-user-circle"></i> Loading...</span>
-                    <button onclick="logout()" class="btn btn-secondary btn-sm"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        <header class="fixed top-0 left-0 right-0 bg-white shadow z-20">
+            <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <a href="dashboard.html" class="text-indigo-600 text-lg"><i class="fas fa-chevron-left"></i></a>
+                    <h1 class="text-lg font-semibold">Transactions</h1>
                 </div>
             </div>
-        </div>
-    </nav>
+        </header>
 
-    <!-- Main Content -->
-    <div class="container main-content">
-        <div class="dashboard-header">
-            <h1>Transaction History</h1>
-            <p class="subtitle">View all your banking activities</p>
-        </div>
+        <main class="pt-20 pb-24 max-w-2xl mx-auto px-4">
+            <p class="text-sm text-slate-600 mb-4">View all your banking activities</p>
 
-        <!-- Filters -->
-        <div class="filters-card">
-            <div class="filter-group">
-                <label for="filterAccount">Filter by Account</label>
-                <select id="filterAccount" onchange="filterTransactions()">
+            <div class="flex gap-2 mb-4">
+                <select id="filterAccount" class="flex-1 rounded-md border px-3 py-2 text-sm" onchange="filterTransactions()">
                     <option value="">All Accounts</option>
                 </select>
-            </div>
-
-            <div class="filter-group">
-                <label for="filterType">Transaction Type</label>
-                <select id="filterType" onchange="filterTransactions()">
-                    <option value="">All Types</option>
+                <select id="filterType" class="w-36 rounded-md border px-3 py-2 text-sm" onchange="filterTransactions()">
+                    <option value="">All</option>
                     <option value="transfer">Transfers</option>
                     <option value="deposit">Deposits</option>
                     <option value="withdrawal">Withdrawals</option>
                 </select>
             </div>
 
-            <div class="filter-group">
-                <label for="searchTransaction">Search</label>
-                <input type="text" id="searchTransaction" placeholder="Search descriptions..." oninput="filterTransactions()">
+            <div class="grid grid-cols-3 gap-3 mb-4">
+                <div class="col-span-2 p-3 bg-white rounded-lg shadow">
+                    <h4 class="text-xs text-slate-500">Total Income</h4>
+                    <p id="totalIncome" class="text-lg font-semibold">$0.00</p>
+                </div>
+                <div class="p-3 bg-white rounded-lg shadow">
+                    <h4 class="text-xs text-slate-500">Net</h4>
+                    <p id="netChange" class="text-lg font-semibold">$0.00</p>
+                </div>
             </div>
-        </div>
 
-        <!-- Transaction Summary -->
-        <div class="summary-grid">
-            <div class="summary-card small">
-                <h4>Total Income</h4>
-                <p class="summary-amount green" id="totalIncome">$0.00</p>
-            </div>
-            <div class="summary-card small">
-                <h4>Total Expenses</h4>
-                <p class="summary-amount red" id="totalExpenses">$0.00</p>
-            </div>
-            <div class="summary-card small">
-                <h4>Net Change</h4>
-                <p class="summary-amount" id="netChange">$0.00</p>
-            </div>
-        </div>
+            <section class="space-y-3">
+                <div id="transactionsList">
+                    <!-- Transaction items (mobile cards) -->
+                </div>
+            </section>
+        </main>
 
-        <!-- Transactions List -->
-        <div class="transactions-section">
-            <h2>All Transactions</h2>
-            <div id="transactionsList" class="transactions-list">
-                <!-- Transactions will be loaded here -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t z-30">
+            <div class="max-w-2xl mx-auto flex justify-between px-6 py-2">
+                <a href="dashboard.html" class="flex flex-col items-center text-slate-600 text-xs"><i class="fas fa-home text-lg"></i>Home</a>
+                <a href="accounts.html" class="flex flex-col items-center text-slate-600 text-xs"><i class="fas fa-wallet text-lg"></i>Accounts</a>
+                <a href="transfer.html" class="flex flex-col items-center text-slate-600 text-xs"><i class="fas fa-exchange-alt text-lg"></i>Transfer</a>
+                <a href="transactions.html" class="flex flex-col items-center text-indigo-600 text-xs"><i class="fas fa-receipt text-lg"></i>History</a>
+                <a href="index.html" class="flex flex-col items-center text-slate-600 text-xs"><i class="fas fa-user text-lg"></i>Profile</a>
             </div>
-        </div>
-    </div>
+        </nav>
 
     <script src="js/utils.js"></script>
     <script src="js/api.js"></script>
