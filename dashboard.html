@@ -32,7 +32,7 @@
             </div>
         </header>
 
-        <main class="max-w-7xl mx-auto p-6">
+        <main class="max-w-7xl mx-auto p-6 pb-24">
             <div class="flex flex-col lg:flex-row gap-6">
                 <section class="flex-1">
                     <div class="bg-white rounded-lg shadow p-6">
@@ -93,9 +93,100 @@
             </div>
         </main>
 
-    <script src="js/utils.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/dashboard-api.js"></script>
+        <script src="js/utils.js"></script>
+        <script src="js/api.js"></script>
+        <script src="js/auth.js"></script>
+        <script src="js/dashboard-api.js"></script>
+        <script src="js/features.js"></script>
+        <script src="js/ui.js"></script>
+
+        <!-- Feature sheet + bottom nav -->
+        <div id="featureBackdrop" onclick="featureBackdropClick(event)" class="hidden fixed inset-0 bg-black/40 z-40"></div>
+        <div id="featureSheet" class="hidden fixed bottom-0 left-0 right-0 z-50 transform translate-y-full transition-transform duration-300">
+            <div class="max-w-3xl mx-auto bg-white rounded-t-2xl shadow-lg p-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-semibold">Quick Actions</h3>
+                    <button onclick="closeFeatureSheet()" class="text-slate-500">Close</button>
+                </div>
+                <div class="grid grid-cols-4 gap-3 mt-4">
+                    <a href="transfer.html" class="flex flex-col items-center p-3 bg-slate-50 rounded-lg"> <i class="fas fa-exchange-alt text-lg text-indigo-600"></i> <span class="text-xs mt-1">Transfer</span></a>
+                    <a href="#" class="flex flex-col items-center p-3 bg-slate-50 rounded-lg"> <i class="fas fa-money-bill-wave text-lg text-green-600"></i> <span class="text-xs mt-1">Deposit</span></a>
+                    <a href="#" class="flex flex-col items-center p-3 bg-slate-50 rounded-lg"> <i class="fas fa-hand-holding-dollar text-lg text-rose-600"></i> <span class="text-xs mt-1">Withdraw</span></a>
+                    <a href="bills.html" class="flex flex-col items-center p-3 bg-slate-50 rounded-lg"> <i class="fas fa-file-invoice-dollar text-lg text-yellow-600"></i> <span class="text-xs mt-1">Bill Pay</span></a>
+                </div>
+                <div class="mt-4 text-xs text-slate-500">More: Scheduled payments, External transfers, Statements, Support</div>
+            </div>
+        </div>
+
+        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t z-30">
+            <div class="max-w-7xl mx-auto flex justify-between px-6 py-2">
+                <a href="dashboard.html" class="flex flex-col items-center text-indigo-600 text-xs"><i class="fas fa-home text-lg"></i>Home</a>
+                <a href="accounts.html" class="flex flex-col items-center text-slate-600 text-xs"><i class="fas fa-wallet text-lg"></i>Accounts</a>
+                <button onclick="toggleFeatureSheet()" class="-mt-6 bg-indigo-600 text-white p-3 rounded-full shadow-lg"><i class="fas fa-star"></i></button>
+                <a href="transactions.html" class="flex flex-col items-center text-slate-600 text-xs"><i class="fas fa-receipt text-lg"></i>History</a>
+                <a href="index.html" class="flex flex-col items-center text-slate-600 text-xs"><i class="fas fa-user text-lg"></i>Profile</a>
+            </div>
+        </nav>
+
+        <!-- Feature Modals -->
+        <div id="modalBackdrop" class="hidden fixed inset-0 bg-black/40 z-40"></div>
+
+        <!-- Bill Pay Modal -->
+        <div id="modal-bill" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+            <div class="bg-white rounded-t-2xl sm:rounded-xl w-full max-w-md p-4 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-semibold">Pay a Bill</h3>
+                    <button onclick="closeFeatureModal('bill')" class="text-slate-500">Close</button>
+                </div>
+                <form id="billForm" class="mt-4 space-y-3" onsubmit="submitBill(event)">
+                    <select id="billerSelect" required class="w-full rounded-md border px-3 py-2">
+                        <option value="">Select biller</option>
+                    </select>
+                    <select id="fromAccountSelect" required class="w-full rounded-md border px-3 py-2">
+                        <option value="">From account</option>
+                    </select>
+                    <input id="billAmount" type="number" step="0.01" min="0.1" required class="w-full rounded-md border px-3 py-2" placeholder="Amount">
+                    <input id="billMemo" type="text" class="w-full rounded-md border px-3 py-2" placeholder="Memo (optional)">
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-md">Pay Now</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Airtime/Data Modal -->
+        <div id="modal-airtime" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+            <div class="bg-white rounded-t-2xl sm:rounded-xl w-full max-w-md p-4 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-semibold">Buy Airtime / Data</h3>
+                    <button onclick="closeFeatureModal('airtime')" class="text-slate-500">Close</button>
+                </div>
+                <form id="airtimeForm" class="mt-4 space-y-3" onsubmit="submitAirtime(event)">
+                    <input id="phoneNumber" type="tel" required class="w-full rounded-md border px-3 py-2" placeholder="Phone number">
+                    <select id="airtimeAmount" class="w-full rounded-md border px-3 py-2">
+                        <option value="5">$5</option>
+                        <option value="10">$10</option>
+                        <option value="20">$20</option>
+                    </select>
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-md">Buy</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Betting Modal (simulation) -->
+        <div id="modal-bet" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+            <div class="bg-white rounded-t-2xl sm:rounded-xl w-full max-w-md p-4 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-semibold">Place a Bet (Demo)</h3>
+                    <button onclick="closeFeatureModal('bet')" class="text-slate-500">Close</button>
+                </div>
+                <form id="betForm" class="mt-4 space-y-3" onsubmit="submitBet(event)">
+                    <input id="betAmount" type="number" step="0.01" min="1" required class="w-full rounded-md border px-3 py-2" placeholder="Amount to wager">
+                    <select id="betType" class="w-full rounded-md border px-3 py-2">
+                        <option value="win">Win/Lose</option>
+                        <option value="score">Score Predictor</option>
+                    </select>
+                    <button type="submit" class="w-full bg-rose-600 text-white py-2 rounded-md">Place Bet</button>
+                </form>
+            </div>
+        </div>
 </body>
 </html>
