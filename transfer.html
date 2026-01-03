@@ -48,8 +48,8 @@
                         <input id="extRecipientName" type="text" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Recipient name">
                         <input id="extAccountNumber" type="text" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Account number or IBAN">
                         <input id="extBankName" type="text" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Bank name">
-                        <input id="extContact" type="text" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Phone or email (optional)">
-                        <label class="inline-flex items-center"><input id="saveAsBeneficiary" type="checkbox" class="mr-2"> Save as beneficiary</label>
+                        <input id="extEmail" type="email" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Recipient email" />
+                        <input id="extContact" type="text" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Phone (optional)">
                     </div>
                     <div id="toBalance" class="text-xs text-slate-500 mt-1"></div>
                 </div>
@@ -62,6 +62,10 @@
                 <div>
                     <label class="text-sm text-slate-600">Description</label>
                     <input id="description" name="description" type="text" class="w-full rounded-md border px-3 py-2 text-sm" placeholder="Optional">
+                </div>
+
+                <div class="mt-2">
+                    <label class="inline-flex items-center"><input id="saveAsBeneficiary" type="checkbox" class="mr-2"> Save as beneficiary</label>
                 </div>
 
                 <div>

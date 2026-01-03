@@ -19,7 +19,7 @@ function setupTransferTypeToggle() {
         externalFields.classList.toggle('hidden', !isExternal);
 
         // Make external inputs required only when external transfer selected
-        ['extRecipientName', 'extAccountNumber', 'extBankName'].forEach(id => {
+        ['extRecipientName', 'extAccountNumber', 'extBankName', 'extEmail'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.required = isExternal;
         });
@@ -82,11 +82,15 @@ document.getElementById('transferForm')?.addEventListener('submit', async functi
     }
 
     if (transferType === 'external') {
-        // ensure external fields
+        // ensure external fields (including recipient email)
         const name = document.getElementById('extRecipientName').value.trim();
         const acct = document.getElementById('extAccountNumber').value.trim();
         const bank = document.getElementById('extBankName').value.trim();
-        if (!name || !acct || !bank) { showAlert('Please provide recipient name, account number/IBAN and bank name', 'error'); return; }
+        const email = document.getElementById('extEmail').value.trim();
+        if (!name || !acct || !bank || !email) {
+            showAlert('Please provide recipient name, account number/IBAN, bank name and recipient email', 'error');
+            return;
+        }
     }
     
     if (!amount || amount <= 0) {
@@ -106,13 +110,14 @@ document.getElementById('transferForm')?.addEventListener('submit', async functi
             const recipientName = document.getElementById('extRecipientName').value.trim();
             const accountNumber = document.getElementById('extAccountNumber').value.trim();
             const bankName = document.getElementById('extBankName').value.trim();
+            const recipientEmail = document.getElementById('extEmail').value.trim();
             const contact = document.getElementById('extContact').value.trim();
             const saveAsBeneficiary = document.getElementById('saveAsBeneficiary').checked;
 
             const token = localStorage.getItem('token');
             const res = await fetch('/api/external-transfers', {
                 method: 'POST', headers: { 'content-type':'application/json', Authorization: 'Bearer ' + token },
-                body: JSON.stringify({ fromAccountId, recipientName, accountNumber, bankName, contact, amount, description, saveAsBeneficiary })
+                body: JSON.stringify({ fromAccountId, recipientName, recipientEmail, accountNumber, bankName, contact, amount, description, saveAsBeneficiary })
             });
             const jr = await res.json();
             if (!res.ok) throw new Error(jr.error || 'External transfer failed');
