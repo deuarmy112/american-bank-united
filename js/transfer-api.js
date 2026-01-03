@@ -10,35 +10,42 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 function setupTransferTypeToggle() {
-    const radios = document.getElementsByName('transferType');
-    radios.forEach(r => r.addEventListener('change', () => {
+    const radios = Array.from(document.getElementsByName('transferType'));
+    const update = () => {
         const isExternal = document.querySelector('input[name="transferType"]:checked').value === 'external';
-        document.getElementById('toAccount').required = !isExternal;
-        document.getElementById('externalFields').classList.toggle('hidden', !isExternal);
-    }));
+        const toAccount = document.getElementById('toAccount');
+        const externalFields = document.getElementById('externalFields');
+        toAccount.required = !isExternal;
+        externalFields.classList.toggle('hidden', !isExternal);
+
+        // Make external inputs required only when external transfer selected
+        ['extRecipientName', 'extAccountNumber', 'extBankName'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.required = isExternal;
+        });
+    };
+
+    radios.forEach(r => r.addEventListener('change', update));
+    // initialize state
+    update();
 }
 
 async function loadAccounts() {
     try {
         const accounts = await accountsAPI.getAll();
-        
+
         const fromSelect = document.getElementById('fromAccount');
         const toSelect = document.getElementById('toAccount');
-        
-        // Clear existing options except first
-        fromSelect.innerHTML = '<option value="">Select Account</option>';
-        toSelect.innerHTML = '<option value="">Select Account</option>';
-        
-        accounts.forEach(account => {
-            const optionText = `${account.account_type.charAt(0).toUpperCase() + account.account_type.slice(1)} - ${account.account_number} (${formatCurrency(account.balance)})`;
-            
-            const fromOption = new Option(optionText, account.id);
-            const toOption = new Option(optionText, account.id);
-            
-            fromSelect.add(fromOption);
-            toSelect.add(toOption);
-        });
-        
+
+        // Populate selects
+        const optionsHtml = '<option value="">Select Account</option>' + accounts.map(a=>{
+            const label = `${a.account_type.charAt(0).toUpperCase() + a.account_type.slice(1)} - ${a.account_number} (${formatCurrency(a.balance)})`;
+            return `<option value="${a.id}">${label}</option>`;
+        }).join('');
+
+        fromSelect.innerHTML = optionsHtml;
+        toSelect.innerHTML = optionsHtml;
+
         // Add change listener to show balance
         fromSelect.addEventListener('change', async function() {
             const selectedAccount = accounts.find(acc => acc.id === this.value);
@@ -49,10 +56,6 @@ async function loadAccounts() {
                 balanceDisplay.textContent = '';
             }
         });
-
-        // also populate toAccount select with internal accounts
-        const toSelect = document.getElementById('toAccount');
-        toSelect.innerHTML = '<option value="">Select Account</option>' + accounts.map(a=>`<option value="${a.id}">${a.account_type} - ${a.account_number} (${formatCurrency(a.balance)})</option>`).join('');
         
     } catch (error) {
         console.error('Failed to load accounts:', error);
