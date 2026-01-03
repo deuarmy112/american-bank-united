@@ -5,6 +5,15 @@
       <stop offset="1" stop-color="#0b6aa8"/>
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="10" fill="url(#fg)" />
-  <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#FFD166" font-family="'Segoe UI', Arial" font-weight="700" font-size="22">ABU</text>
+  </svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Opay favicon">
+    <defs>
+      <linearGradient id="f" x1="0" x2="1">
+        <stop offset="0" stop-color="#FF6B35"/>
+        <stop offset="1" stop-color="#FF8A00"/>
+      </linearGradient>
+    </defs>
+    <rect width="64" height="64" rx="12" fill="url(#f)" />
+    <text x="32" y="42" font-family="'Poppins', Arial" font-weight="700" font-size="28" fill="#fff" text-anchor="middle">O</text>
+    </svg>
 </svg>
