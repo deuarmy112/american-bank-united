@@ -13,13 +13,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/opay.css">
+    <style>
+        /* Small adjustments for the demo look */
+        .balance-amount { font-size: 1.6rem; font-weight: 700; }
+        .quick-action { min-height: 72px; }
+    </style>
 </head>
-<body class="opay-ui">
+<body class="opay-ui bg-slate-50">
     <header class="fixed top-0 left-0 right-0 bg-white shadow z-20">
         <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <a href="dashboard.html" class="text-indigo-600 text-lg"><i class="fas fa-chevron-left"></i></a>
-                <h1 class="text-lg font-semibold">Profile</h1>
+                <div>
+                    <div class="text-sm text-slate-400">Welcome back</div>
+                    <h1 class="text-lg font-semibold">Profile</h1>
+                </div>
             </div>
             <div>
                 <button id="logoutBtn" class="text-sm text-rose-600">Logout</button>
@@ -27,32 +35,85 @@
         </div>
     </header>
 
-    <main class="pt-20 pb-24 max-w-2xl mx-auto px-4">
-        <div id="profileCard" class="bg-white rounded-xl shadow p-6">
-            <div class="flex items-center gap-4">
-                <img id="profileAvatar" src="https://via.placeholder.com/80" alt="avatar" class="w-20 h-20 rounded-full border">
+    <main class="pt-20 pb-28 max-w-2xl mx-auto px-4">
+        <!-- Balance Card -->
+        <section class="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-xl shadow p-5 mb-5">
+            <div class="flex items-start justify-between">
                 <div>
+                    <div class="text-sm opacity-80">Available balance</div>
+                    <div id="balance" class="balance-amount mt-2">$0.00</div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs opacity-80">Primary account</div>
+                    <div class="text-sm">**** 1234</div>
+                </div>
+            </div>
+            <div class="mt-4 flex gap-3">
+                <button class="bg-white/20 px-3 py-2 rounded text-sm">Add money</button>
+                <button class="bg-white/20 px-3 py-2 rounded text-sm">Withdraw</button>
+            </div>
+        </section>
+
+        <!-- Quick actions -->
+        <section class="grid grid-cols-4 gap-3 mb-5">
+            <button class="quick-action bg-white rounded-lg shadow p-3 flex flex-col items-center justify-center text-sm" id="actionSend">
+                <i class="fas fa-paper-plane text-indigo-600 text-lg"></i>
+                <span class="mt-2">Send</span>
+            </button>
+            <button class="quick-action bg-white rounded-lg shadow p-3 flex flex-col items-center justify-center text-sm" id="actionReceive">
+                <i class="fas fa-qrcode text-indigo-600 text-lg"></i>
+                <span class="mt-2">Receive</span>
+            </button>
+            <button class="quick-action bg-white rounded-lg shadow p-3 flex flex-col items-center justify-center text-sm" id="actionPay">
+                <i class="fas fa-credit-card text-indigo-600 text-lg"></i>
+                <span class="mt-2">Pay</span>
+            </button>
+            <button class="quick-action bg-white rounded-lg shadow p-3 flex flex-col items-center justify-center text-sm" id="actionTopup">
+                <i class="fas fa-wallet text-indigo-600 text-lg"></i>
+                <span class="mt-2">Top-up</span>
+            </button>
+        </section>
+
+        <!-- Profile card -->
+        <section id="profileCard" class="bg-white rounded-xl shadow p-6">
+            <div class="flex items-center gap-4">
+                <img id="profileAvatar" src="https://via.placeholder.com/96" alt="avatar" class="w-24 h-24 rounded-full border">
+                <div class="flex-1">
                     <h2 id="profileName" class="text-xl font-semibold">Loading...</h2>
                     <p id="profileEmail" class="text-sm text-slate-500">&nbsp;</p>
                     <p id="profilePhone" class="text-sm text-slate-500">&nbsp;</p>
                 </div>
+                <div>
+                    <button id="editProfileBtn" class="px-3 py-2 border rounded text-sm">Edit</button>
+                </div>
             </div>
 
-            <div class="mt-6 grid grid-cols-2 gap-3">
-                <button id="editProfileBtn" class="px-4 py-2 border rounded">Edit profile</button>
-                <button id="changePasswordBtn" class="px-4 py-2 bg-indigo-600 text-white rounded">Change password</button>
+            <div class="mt-6 grid grid-cols-1 gap-3">
+                <div class="flex items-center justify-between text-sm text-slate-600">
+                    <div>Language</div>
+                    <div class="text-slate-800">English</div>
+                </div>
+                <div class="flex items-center justify-between text-sm text-slate-600">
+                    <div>Notifications</div>
+                    <div class="text-slate-800">Email, SMS</div>
+                </div>
+                <div class="flex items-center justify-between text-sm text-slate-600">
+                    <div>Two-factor</div>
+                    <div class="text-slate-800">Not set</div>
+                </div>
             </div>
-
-            <div class="mt-6">
-                <h3 class="text-sm font-medium">Account settings</h3>
-                <ul class="mt-3 space-y-2 text-sm text-slate-600">
-                    <li><strong>Notifications:</strong> Email, SMS</li>
-                    <li><strong>Language:</strong> English</li>
-                    <li><strong>Two-factor:</strong> Not set</li>
-                </ul>
-            </div>
-        </div>
+        </section>
     </main>
+
+    <!-- Bottom navigation (mobile) -->
+    <nav class="fixed bottom-4 left-0 right-0 max-w-2xl mx-auto px-4">
+        <div class="bg-white rounded-xl shadow flex items-center justify-between px-4 py-2">
+            <a href="dashboard.html" class="text-center text-slate-600 text-sm"><i class="fas fa-home"></i><div>Home</div></a>
+            <a href="transactions.html" class="text-center text-slate-600 text-sm"><i class="fas fa-exchange-alt"></i><div>Txn</div></a>
+            <a href="transfer.html" class="text-center text-indigo-600 text-sm"><i class="fas fa-paper-plane"></i><div>Transfer</div></a>
+            <a href="profile.html" class="text-center text-slate-600 text-sm"><i class="fas fa-user"></i><div>Profile</div></a>
+        </div>
+    </nav>
 
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
@@ -60,11 +121,16 @@
         async function loadProfile() {
             try {
                 const user = await authAPI.getProfile();
-                document.getElementById('profileName').textContent = `${user.first_name} ${user.last_name}`;
+                document.getElementById('profileName').textContent = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User';
                 document.getElementById('profileEmail').textContent = user.email || '';
                 document.getElementById('profilePhone').textContent = user.phone || '';
-                // if server provides avatar URL
                 if (user.avatar) document.getElementById('profileAvatar').src = user.avatar;
+                // display balance if provided
+                if (user.balance !== undefined) {
+                    document.getElementById('balance').textContent = `$${Number(user.balance).toFixed(2)}`;
+                } else if (user.account && user.account.balance !== undefined) {
+                    document.getElementById('balance').textContent = `$${Number(user.account.balance).toFixed(2)}`;
+                }
             } catch (err) {
                 console.error('Failed to load profile', err);
             }
@@ -78,9 +144,10 @@
             alert('Edit profile - not implemented in this demo');
         });
 
-        document.getElementById('changePasswordBtn').addEventListener('click', () => {
-            alert('Change password - not implemented in this demo');
-        });
+        document.getElementById('actionSend').addEventListener('click', () => { window.location.href = 'send-money.html'; });
+        document.getElementById('actionReceive').addEventListener('click', () => { alert('Receive - show QR code'); });
+        document.getElementById('actionPay').addEventListener('click', () => { window.location.href = 'accounts.html'; });
+        document.getElementById('actionTopup').addEventListener('click', () => { window.location.href = 'transfer.html'; });
 
         loadProfile();
     </script>
