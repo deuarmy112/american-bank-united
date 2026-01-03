@@ -208,10 +208,10 @@ select:focus {
 }
 
 /* App logo styling */
-.site-logo { height: 28px !important; width: auto !important; vertical-align: middle; margin-right: 8px; border-radius:6px; }
+.site-logo { height: 20px !important; width: auto !important; vertical-align: middle; margin-right: 8px; border-radius:6px; }
 
 /* Ensure header variants also use same sizing */
-.navbar-brand .site-logo, .opay-brand .site-logo, .opay-header .site-logo { height: 28px !important; width: auto !important; }
+.navbar-brand .site-logo, .opay-brand .site-logo, .opay-header .site-logo { height: 20px !important; width: auto !important; }
 
 /* Card Styles */
 .card {
