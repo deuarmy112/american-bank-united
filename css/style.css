@@ -208,7 +208,7 @@ select:focus {
 }
 
 /* App logo styling */
-.site-logo { height: 40px; width: auto; vertical-align: middle; margin-right: 10px; border-radius:6px; }
+.site-logo { height: 28px; width: auto; vertical-align: middle; margin-right: 8px; border-radius:6px; }
 
 /* Card Styles */
 .card {
