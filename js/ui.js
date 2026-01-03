@@ -43,4 +43,15 @@ document.addEventListener('DOMContentLoaded', () => {
       navs[i].remove();
     }
   }
+  // Toggle `desktop` class on body for larger viewports (laptop/desktop)
+  function updateDesktopMode() {
+    if (window.innerWidth >= 1024) document.body.classList.add('desktop');
+    else document.body.classList.remove('desktop');
+  }
+  updateDesktopMode();
+  window.addEventListener('resize', () => {
+    // debounce slightly
+    clearTimeout(window.__desktopModeTimer);
+    window.__desktopModeTimer = setTimeout(updateDesktopMode, 120);
+  });
 });

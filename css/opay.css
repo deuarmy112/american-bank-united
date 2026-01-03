@@ -54,3 +54,22 @@ h1.opay-title{font-size:1.1rem;font-weight:700;margin:0}
 .opay-bottom-nav a { color: #374151; text-decoration:none }
 .opay-bottom-nav a.active { color: var(--opay-end) }
 
+/* Desktop adjustments: when viewing on a laptop/desktop, prefer a full-screen layout
+   and hide the mobile bottom controls. The `desktop` class is toggled by JS. */
+body.desktop {
+  background: linear-gradient(180deg,#f8fafc 0%, #eef2ff 100%);
+}
+
+body.desktop .opay-bottom-nav { display: none !important; }
+body.desktop .opay-header { position: relative; top: 0; left: 0; right: 0; padding: 18px 0; }
+body.desktop main { max-width: 1100px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+body.desktop .max-w-2xl, body.desktop .max-w-md, body.desktop .max-w-3xl { max-width: 1100px !important; width: 100% !important; }
+body.desktop .opay-card { border-radius: 12px; }
+body.desktop .opay-toast { bottom: 4rem }
+
+/* Show a desktop top nav if needed (keeps layout simple) */
+body.desktop .navbar, body.desktop .navbar-container { display: block }
+
+/* Ensure feature sheet doesn't cover desktop screens — keep it hidden by default */
+body.desktop #featureSheet { display: none !important }
+
