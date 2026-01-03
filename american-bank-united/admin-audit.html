@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Log - Admin Portal</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <div class="navbar-brand">
+                <h2><i class="fas fa-shield-alt"></i> Admin Portal</h2>
+            </div>
+            <div class="navbar-menu">
+                <a href="admin-dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="admin-users.html" class="nav-link"><i class="fas fa-users"></i> Users</a>
+                <a href="admin-accounts.html" class="nav-link"><i class="fas fa-wallet"></i> Accounts</a>
+                <a href="admin-approvals.html" class="nav-link"><i class="fas fa-check-circle"></i> Approvals</a>
+                <a href="admin-transactions.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Transactions</a>
+                <a href="admin-audit.html" class="nav-link active"><i class="fas fa-history"></i> Audit Log</a>
+                <div class="navbar-user">
+                    <span id="adminName"><i class="fas fa-user-shield"></i> Admin</span>
+                    <button onclick="logout()" class="btn btn-secondary btn-sm"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container main-content">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-history"></i> Admin Audit Log</h1>
+            <p class="subtitle">Track all admin actions and system changes</p>
+        </div>
+
+        <div id="alert" class="alert" style="display: none;"></div>
+
+        <!-- Audit Log Table -->
+        <div class="section">
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Admin</th>
+                            <th>Action Type</th>
+                            <th>Description</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditTable">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 20px;">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDetailsModal()">&times;</span>
+            <h2>Action Details</h2>
+            <div id="detailsContent"></div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/admin-api.js"></script>
+    <script>
+        // Check admin authentication
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (!token || (user.role !== 'admin' && user.role !== 'super_admin')) {
+                window.location.href = 'admin-login.html';
+                return false;
+            }
+            
+            document.getElementById('adminName').innerHTML = 
+                `<i class="fas fa-user-shield"></i> ${user.firstName} ${user.lastName}`;
+            return true;
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'admin-login.html';
+        }
+
+        async function loadAuditLog() {
+            if (!checkAuth()) return;
+
+            try {
+                const data = await adminAPI.getAuditLog();
+                
+                const tbody = document.getElementById('auditTable');
+                if (data.actions.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No audit log entries</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.actions.map(action => {
+                    const actionColor = getActionColor(action.action_type);
+                    return `
+                        <tr>
+                            <td>${formatDateTime(action.created_at)}</td>
+                            <td>
+                                <strong>${action.first_name} ${action.last_name}</strong><br>
+                                <small>${action.email}</small>
+                            </td>
+                            <td><span class="badge" style="background: ${actionColor};">${action.action_type.replace(/_/g, ' ')}</span></td>
+                            <td>${action.description}</td>
+                            <td>
+                                <button onclick='showDetails(${JSON.stringify(action).replace(/'/g, "&apos;")})' class="btn btn-sm btn-secondary">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Load audit log error:', error);
+                showAlert('Failed to load audit log', 'error');
+            }
+        }
+
+        function getActionColor(actionType) {
+            const colors = {
+                'USER_STATUS_UPDATE': '#3b82f6',
+                'ACCOUNT_APPROVED': '#10b981',
+                'ACCOUNT_REJECTED': '#ef4444',
+                'BALANCE_ADJUSTMENT': '#f59e0b',
+                'TRANSACTION_REVIEW': '#8b5cf6'
+            };
+            return colors[actionType] || '#6b7280';
+        }
+
+        function showDetails(action) {
+            const metadata = action.metadata ? (typeof action.metadata === 'string' ? JSON.parse(action.metadata) : action.metadata) : {};
+            
+            let detailsHtml = `
+                <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                    <p><strong>Action:</strong> ${action.action_type.replace(/_/g, ' ')}</p>
+                    <p><strong>Performed by:</strong> ${action.first_name} ${action.last_name} (${action.email})</p>
+                    <p><strong>Date/Time:</strong> ${formatDateTime(action.created_at)}</p>
+                    <p><strong>Description:</strong> ${action.description}</p>
+                </div>
+            `;
+
+            if (Object.keys(metadata).length > 0) {
+                detailsHtml += '<h3>Additional Details:</h3><ul style="list-style: none; padding: 0;">';
+                for (const [key, value] of Object.entries(metadata)) {
+                    detailsHtml += `<li style="padding: 5px 0;"><strong>${key}:</strong> ${value}</li>`;
+                }
+                detailsHtml += '</ul>';
+            }
+
+            document.getElementById('detailsContent').innerHTML = detailsHtml;
+            document.getElementById('detailsModal').style.display = 'block';
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').style.display = 'none';
+        }
+
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        // Load audit log on page load
+        loadAuditLog();
+    </script>
+</body>
+</html>

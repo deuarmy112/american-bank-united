@@ -1,0 +1,378 @@
+/* 
+ * American Bank United - Main Styles
+ * This file contains the core styling for the banking system
+ */
+
+/* CSS Variables - Easy to customize colors */
+:root {
+    --primary-color: #003087;
+    --secondary-color: #0070ba;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --dark-color: #343a40;
+    --light-color: #f8f9fa;
+    --border-radius: 12px;
+    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    color: var(--dark-color);
+    line-height: 1.6;
+}
+
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Navbar Styles */
+.navbar {
+    background: white;
+    box-shadow: var(--box-shadow);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.navbar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+}
+
+.navbar-brand h2 {
+    color: var(--primary-color);
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.navbar-menu {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+.nav-link {
+    color: var(--dark-color);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+.nav-link:hover,
+.nav-link.active {
+    background-color: var(--light-color);
+    color: var(--primary-color);
+}
+
+.navbar-user {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-left: 20px;
+    padding-left: 20px;
+    border-left: 2px solid var(--light-color);
+}
+
+/* Buttons */
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: var(--transition);
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 48, 135, 0.3);
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: var(--primary-color);
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-success {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.btn-block {
+    width: 100%;
+    display: block;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.form-control,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="tel"],
+select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: var(--border-radius);
+    font-size: 16px;
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.form-control:focus,
+input:focus,
+select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 48, 135, 0.1);
+}
+
+/* Alert Messages */
+.alert {
+    padding: 16px 20px;
+    border-radius: var(--border-radius);
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border-left: 4px solid var(--success-color);
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-left: 4px solid var(--danger-color);
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border-left: 4px solid #17a2b8;
+}
+
+/* Card Styles */
+.card {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+/* Utility Classes */
+.text-center {
+    text-align: center;
+}
+
+.mt-1 { margin-top: 10px; }
+.mt-2 { margin-top: 20px; }
+.mt-3 { margin-top: 30px; }
+.mb-1 { margin-bottom: 10px; }
+.mb-2 { margin-bottom: 20px; }
+.mb-3 { margin-bottom: 30px; }
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s;
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: var(--border-radius);
+    width: 90%;
+    max-width: 500px;
+    animation: slideDown 0.3s;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.close {
+    color: #aaa;
+    font-size: 32px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close:hover {
+    color: var(--dark-color);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Password Input Wrapper */
+.password-input-wrapper {
+    position: relative;
+}
+
+.password-input-wrapper input {
+    padding-right: 45px;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 5px 10px;
+}
+
+.toggle-password:hover {
+    color: var(--secondary-color);
+}
+
+/* Form Options */
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: auto;
+    cursor: pointer;
+}
+
+.forgot-password {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .navbar-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .navbar-menu {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .navbar-user {
+        border-left: none;
+        border-top: 2px solid var(--light-color);
+        padding-left: 0;
+        padding-top: 15px;
+        margin-left: 0;
+    }
+
+    .container {
+        padding: 0 15px;
+    }
+    
+    .form-options {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}

@@ -1,0 +1,56 @@
+/* Opay-like visual style overrides */
+:root{
+  --opay-start:#ff8a00;
+  --opay-end:#ff2d55;
+  --muted:#6b7280;
+  --card:#ffffff;
+}
+body{
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: linear-gradient(180deg,#fafafa 0%, #f3f4f6 100%);
+  -webkit-font-smoothing:antialiased;
+}
+.opay-gradient{
+  background: linear-gradient(90deg,var(--opay-start),var(--opay-end));
+}
+.opay-card{
+  background: var(--card);
+  border-radius: 1rem;
+  box-shadow: 0 8px 20px rgba(15,23,42,0.06);
+}
+.opay-balance{color:white;padding:1rem;border-radius:1rem}
+.opay-action{background:var(--card);border-radius:9999px;padding:.6rem;box-shadow:0 6px 14px rgba(15,23,42,0.06)}
+.opay-quick .w-14{width:3.5rem;height:3.5rem}
+.opay-quick i{font-size:1.1rem}
+.opay-bottom-nav{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(90deg,rgba(255,255,255,0.9),rgba(255,255,255,0.95));box-shadow:0 -6px 24px rgba(15,23,42,0.06);padding:8px 12px}
+.opay-bottom-nav .fab{width:56px;height:56px;border-radius:9999px;background:linear-gradient(135deg,var(--opay-start),var(--opay-end));display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 8px 24px rgba(255,45,85,0.18);transform:translateY(-20%)}
+.opay-pill{background:rgba(255,255,255,0.08);padding:.35rem .6rem;border-radius:9999px;color:#fff;font-size:.85rem}
+.opay-card .small{font-size:.8rem;color:var(--muted)}
+.opay-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:6rem;background:#111827;color:#fff;padding:.6rem 1rem;border-radius:.6rem;box-shadow:0 8px 20px rgba(0,0,0,0.2);z-index:60}
+
+/* Mobile tweaks */
+@media(min-width:768px){
+  .opay-bottom-nav{max-width:720px;margin:0 auto;border-radius:14px}
+}
+
+/* Header / Brand */
+.opay-header{background:transparent;border-bottom:0;padding:14px 0}
+.opay-brand{display:flex;align-items:center;gap:.6rem;font-weight:600;color:#0f172a}
+.opay-logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(90deg,var(--opay-start),var(--opay-end));display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+.opay-sub{color:var(--muted);font-size:.85rem}
+
+/* Body typography */
+body.opay-ui { font-family: 'Poppins', Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+h1.opay-title{font-size:1.1rem;font-weight:700;margin:0}
+
+/* Cards and list spacing */
+.opay-card { padding:1rem }
+.opay-card .title { font-weight:600 }
+
+/* Buttons */
+.opay-btn { background:linear-gradient(90deg,var(--opay-start),var(--opay-end)); color:#fff; padding:.6rem 1rem; border-radius:10px; border:0 }
+
+/* Bottom nav small tweaks */
+.opay-bottom-nav a { color: #374151; text-decoration:none }
+.opay-bottom-nav a.active { color: var(--opay-end) }
+

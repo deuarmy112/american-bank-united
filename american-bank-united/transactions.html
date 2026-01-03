@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions - American Bank United</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/opay.css">
+    <style>body{background:#f8fafc}</style>
+</head>
+<body class="opay-ui">
+        <header class="opay-header fixed top-0 left-0 right-0 z-20">
+            <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <a href="dashboard.html" class="opay-brand"><div class="opay-logo">AB</div><div style="margin-left:.5rem"><div class="opay-name">Transactions</div><div class="opay-sub">Recent activity</div></div></a>
+                </div>
+                <div>
+                    <button onclick="logout()" class="opay-btn">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="pt-20 pb-24 max-w-2xl mx-auto px-4">
+            <p class="text-sm text-slate-600 mb-4">View all your banking activities</p>
+
+            <div class="flex gap-2 mb-4">
+                <select id="filterAccount" class="flex-1 rounded-md border px-3 py-2 text-sm" onchange="filterTransactions()">
+                    <option value="">All Accounts</option>
+                </select>
+                <select id="filterType" class="w-36 rounded-md border px-3 py-2 text-sm" onchange="filterTransactions()">
+                    <option value="">All</option>
+                    <option value="transfer">Transfers</option>
+                    <option value="deposit">Deposits</option>
+                    <option value="withdrawal">Withdrawals</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 mb-4">
+                <div class="col-span-2 p-3 bg-white rounded-lg shadow">
+                    <h4 class="text-xs text-slate-500">Total Income</h4>
+                    <p id="totalIncome" class="text-lg font-semibold">$0.00</p>
+                </div>
+                <div class="p-3 bg-white rounded-lg shadow">
+                    <h4 class="text-xs text-slate-500">Net</h4>
+                    <p id="netChange" class="text-lg font-semibold">$0.00</p>
+                </div>
+            </div>
+
+            <section class="space-y-3">
+                <div id="transactionsList">
+                    <!-- Transaction items (mobile cards) -->
+                </div>
+            </section>
+        </main>
+
+        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t z-30">
+            <div class="max-w-2xl mx-auto flex justify-between px-6 py-2">
+                <a href="dashboard.html" class="flex flex-col items-center text-slate-600 text-xs"><i class="fas fa-home text-lg"></i>Home</a>
+                <a href="accounts.html" class="flex flex-col items-center text-slate-600 text-xs"><i class="fas fa-wallet text-lg"></i>Accounts</a>
+                <a href="transfer.html" class="flex flex-col items-center text-slate-600 text-xs"><i class="fas fa-exchange-alt text-lg"></i>Transfer</a>
+                <a href="transactions.html" class="flex flex-col items-center text-indigo-600 text-xs"><i class="fas fa-receipt text-lg"></i>History</a>
+                <a href="index.html" class="flex flex-col items-center text-slate-600 text-xs"><i class="fas fa-user text-lg"></i>Profile</a>
+            </div>
+        </nav>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/transactions-api.js"></script>
+</body>
+</html>

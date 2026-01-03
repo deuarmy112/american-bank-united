@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transfer - American Bank United</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/opay.css">
+    <style>body{background:#f8fafc}</style>
+</head>
+<body>
+        <header class="opay-header fixed top-0 left-0 right-0 z-20">
+            <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <a href="dashboard.html" class="opay-brand"><div class="opay-logo">AB</div><div style="margin-left:.5rem"><div class="opay-name">Transfer</div><div class="opay-sub">Send money fast</div></div></a>
+                </div>
+                <div>
+                    <button onclick="logout()" class="opay-btn">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="pt-20 pb-24 max-w-2xl mx-auto px-4">
+            <p class="text-sm text-slate-600 mb-4">Move money between your accounts instantly</p>
+
+            <div id="alert" class="hidden"></div>
+
+            <form id="transferForm" class="space-y-3 bg-white rounded-lg p-4 shadow">
+                <div class="flex gap-2 items-center">
+                    <label class="inline-flex items-center"><input type="radio" name="transferType" value="internal" checked class="mr-2"> Internal</label>
+                    <label class="inline-flex items-center"><input type="radio" name="transferType" value="external" class="mr-2"> Other Bank</label>
+                </div>
+                <div>
+                    <label class="text-sm text-slate-600">From</label>
+                    <select id="fromAccount" name="fromAccount" required class="w-full rounded-md border px-3 py-2 text-sm">
+                        <option value="">Select source account</option>
+                    </select>
+                    <div id="fromAccountBalance" class="text-xs text-slate-500 mt-1"></div>
+                </div>
+
+                <div>
+                    <label class="text-sm text-slate-600">To</label>
+                    <select id="toAccount" name="toAccount" required class="w-full rounded-md border px-3 py-2 text-sm">
+                        <option value="">Select destination account</option>
+                    </select>
+                    <div id="externalFields" class="mt-2 hidden">
+                        <input id="extRecipientName" type="text" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Recipient name">
+                        <input id="extAccountNumber" type="text" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Account number or IBAN">
+                        <input id="extBankName" type="text" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Bank name">
+                        <input id="extContact" type="text" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Phone or email (optional)">
+                        <label class="inline-flex items-center"><input id="saveAsBeneficiary" type="checkbox" class="mr-2"> Save as beneficiary</label>
+                    </div>
+                    <div id="toBalance" class="text-xs text-slate-500 mt-1"></div>
+                </div>
+
+                <div>
+                    <label class="text-sm text-slate-600">Amount</label>
+                    <input id="amount" name="amount" type="number" min="0.01" step="0.01" required class="w-full rounded-md border px-3 py-2 text-sm" placeholder="0.00">
+                </div>
+
+                <div>
+                    <label class="text-sm text-slate-600">Description</label>
+                    <input id="description" name="description" type="text" class="w-full rounded-md border px-3 py-2 text-sm" placeholder="Optional">
+                </div>
+
+                <div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-md">Transfer</button>
+                </div>
+            </form>
+
+            <div class="mt-4 bg-white rounded-lg p-4 shadow">
+                <h3 class="text-sm font-medium">Recent Transfers</h3>
+                <div id="recentTransfers" class="mt-2 space-y-2">
+                    <!-- recent items -->
+                </div>
+            </div>
+        </main>
+
+        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t z-30">
+            <div class="max-w-2xl mx-auto flex justify-between px-6 py-2">
+                <a href="dashboard.html" class="flex flex-col items-center text-slate-600 text-xs"><i class="fas fa-home text-lg"></i>Home</a>
+                <a href="accounts.html" class="flex flex-col items-center text-slate-600 text-xs"><i class="fas fa-wallet text-lg"></i>Accounts</a>
+                <a href="transfer.html" class="flex flex-col items-center text-indigo-600 text-xs"><i class="fas fa-exchange-alt text-lg"></i>Transfer</a>
+                <a href="transactions.html" class="flex flex-col items-center text-slate-600 text-xs"><i class="fas fa-receipt text-lg"></i>History</a>
+                <a href="index.html" class="flex flex-col items-center text-slate-600 text-xs"><i class="fas fa-user text-lg"></i>Profile</a>
+            </div>
+        </nav>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/transfer-api.js"></script>
+</body>
+</html>
