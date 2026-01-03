@@ -34,3 +34,13 @@ function featureBackdropClick(e) {
 
 // Export for console access
 window.appUI = { openFeatureSheet, closeFeatureSheet, toggleFeatureSheet };
+
+// Remove duplicate bottom navs at runtime (keep the last one)
+document.addEventListener('DOMContentLoaded', () => {
+  const navs = document.querySelectorAll('.opay-bottom-nav');
+  if (navs.length > 1) {
+    for (let i = 0; i < navs.length - 1; i++) {
+      navs[i].remove();
+    }
+  }
+});
