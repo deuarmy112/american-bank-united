@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - American Bank United</title>
+    <title>Profile - Opay</title>
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script>
         if (!localStorage.getItem('authToken')) {
@@ -13,18 +13,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/opay.css">
-    <script src="js/global-ui.js" defer></script>
     <style>
-        /* Small adjustments for the demo look */
-        .balance-amount { font-size: 1.6rem; font-weight: 700; }
-        .quick-action { min-height: 72px; }
+        /* Opay-inspired colors */
+        .opay-gradient { background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); }
+        .opay-orange { color: #FF6B35; }
+        .opay-bg { background-color: #FF6B35; }
+        .opay-text { color: #FF6B35; }
     </style>
 </head>
 <body class="opay-ui bg-slate-50">
     <header class="fixed top-0 left-0 right-0 bg-white shadow z-20">
         <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <a href="dashboard.html" class="text-indigo-600 text-lg"><i class="fas fa-chevron-left"></i></a>
+                <a href="dashboard.html" class="opay-text text-lg"><i class="fas fa-chevron-left"></i></a>
                 <div>
                     <div class="text-sm text-slate-400">Welcome back</div>
                     <h1 class="text-lg font-semibold">Profile</h1>
@@ -37,12 +38,27 @@
     </header>
 
     <main class="pt-20 pb-28 max-w-2xl mx-auto px-4">
-        <!-- Balance Card -->
-        <section class="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-xl shadow p-5 mb-5">
+        <!-- Profile Header -->
+        <section class="bg-white rounded-xl shadow p-6 mb-5">
+            <div class="flex items-center gap-4">
+                <img id="profileAvatar" src="https://via.placeholder.com/80" alt="avatar" class="w-20 h-20 rounded-full border-2 border-orange-200">
+                <div class="flex-1">
+                    <h2 id="profileName" class="text-xl font-semibold text-slate-800">Loading...</h2>
+                    <p id="profileEmail" class="text-sm text-slate-500">&nbsp;</p>
+                    <p id="profilePhone" class="text-sm text-slate-500">&nbsp;</p>
+                </div>
+                <button id="editProfileBtn" class="opay-bg text-white px-4 py-2 rounded-lg text-sm">
+                    <i class="fas fa-edit mr-1"></i> Edit
+                </button>
+            </div>
+        </section>
+
+        <!-- Account Balance -->
+        <section class="opay-gradient text-white rounded-xl shadow p-5 mb-5">
             <div class="flex items-start justify-between">
                 <div>
-                    <div class="text-sm opacity-80">Available balance</div>
-                    <div id="balance" class="balance-amount mt-2">$0.00</div>
+                    <div class="text-sm opacity-90">Available balance</div>
+                    <div id="balance" class="text-2xl font-bold mt-1">$0.00</div>
                 </div>
                 <div class="text-right">
                     <div class="text-xs opacity-80">Primary account</div>
@@ -55,52 +71,53 @@
             </div>
         </section>
 
-        <!-- Quick actions -->
-        <section class="grid grid-cols-4 gap-3 mb-5">
-            <button class="quick-action bg-white rounded-lg shadow p-3 flex flex-col items-center justify-center text-sm" id="actionSend">
-                <i class="fas fa-paper-plane text-indigo-600 text-lg"></i>
-                <span class="mt-2">Send</span>
-            </button>
-            <button class="quick-action bg-white rounded-lg shadow p-3 flex flex-col items-center justify-center text-sm" id="actionReceive">
-                <i class="fas fa-qrcode text-indigo-600 text-lg"></i>
-                <span class="mt-2">Receive</span>
-            </button>
-            <button class="quick-action bg-white rounded-lg shadow p-3 flex flex-col items-center justify-center text-sm" id="actionPay">
-                <i class="fas fa-credit-card text-indigo-600 text-lg"></i>
-                <span class="mt-2">Pay</span>
-            </button>
-            <button class="quick-action bg-white rounded-lg shadow p-3 flex flex-col items-center justify-center text-sm" id="actionTopup">
-                <i class="fas fa-wallet text-indigo-600 text-lg"></i>
-                <span class="mt-2">Top-up</span>
-            </button>
+        <!-- Quick Actions -->
+        <section class="bg-white rounded-xl shadow p-4 mb-5">
+            <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <button class="flex flex-col items-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100" id="actionSend">
+                    <i class="fas fa-paper-plane text-2xl opay-text mb-2"></i>
+                    <span class="text-sm font-medium">Send Money</span>
+                </button>
+                <button class="flex flex-col items-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100" id="actionReceive">
+                    <i class="fas fa-qrcode text-2xl opay-text mb-2"></i>
+                    <span class="text-sm font-medium">Receive</span>
+                </button>
+                <button class="flex flex-col items-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100" id="actionPay">
+                    <i class="fas fa-credit-card text-2xl opay-text mb-2"></i>
+                    <span class="text-sm font-medium">Pay Bills</span>
+                </button>
+                <button class="flex flex-col items-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100" id="actionTopup">
+                    <i class="fas fa-wallet text-2xl opay-text mb-2"></i>
+                    <span class="text-sm font-medium">Top-up</span>
+                </button>
+            </div>
         </section>
 
-        <!-- Profile card -->
-        <section id="profileCard" class="bg-white rounded-xl shadow p-6">
-            <div class="flex items-center gap-4">
-                <img id="profileAvatar" src="https://via.placeholder.com/96" alt="avatar" class="w-24 h-24 rounded-full border">
-                <div class="flex-1">
-                    <h2 id="profileName" class="text-xl font-semibold">Loading...</h2>
-                    <p id="profileEmail" class="text-sm text-slate-500">&nbsp;</p>
-                    <p id="profilePhone" class="text-sm text-slate-500">&nbsp;</p>
+        <!-- Account Settings -->
+        <section class="bg-white rounded-xl shadow p-4">
+            <h3 class="text-lg font-semibold mb-4">Account Settings</h3>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between py-3 border-b border-slate-100">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-bell opay-text"></i>
+                        <span class="text-sm">Notifications</span>
+                    </div>
+                    <span class="text-sm text-slate-500">On</span>
                 </div>
-                <div>
-                    <button id="editProfileBtn" class="px-3 py-2 border rounded text-sm">Edit</button>
+                <div class="flex items-center justify-between py-3 border-b border-slate-100">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-language opay-text"></i>
+                        <span class="text-sm">Language</span>
+                    </div>
+                    <span class="text-sm text-slate-500">English</span>
                 </div>
-            </div>
-
-            <div class="mt-6 grid grid-cols-1 gap-3">
-                <div class="flex items-center justify-between text-sm text-slate-600">
-                    <div>Language</div>
-                    <div class="text-slate-800">English</div>
-                </div>
-                <div class="flex items-center justify-between text-sm text-slate-600">
-                    <div>Notifications</div>
-                    <div class="text-slate-800">Email, SMS</div>
-                </div>
-                <div class="flex items-center justify-between text-sm text-slate-600">
-                    <div>Two-factor</div>
-                    <div class="text-slate-800">Not set</div>
+                <div class="flex items-center justify-between py-3">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-lock opay-text"></i>
+                        <span class="text-sm">Two-factor auth</span>
+                    </div>
+                    <span class="text-sm text-slate-500">Not set</span>
                 </div>
             </div>
         </section>
@@ -147,7 +164,7 @@
 
         document.getElementById('actionSend').addEventListener('click', () => { window.location.href = 'send-money.html'; });
         document.getElementById('actionReceive').addEventListener('click', () => { alert('Receive - show QR code'); });
-        document.getElementById('actionPay').addEventListener('click', () => { window.location.href = 'accounts.html'; });
+        document.getElementById('actionPay').addEventListener('click', () => { window.location.href = 'bills.html'; });
         document.getElementById('actionTopup').addEventListener('click', () => { window.location.href = 'transfer.html'; });
 
         loadProfile();
