@@ -31,9 +31,13 @@
                                                         <div class="opay-sub">ABU — Everyday banking</div>
                                                     </div>
                                                 </a>
-                                                <div class="ml-4 flex items-center gap-2">
+                                                <div class="ml-8 flex items-center gap-3">
                                                     <button aria-label="Contact support" title="Contact support" onclick="openCustomerServiceModal()" class="p-2 rounded-full hover:bg-slate-100">
                                                         <i class="fas fa-headphones text-slate-700"></i>
+                                                    </button>
+                                                    <button aria-label="Notifications" title="Notifications" onclick="location.href='notifications.html'" class="p-2 rounded-full hover:bg-slate-100 relative">
+                                                        <i class="fas fa-bell text-slate-700"></i>
+                                                        <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
                                                     </button>
                                                     <button aria-label="Open menu" title="Menu" onclick="toggleSidebar()" class="p-2 rounded-md hover:bg-slate-100">
                                                         <i class="fas fa-bars text-slate-700"></i>
@@ -52,13 +56,7 @@
                     <p class="text-xs text-slate-500">Smart banking at your fingertips</p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button class="relative">
-                        <i class="fas fa-bell text-slate-700 text-lg"></i>
-                        <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
-                    </button>
-                    <a href="profile.html" aria-label="Open profile" title="Profile">
-                        <img id="userAvatar" src="https://via.placeholder.com/40" alt="avatar" class="w-10 h-10 rounded-full border">
-                    </a>
+                    <!-- Notifications and profile moved to header/sidebar -->
                 </div>
             </div>
 
@@ -207,6 +205,20 @@
                 <script>
                     // expose small helper for beneficiaries open from quick actions
                     async function openBeneficiariesModal() { if (window.openFeatureModal) { openFeatureModal('beneficiaries'); await loadBeneficiaries(); } }
+                    // populate sidebar profile from API
+                    document.addEventListener('DOMContentLoaded', async () => {
+                        try {
+                            if (window.authAPI && typeof authAPI.getProfile === 'function') {
+                                const user = await authAPI.getProfile();
+                                if (user) {
+                                    const nameEl = document.getElementById('sidebarName');
+                                    const avatarEl = document.getElementById('sidebarAvatar');
+                                    if (nameEl) nameEl.textContent = (user.first_name || '') + (user.last_name ? ' ' + user.last_name : '');
+                                    if (avatarEl && user.avatar) avatarEl.src = user.avatar;
+                                }
+                            }
+                        } catch (e) { /* ignore */ }
+                    });
                 </script>
 
         <!-- Feature sheet + bottom nav -->
@@ -272,14 +284,27 @@
                     </div>
                     <button onclick="closeSidebar()" class="text-slate-500"><i class="fas fa-times"></i></button>
                 </div>
+                <div class="px-3 mb-3">
+                    <a href="profile.html" onclick="closeSidebar()" class="flex items-center gap-3 p-2 rounded hover:bg-slate-50">
+                        <img id="sidebarAvatar" src="https://via.placeholder.com/48" alt="avatar" class="w-12 h-12 rounded-full border">
+                        <div>
+                            <div id="sidebarName" class="font-medium">User</div>
+                            <div class="text-xs text-slate-500">View profile</div>
+                        </div>
+                    </a>
+                </div>
                 <nav class="flex-1">
                     <ul class="space-y-2">
-                        <li><a href="dashboard.html" class="block py-2 px-3 rounded hover:bg-slate-50">Home</a></li>
-                        <li><a href="accounts.html" class="block py-2 px-3 rounded hover:bg-slate-50">Accounts</a></li>
-                        <li><a href="transfer.html" class="block py-2 px-3 rounded hover:bg-slate-50">Transfer</a></li>
-                        <li><a href="transactions.html" class="block py-2 px-3 rounded hover:bg-slate-50">Transactions</a></li>
-                        <li><a href="cards.html" class="block py-2 px-3 rounded hover:bg-slate-50">Cards</a></li>
-                        <li><a href="beneficiaries.html" class="block py-2 px-3 rounded hover:bg-slate-50">Beneficiaries</a></li>
+                        <li><a href="dashboard.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Home</a></li>
+                        <li><a href="accounts.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Accounts</a></li>
+                        <li><a href="transfer.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Transfer</a></li>
+                        <li><a href="transactions.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Transactions</a></li>
+                        <li><a href="cards.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Cards</a></li>
+                        <li><a href="#" onclick="openBeneficiariesModal(); closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Beneficiaries</a></li>
+                        <li><a href="other-banks.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Other Banks</a></li>
+                        <li><a href="wallet.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Wallet</a></li>
+                        <li><a href="investments.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Investment</a></li>
+                        <li><a href="shop.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Shop</a></li>
                     </ul>
                 </nav>
                 <div class="mt-4">
@@ -383,6 +408,26 @@
                         <option value="score">Score Predictor</option>
                     </select>
                     <button type="submit" class="w-full bg-rose-600 text-white py-2 rounded-md">Place Bet</button>
+                </form>
+            </div>
+        </div>
+        <!-- Loan Modal -->
+        <div id="modal-loan" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-white rounded-lg w-11/12 max-w-md p-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold">Apply for Loan</h3>
+                    <button onclick="closeFeatureModal('loan')" class="text-slate-500">Close</button>
+                </div>
+                <form id="loanForm" class="mt-3 space-y-3" onsubmit="submitLoan(event)">
+                    <input id="loanAmount" type="number" step="0.01" min="1" required class="w-full rounded-md border px-3 py-2" placeholder="Loan amount">
+                    <select id="loanTerm" required class="w-full rounded-md border px-3 py-2">
+                        <option value="">Select term</option>
+                        <option value="6">6 months</option>
+                        <option value="12">12 months</option>
+                        <option value="24">24 months</option>
+                    </select>
+                    <input id="loanPurpose" type="text" class="w-full rounded-md border px-3 py-2" placeholder="Purpose (optional)">
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-md">Apply</button>
                 </form>
             </div>
         </div>

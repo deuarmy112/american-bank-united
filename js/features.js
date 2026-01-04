@@ -235,6 +235,25 @@ async function submitBet(e) {
   closeFeatureModal('bet');
 }
 
+async function submitLoan(e) {
+  e.preventDefault();
+  const token = localStorage.getItem('token'); if (!token) return alert('Not signed in');
+  const amount = parseFloat(document.getElementById('loanAmount').value);
+  const term = parseInt(document.getElementById('loanTerm').value, 10);
+  const purpose = document.getElementById('loanPurpose').value || '';
+  if (!amount || amount <= 0 || !term) return alert('Please complete the form');
+
+  try {
+    const res = await fetch('/api/loans/apply', {
+      method: 'POST', headers: { 'content-type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ amount, term, purpose })
+    });
+    const json = await res.json(); if (!res.ok) throw new Error(json.error || 'Loan application failed');
+    alert('Loan application submitted — reference: ' + (json.reference || json.id || 'n/a'));
+    closeFeatureModal('loan');
+  } catch (err) { console.error(err); alert('Loan application failed: ' + (err.message || err)); }
+}
+
 // Expose to global
 window.openFeatureModal = openFeatureModal;
 window.closeFeatureModal = closeFeatureModal;
@@ -243,3 +262,4 @@ window.submitAirtime = submitAirtime;
 window.submitBet = submitBet;
 window.submitDeposit = submitDeposit;
 window.submitWithdraw = submitWithdraw;
+window.submitLoan = submitLoan;
