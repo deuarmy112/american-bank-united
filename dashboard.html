@@ -105,34 +105,56 @@
 
             <!-- Quick actions (circular) -->
             <div class="mb-4">
-                <div class="flex gap-3 overflow-x-auto pb-2">
-                    <button onclick="location.href='transfer.html'" class="flex-none flex flex-col items-center gap-1 w-20">
+                <div class="grid grid-cols-4 gap-3">
+                    <button onclick="location.href='transfer.html'" class="flex flex-col items-center gap-1 p-2">
                         <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-exchange-alt text-orange-500"></i></div>
                         <span class="text-xs">Transfer</span>
                     </button>
-                    <button onclick="openFeatureModal('bill')" class="flex-none flex flex-col items-center gap-1 w-20">
+                    <button onclick="openFeatureModal('bill')" class="flex flex-col items-center gap-1 p-2">
                         <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-file-invoice-dollar text-red-500"></i></div>
                         <span class="text-xs">Pay Bills</span>
                     </button>
-                    <button onclick="openFeatureModal('airtime')" class="flex-none flex flex-col items-center gap-1 w-20">
+                    <button onclick="openFeatureModal('airtime')" class="flex flex-col items-center gap-1 p-2">
                         <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-signal text-green-500"></i></div>
                         <span class="text-xs">Airtime</span>
                     </button>
-                    <button onclick="openFeatureModal('bet')" class="flex-none flex flex-col items-center gap-1 w-20">
+                    <button onclick="openFeatureModal('bet')" class="flex flex-col items-center gap-1 p-2">
                         <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-football-ball text-indigo-500"></i></div>
                         <span class="text-xs">Betting</span>
                     </button>
-                    <button onclick="location.href='cards.html'" class="flex-none flex flex-col items-center gap-1 w-20">
+
+                    <button onclick="location.href='cards.html'" class="flex flex-col items-center gap-1 p-2">
                         <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-credit-card text-sky-500"></i></div>
                         <span class="text-xs">Cards</span>
                     </button>
-                    <button onclick="openFeatureModal('qr')" class="flex-none flex flex-col items-center gap-1 w-20">
+                    <button onclick="openFeatureModal('qr')" class="flex flex-col items-center gap-1 p-2">
                         <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-qrcode text-slate-700"></i></div>
                         <span class="text-xs">QR Pay</span>
                     </button>
-                    <button onclick="openBeneficiariesModal()" class="flex-none flex flex-col items-center gap-1 w-20">
+                    <button onclick="openBeneficiariesModal()" class="flex flex-col items-center gap-1 p-2">
                         <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-users text-indigo-600"></i></div>
                         <span class="text-xs">Beneficiaries</span>
+                    </button>
+                    <button onclick="location.href='other-banks.html'" class="flex flex-col items-center gap-1 p-2">
+                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-university text-emerald-600"></i></div>
+                        <span class="text-xs">Other Banks</span>
+                    </button>
+
+                    <button onclick="location.href='wallet.html'" class="flex flex-col items-center gap-1 p-2">
+                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-wallet text-fuchsia-600"></i></div>
+                        <span class="text-xs">Wallet</span>
+                    </button>
+                    <button onclick="openFeatureModal('loan')" class="flex flex-col items-center gap-1 p-2">
+                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-hand-holding-dollar text-rose-500"></i></div>
+                        <span class="text-xs">Loan</span>
+                    </button>
+                    <button onclick="location.href='investments.html'" class="flex flex-col items-center gap-1 p-2">
+                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-chart-line text-sky-600"></i></div>
+                        <span class="text-xs">Investment</span>
+                    </button>
+                    <button onclick="location.href='shop.html'" class="flex flex-col items-center gap-1 p-2">
+                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-store text-yellow-600"></i></div>
+                        <span class="text-xs">Shop Now</span>
                     </button>
                 </div>
             </div>
