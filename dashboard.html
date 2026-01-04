@@ -31,6 +31,14 @@
                                                         <div class="opay-sub">ABU — Everyday banking</div>
                                                     </div>
                                                 </a>
+                                                <div class="ml-4 flex items-center gap-2">
+                                                    <button aria-label="Contact support" title="Contact support" onclick="openCustomerServiceModal()" class="p-2 rounded-full hover:bg-slate-100">
+                                                        <i class="fas fa-headphones text-slate-700"></i>
+                                                    </button>
+                                                    <button aria-label="Open menu" title="Menu" onclick="toggleSidebar()" class="p-2 rounded-md hover:bg-slate-100">
+                                                        <i class="fas fa-bars text-slate-700"></i>
+                                                    </button>
+                                                </div>
                                         </div>
                 </div>
             </div>
@@ -231,6 +239,54 @@
 
         <!-- Feature Modals -->
         <div id="modalBackdrop" class="hidden fixed inset-0 bg-black/40 z-40"></div>
+
+        <!-- Customer Service Modal -->
+        <div id="modal-cs" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-white rounded-lg w-11/12 max-w-md p-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold">Customer Support</h3>
+                    <button onclick="closeCustomerServiceModal()" class="text-slate-500">Close</button>
+                </div>
+                <div class="mt-3 text-sm text-slate-600">
+                    <p>Need help? Call <strong>+1-800-ABU-HELP</strong> or send us a message.</p>
+                    <p class="mt-2">Or start a chat (demo) — our agents will respond shortly.</p>
+                </div>
+                <div class="mt-4 flex gap-2">
+                    <a href="tel:+18002284435" class="flex-1 bg-indigo-600 text-white py-2 rounded text-center">Call Support</a>
+                    <button onclick="closeCustomerServiceModal()" class="flex-1 border py-2 rounded">Message</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Navigation -->
+        <div id="sidebarBackdrop" onclick="closeSidebar()" class="hidden fixed inset-0 bg-black/40 z-40"></div>
+        <aside id="sidebarPanel" class="fixed top-0 left-0 bottom-0 w-72 bg-white shadow z-50 transform -translate-x-full transition-transform">
+            <div class="p-4 h-full flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <img src="assets/abu-logo.svg" class="w-10 h-10" alt="ABU">
+                        <div>
+                            <div class="font-semibold">American Bank United</div>
+                            <div class="text-xs text-slate-500">ABU</div>
+                        </div>
+                    </div>
+                    <button onclick="closeSidebar()" class="text-slate-500"><i class="fas fa-times"></i></button>
+                </div>
+                <nav class="flex-1">
+                    <ul class="space-y-2">
+                        <li><a href="dashboard.html" class="block py-2 px-3 rounded hover:bg-slate-50">Home</a></li>
+                        <li><a href="accounts.html" class="block py-2 px-3 rounded hover:bg-slate-50">Accounts</a></li>
+                        <li><a href="transfer.html" class="block py-2 px-3 rounded hover:bg-slate-50">Transfer</a></li>
+                        <li><a href="transactions.html" class="block py-2 px-3 rounded hover:bg-slate-50">Transactions</a></li>
+                        <li><a href="cards.html" class="block py-2 px-3 rounded hover:bg-slate-50">Cards</a></li>
+                        <li><a href="beneficiaries.html" class="block py-2 px-3 rounded hover:bg-slate-50">Beneficiaries</a></li>
+                    </ul>
+                </nav>
+                <div class="mt-4">
+                    <button onclick="logoutFromMenu()" class="w-full bg-rose-600 text-white py-2 rounded">Logout</button>
+                </div>
+            </div>
+        </aside>
 
         <!-- Bill Pay Modal -->
         <div id="modal-bill" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
