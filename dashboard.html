@@ -8,6 +8,58 @@
             window.location.href = 'index.html';
         }
     </script>
+        <title>Dashboard - American Bank United</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="css/opay.css">
+        <script src="js/global-ui.js" defer></script>
+        <style>
+            body { background: #f8fafc }
+        </style>
+        <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+</head>
+<body class="opay-ui">
+        <!-- Navigation -->
+        <header class="opay-header">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center">
+                                        <div class="flex items-center gap-4">
+                                                <a href="/" class="opay-brand flex items-center gap-3">
+                                                    <img src="assets/abu-logo.svg" alt="ABU logo" class="w-10 h-10">
+                                                    <div>
+                                                        <div class="opay-name">American Bank United</div>
+                                                        <div class="opay-sub">ABU — Everyday banking</div>
+                                                    </div>
+                                                </a>
+                                                <div class="ml-8 flex items-center gap-3">
+                                                    <button aria-label="Contact support" title="Contact support" onclick="openCustomerServiceModal()" class="p-2 rounded-full hover:bg-slate-100">
+                                                        <i class="fas fa-headphones text-slate-700"></i>
+                                                    </button>
+                                                    <button aria-label="Notifications" title="Notifications" onclick="location.href='notifications.html'" class="p-2 rounded-full hover:bg-slate-100 relative">
+                                                        <i class="fas fa-bell text-slate-700"></i>
+                                                        <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
+                                                    </button>
+                                                    <button aria-label="Open menu" title="Menu" onclick="toggleSidebar()" class="p-2 rounded-md hover:bg-slate-100">
+                                                        <i class="fas fa-bars text-slate-700"></i>
+                                                    </button>
+                                                </div>
+                                        </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-md mx-auto p-4 pb-32">
+            <!-- Mobile app top area -->
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-lg font-semibold">Good day, <span id="userGreeting">User</span></h2>
+                    <p class="text-xs text-slate-500">Smart banking at your fingertips</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <!-- Notifications and profile moved to header/sidebar -->
+                </div>
+            </div>
+
             <!-- Deposit Modal -->
             <div id="modal-deposit" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50">
                 <div class="bg-white rounded-lg w-11/12 max-w-md p-4">
@@ -55,30 +107,17 @@
                     </div>
                 </div>
                 <div class="mt-4 flex gap-3">
-                    <button onclick="openFeatureModal('deposit')" class="flex-none w-24 bg-white/20 rounded-lg py-2 text-sm">Add money</button>
-                    <button onclick="openFeatureModal('withdraw')" class="flex-none w-24 bg-white/20 rounded-lg py-2 text-sm">Withdraw</button>
-                    <button onclick="location.href='transfer.html'" class="flex-none w-28 bg-white/20 rounded-lg py-2 text-sm">Transfer</button>
+                    <button onclick="location.href='transfer.html'" class="flex-1 bg-white/20 rounded-lg py-2 text-sm">Transfer</button>
+                    <button onclick="openFeatureModal('airtime')" class="bg-white/20 rounded-lg px-3 py-2 text-sm">Airtime</button>
                 </div>
             </div>
 
             <!-- Quick actions (circular) -->
             <div class="mb-4">
                 <div class="grid grid-cols-4 gap-3">
-                    <button onclick="location.href='accounts.html'" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-wallet text-indigo-600"></i></div>
-                        <span class="text-xs">Accounts</span>
-                    </button>
-                    <button onclick="location.href='trade.html'" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-chart-line text-emerald-600"></i></div>
-                        <span class="text-xs">Trade</span>
-                    </button>
-                    <button onclick="location.href='other-banks.html'" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-globe text-sky-500"></i></div>
-                        <span class="text-xs">Intl Transfer</span>
-                    </button>
-                    <button onclick="location.href='transactions.html'" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-history text-slate-700"></i></div>
-                        <span class="text-xs">History</span>
+                    <button onclick="location.href='transfer.html'" class="flex flex-col items-center gap-1 p-2">
+                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-exchange-alt text-orange-500"></i></div>
+                        <span class="text-xs">Transfer</span>
                     </button>
                     <button onclick="openFeatureModal('bill')" class="flex flex-col items-center gap-1 p-2">
                         <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-file-invoice-dollar text-red-500"></i></div>
@@ -166,20 +205,6 @@
                 <script>
                     // expose small helper for beneficiaries open from quick actions
                     async function openBeneficiariesModal() { if (window.openFeatureModal) { openFeatureModal('beneficiaries'); await loadBeneficiaries(); } }
-                    // populate sidebar profile from API
-                    document.addEventListener('DOMContentLoaded', async () => {
-                        try {
-                            if (window.authAPI && typeof authAPI.getProfile === 'function') {
-                                const user = await authAPI.getProfile();
-                                if (user) {
-                                    const nameEl = document.getElementById('sidebarName');
-                                    const avatarEl = document.getElementById('sidebarAvatar');
-                                    if (nameEl) nameEl.textContent = (user.first_name || '') + (user.last_name ? ' ' + user.last_name : '');
-                                    if (avatarEl && user.avatar) avatarEl.src = user.avatar;
-                                }
-                            }
-                        } catch (e) { /* ignore */ }
-                    });
                 </script>
 
         <!-- Feature sheet + bottom nav -->
@@ -245,15 +270,6 @@
                     </div>
                     <button onclick="closeSidebar()" class="text-slate-500"><i class="fas fa-times"></i></button>
                 </div>
-                <div class="px-3 mb-3">
-                    <a href="profile.html" onclick="closeSidebar()" class="flex items-center gap-3 p-2 rounded hover:bg-slate-50">
-                        <img id="sidebarAvatar" src="https://via.placeholder.com/48" alt="avatar" class="w-12 h-12 rounded-full border">
-                        <div>
-                            <div id="sidebarName" class="font-medium">User</div>
-                            <div class="text-xs text-slate-500">View profile</div>
-                        </div>
-                    </a>
-                </div>
                 <nav class="flex-1">
                     <ul class="space-y-2">
                         <li><a href="dashboard.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Home</a></li>
@@ -261,11 +277,7 @@
                         <li><a href="transfer.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Transfer</a></li>
                         <li><a href="transactions.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Transactions</a></li>
                         <li><a href="cards.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Cards</a></li>
-                        <li><a href="#" onclick="openBeneficiariesModal(); closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Beneficiaries</a></li>
-                        <li><a href="other-banks.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Other Banks</a></li>
-                        <li><a href="wallet.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Wallet</a></li>
-                        <li><a href="investments.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Investment</a></li>
-                        <li><a href="shop.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Shop</a></li>
+                        <li><a href="beneficiaries.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Beneficiaries</a></li>
                     </ul>
                 </nav>
                 <div class="mt-4">
