@@ -110,16 +110,27 @@
                     <button onclick="openFeatureModal('deposit')" class="flex-none w-24 bg-white/20 rounded-lg py-2 text-sm">Add money</button>
                     <button onclick="openFeatureModal('withdraw')" class="flex-none w-24 bg-white/20 rounded-lg py-2 text-sm">Withdraw</button>
                     <button onclick="location.href='transfer.html'" class="flex-none w-28 bg-white/20 rounded-lg py-2 text-sm">Transfer</button>
-                    <button onclick="openFeatureModal('airtime')" class="flex-none w-28 bg-white/20 rounded-lg px-3 py-2 text-sm">Airtime</button>
                 </div>
             </div>
 
             <!-- Quick actions (circular) -->
             <div class="mb-4">
                 <div class="grid grid-cols-4 gap-3">
-                    <button onclick="location.href='transfer.html'" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-exchange-alt text-orange-500"></i></div>
-                        <span class="text-xs">Transfer</span>
+                    <button onclick="location.href='accounts.html'" class="flex flex-col items-center gap-1 p-2">
+                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-wallet text-indigo-600"></i></div>
+                        <span class="text-xs">Accounts</span>
+                    </button>
+                    <button onclick="location.href='trade.html'" class="flex flex-col items-center gap-1 p-2">
+                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-chart-line text-emerald-600"></i></div>
+                        <span class="text-xs">Trade</span>
+                    </button>
+                    <button onclick="location.href='other-banks.html'" class="flex flex-col items-center gap-1 p-2">
+                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-globe text-sky-500"></i></div>
+                        <span class="text-xs">Intl Transfer</span>
+                    </button>
+                    <button onclick="location.href='transactions.html'" class="flex flex-col items-center gap-1 p-2">
+                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-history text-slate-700"></i></div>
+                        <span class="text-xs">History</span>
                     </button>
                     <button onclick="openFeatureModal('bill')" class="flex flex-col items-center gap-1 p-2">
                         <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-file-invoice-dollar text-red-500"></i></div>
