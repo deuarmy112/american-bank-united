@@ -22,7 +22,7 @@ function closeFeatureModal(id) {
 
 async function populateBillModal() {
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     if (!token) return;
     // fetch billers
     const r1 = await fetch('/api/bills/billers', { headers: { Authorization: 'Bearer ' + token } });
@@ -42,7 +42,7 @@ async function populateBillModal() {
 
 async function populateAccountSelectsForCashOp(kind) {
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     if (!token) return;
     const r = await fetch('/api/accounts', { headers: { Authorization: 'Bearer ' + token } });
     const accounts = await r.json();
@@ -56,7 +56,7 @@ async function populateAccountSelectsForCashOp(kind) {
 
 async function submitDeposit(e) {
   e.preventDefault();
-  const token = localStorage.getItem('token'); if (!token) return alert('Not signed in');
+  const token = localStorage.getItem('authToken'); if (!token) return alert('Not signed in');
   const accountId = document.getElementById('depositAccount').value;
   const amount = parseFloat(document.getElementById('depositAmount').value);
   if (!accountId || !amount || amount <= 0) return alert('Complete form');
@@ -76,7 +76,7 @@ async function submitDeposit(e) {
 
 async function submitWithdraw(e) {
   e.preventDefault();
-  const token = localStorage.getItem('token'); if (!token) return alert('Not signed in');
+  const token = localStorage.getItem('authToken'); if (!token) return alert('Not signed in');
   const accountId = document.getElementById('withdrawAccount').value;
   const amount = parseFloat(document.getElementById('withdrawAmount').value);
   if (!accountId || !amount || amount <= 0) return alert('Complete form');
@@ -96,7 +96,7 @@ async function submitWithdraw(e) {
 // Beneficiaries management
 async function loadBeneficiaries() {
   try {
-    const token = localStorage.getItem('token'); if (!token) return;
+    const token = localStorage.getItem('authToken'); if (!token) return;
     const r = await fetch('/api/beneficiaries', { headers: { Authorization: 'Bearer ' + token } });
     const list = await r.json();
     const container = document.getElementById('beneficiariesList');
@@ -117,7 +117,7 @@ async function loadBeneficiaries() {
 
 async function createBeneficiary(e) {
   e.preventDefault();
-  const token = localStorage.getItem('token'); if (!token) return alert('Sign in');
+  const token = localStorage.getItem('authToken'); if (!token) return alert('Sign in');
   const name = document.getElementById('benName').value;
   const accountNumber = document.getElementById('benAccountNumber').value;
   const bank = document.getElementById('benBank').value;
@@ -133,7 +133,7 @@ async function createBeneficiary(e) {
 
 async function deleteBeneficiary(id) {
   if (!confirm('Remove beneficiary?')) return;
-  const token = localStorage.getItem('token'); if (!token) return;
+  const token = localStorage.getItem('authToken'); if (!token) return;
   try {
     const res = await fetch('/api/beneficiaries/' + id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
     if (!res.ok) throw new Error('Failed');
@@ -144,7 +144,7 @@ async function deleteBeneficiary(id) {
 
 async function payBeneficiary(id) {
   // Find beneficiary and open QR pay modal prefilled
-  const token = localStorage.getItem('token'); if (!token) return;
+  const token = localStorage.getItem('authToken'); if (!token) return;
   try {
     const r = await fetch('/api/beneficiaries', { headers: { Authorization: 'Bearer ' + token } });
     const list = await r.json();
@@ -160,7 +160,7 @@ async function payBeneficiary(id) {
 
 async function populateQRFromAccounts() {
   try {
-    const token = localStorage.getItem('token'); if (!token) return;
+    const token = localStorage.getItem('authToken'); if (!token) return;
     const r = await fetch('/api/accounts', { headers: { Authorization: 'Bearer ' + token } });
     const accounts = await r.json();
     const sel = document.getElementById('qrFromAccount');
@@ -170,7 +170,7 @@ async function populateQRFromAccounts() {
 
 async function submitQRPay(e) {
   e.preventDefault();
-  const token = localStorage.getItem('token'); if (!token) return alert('Sign in');
+  const token = localStorage.getItem('authToken'); if (!token) return alert('Sign in');
   const fromId = document.getElementById('qrFromAccount').value;
   const accNum = document.getElementById('qrAccountNumber').value;
   const amount = parseFloat(document.getElementById('qrAmount').value);
@@ -190,7 +190,7 @@ async function submitQRPay(e) {
 
 async function submitBill(e) {
   e.preventDefault();
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('authToken');
   if (!token) return alert('Not signed in');
   const billerId = document.getElementById('billerSelect').value;
   const fromAccountId = document.getElementById('fromAccountSelect').value;
@@ -237,7 +237,7 @@ async function submitBet(e) {
 
 async function submitLoan(e) {
   e.preventDefault();
-  const token = localStorage.getItem('token'); if (!token) return alert('Not signed in');
+  const token = localStorage.getItem('authToken'); if (!token) return alert('Not signed in');
   const amount = parseFloat(document.getElementById('loanAmount').value);
   const term = parseInt(document.getElementById('loanTerm').value, 10);
   const purpose = document.getElementById('loanPurpose').value || '';
