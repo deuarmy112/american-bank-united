@@ -9,6 +9,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const requestCardForm = document.getElementById('requestCardForm');
     if (requestCardForm) requestCardForm.addEventListener('submit', handleRequestCard);
+    const logoutBtn = document.getElementById('cardsLogout');
+    if (logoutBtn) logoutBtn.addEventListener('click', () => {
+        if (confirm('Logout?')) {
+            localStorage.removeItem('authToken');
+            window.location.href = 'index.html';
+        }
+    });
 });
 
 function loadCards() {
