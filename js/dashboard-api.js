@@ -50,9 +50,10 @@ async function loadDashboardData() {
         // Load accounts
         loadDashboardAccounts(accounts);
 
-        // Set current account display (use first account as default)
+        // Set current account display (respect selectedAccountId if present)
         if (accounts && accounts.length > 0) {
-            const acct = accounts[0];
+            const selectedId = localStorage.getItem('selectedAccountId');
+            const acct = (selectedId ? accounts.find(a => a.id === selectedId) : null) || accounts[0];
             const labelEl = document.getElementById('currentAccountLabel');
             const availEl = document.getElementById('currentAccountAvailable');
             if (labelEl) labelEl.textContent = `${capitalize(acct.account_type)} • ****${acct.account_number.slice(-4)}`;
