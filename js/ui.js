@@ -98,7 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   // Toggle `desktop` class on body for larger viewports (laptop/desktop)
   function updateDesktopMode() {
-    if (window.innerWidth >= 1024) document.body.classList.add('desktop');
+    // Treat very large screens as desktop; smaller laptops keep the mobile bottom nav visible.
+    const DESKTOP_BREAKPOINT = 1280; // px
+    if (window.innerWidth >= DESKTOP_BREAKPOINT) document.body.classList.add('desktop');
     else document.body.classList.remove('desktop');
   }
   updateDesktopMode();
