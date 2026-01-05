@@ -6,7 +6,27 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (!requireAuth()) return;
     await displayUserName();
     await loadAccounts();
-    setupTransferTypeToggle();
+
+    // Preselect transfer type from URL (e.g. ?type=international)
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const pre = params.get('type');
+        if (pre) {
+            const radio = document.querySelector(`input[name="transferType"][value="${pre}"]`);
+            if (radio) radio.checked = true;
+        }
+        setupTransferTypeToggle();
+
+        // Show helpful hint for international transfers
+        const hint = document.getElementById('transferHint');
+        if (pre === 'international' && hint) {
+            hint.classList.remove('hidden');
+            hint.textContent = 'International transfers: provide IBAN/SWIFT and recipient bank details. Processing may take 1-5 business days and fees may apply.';
+        }
+    } catch (err) {
+        console.warn('Failed to parse transfer type from URL', err);
+        setupTransferTypeToggle();
+    }
 });
 
 function setupTransferTypeToggle() {

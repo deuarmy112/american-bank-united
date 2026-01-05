@@ -238,7 +238,12 @@ router.post('/send-to-bank', authenticateToken, externalTransferValidation, asyn
 
         // Create external transfer record
         const transferId = generateId();
-        const status = transferType === 'wire' ? 'completed' : 'pending'; // Wire is instant, ACH takes time
+        // Treat international or explicit wire transfers as completed when banking details present
+        const effectiveType = transferType || 'ach';
+        let status = 'pending';
+        if (effectiveType === 'wire' || effectiveType === 'international' || (bankName && accountNumber)) {
+            status = 'completed';
+        }
 
         await client.query(`
             INSERT INTO external_transfers 
@@ -247,7 +252,7 @@ router.post('/send-to-bank', authenticateToken, externalTransferValidation, asyn
         `, [
             transferId,
             fromAccountId,
-            transferType || 'ach',
+            effectiveType,
             'outgoing',
             amount,
             accountHolderName,
@@ -277,7 +282,7 @@ router.post('/send-to-bank', authenticateToken, externalTransferValidation, asyn
 
         res.json({
             success: true,
-            message: `Transfer ${status}. ${transferType === 'wire' ? 'Funds sent immediately.' : 'Processing time: 1-3 business days.'}`,
+            message: `Transfer ${status}. ${status === 'completed' ? 'Funds sent.' : 'Processing time: 1-3 business days.'}`,
             transfer: {
                 id: transferId,
                 amount,
@@ -285,7 +290,7 @@ router.post('/send-to-bank', authenticateToken, externalTransferValidation, asyn
                 bankName,
                 accountHolderName,
                 newBalance,
-                estimatedArrival: transferType === 'wire' ? 'Immediate' : '1-3 business days'
+                estimatedArrival: status === 'completed' ? 'Immediate' : '1-3 business days'
             }
         });
 
