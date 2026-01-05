@@ -166,22 +166,27 @@
                         <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-wallet text-fuchsia-600"></i></div>
                         <span class="text-xs">Wallet</span>
                     </button>
-                    <button onclick="openFeatureModal('loan')" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-hand-holding-dollar text-rose-500"></i></div>
-                        <span class="text-xs">Loans</span>
+                    <button id="moreToggle" onclick="toggleMoreMenu()" class="flex flex-col items-center gap-1 p-2">
+                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-ellipsis-h text-slate-700"></i></div>
+                        <span class="text-xs">More...</span>
                     </button>
-                    <button onclick="openFeatureModal('loan')" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-hand-holding-dollar text-rose-500"></i></div>
-                        <span class="text-xs">Loan</span>
-                    </button>
-                    <button onclick="location.href='investments.html'" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-chart-line text-sky-600"></i></div>
-                        <span class="text-xs">Investment</span>
-                    </button>
-                    <button onclick="location.href='shop.html'" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-store text-yellow-600"></i></div>
-                        <span class="text-xs">Shop Now</span>
-                    </button>
+                    <!-- Hidden more menu (loan, investments, shop) -->
+                    <div id="moreMenu" class="hidden col-span-4">
+                        <div class="mt-2 grid grid-cols-3 gap-3">
+                            <button onclick="openFeatureModal('loan')" class="flex flex-col items-center gap-1 p-2">
+                                <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-hand-holding-dollar text-rose-500"></i></div>
+                                <span class="text-xs">Loan</span>
+                            </button>
+                            <button onclick="location.href='investments.html'" class="flex flex-col items-center gap-1 p-2">
+                                <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-chart-line text-sky-600"></i></div>
+                                <span class="text-xs">Investment</span>
+                            </button>
+                            <button onclick="location.href='shop.html'" class="flex flex-col items-center gap-1 p-2">
+                                <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-store text-yellow-600"></i></div>
+                                <span class="text-xs">Shop Now</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -222,6 +227,23 @@
                 <script>
                     // expose small helper for beneficiaries open from quick actions
                     async function openBeneficiariesModal() { if (window.openFeatureModal) { openFeatureModal('beneficiaries'); await loadBeneficiaries(); } }
+
+                    // Toggle the More... menu that contains additional quick actions
+                    function toggleMoreMenu() {
+                        const menu = document.getElementById('moreMenu');
+                        const btn = document.getElementById('moreToggle');
+                        if (!menu) return;
+                        const hidden = menu.classList.contains('hidden');
+                        if (hidden) {
+                            menu.classList.remove('hidden');
+                            btn.setAttribute('aria-expanded', 'true');
+                            // scroll into view on small screens
+                            menu.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } else {
+                            menu.classList.add('hidden');
+                            btn.setAttribute('aria-expanded', 'false');
+                        }
+                    }
                 </script>
 
         <!-- Feature sheet + bottom nav -->
