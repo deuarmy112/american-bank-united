@@ -496,3 +496,10 @@ window.submitBet = submitBet;
 window.submitDeposit = submitDeposit;
 window.submitWithdraw = submitWithdraw;
 window.submitLoan = submitLoan;
+// Beneficiaries API (exposed for modal buttons)
+window.loadBeneficiaries = loadBeneficiaries;
+window.createBeneficiary = createBeneficiary;
+window.deleteBeneficiary = deleteBeneficiary;
+window.editBeneficiary = editBeneficiary;
+// Local fallback save helper used by transfer page when offline
+window.saveLocalBeneficiary = saveLocalBeneficiary;
