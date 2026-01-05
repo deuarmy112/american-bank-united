@@ -39,6 +39,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const radio = document.querySelector('input[name="transferType"][value="external"]'); if (radio) radio.checked = true;
                 const extAcct = document.getElementById('extAccountNumber'); if (extAcct) extAcct.value = toAcct;
                 const extBank = document.getElementById('extBankName'); if (extBank && bank) extBank.value = bank;
+                const recip = params.get('recipientName');
+                const extName = document.getElementById('extRecipientName'); if (extName && recip) extName.value = recip;
             }
             if (hint && (bank || params.get('transferType') === 'international')) { hint.classList.remove('hidden'); }
         }
