@@ -4,6 +4,9 @@
   --opay-end:#ff2d55;
   --muted:#6b7280;
   --card:#ffffff;
+  --abu-silver:#C0C0C0;
+  --abu-grey:#7f7f7f;
+  --abu-gold:#D4AF37;
 }
 body{
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
@@ -19,9 +22,17 @@ body{
   box-shadow: 0 8px 20px rgba(15,23,42,0.06);
 }
 .opay-balance{color:white;padding:1rem;border-radius:1rem}
+.opay-abu-gradient{background: linear-gradient(90deg,var(--abu-silver),var(--abu-grey),var(--abu-gold));}
 .opay-action{background:var(--card);border-radius:9999px;padding:.6rem;box-shadow:0 6px 14px rgba(15,23,42,0.06)}
 .opay-quick .w-14{width:3.5rem;height:3.5rem}
 .opay-quick i{font-size:1.1rem}
+/* Ensure quick-action icons and header icons match ABU palette */
+.opay-quick i, .opay-header i, .opay-brand img, .opay-logo, .opay-bottom-nav a i, .opay-bottom-nav .fab i {
+  color: var(--abu-gold) !important;
+}
+
+/* Tints for SVG logos when used inline */
+.opay-brand img, .opay-logo img { filter: none; }
 .opay-bottom-nav{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(90deg,rgba(255,255,255,0.9),rgba(255,255,255,0.95));box-shadow:0 -6px 24px rgba(15,23,42,0.06);padding:8px 12px}
 .opay-bottom-nav .fab{width:56px;height:56px;border-radius:9999px;background:linear-gradient(135deg,var(--opay-start),var(--opay-end));display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 8px 24px rgba(255,45,85,0.18);transform:translateY(-20%)}
 .opay-pill{background:rgba(255,255,255,0.08);padding:.35rem .6rem;border-radius:9999px;color:#fff;font-size:.85rem}
