@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const readerId = 'reader';
 
   let html5QrcodeScanner = null;
+  let pendingRedirect = null;
 
   scanTab.addEventListener('click', () => { scanPane.classList.remove('hidden'); showPane.classList.add('hidden'); });
   showTab.addEventListener('click', () => { scanPane.classList.add('hidden'); showPane.classList.remove('hidden'); });
@@ -46,23 +47,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       const acct = payload.accountNumber || payload.iban || payload.account_number;
       const bank = payload.bankName || payload.bank || payload.bank_name || '';
       const amount = payload.amount || '';
-      // stop scanner
-      if (html5QrcodeScanner) html5QrcodeScanner.stop();
-      // Redirect to transfer page with prefilled params
-      const u = new URL(window.location.origin + '/transfer.html');
-      if (acct) u.searchParams.set('toAccountNumber', acct);
-      if (bank) u.searchParams.set('bank', bank);
-      if (amount) u.searchParams.set('amount', amount);
-      window.location.href = u.toString();
+      const recipName = payload.name || payload.recipientName || payload.payee || payload.payee_name || '';
+      // stop scanner and show a visual confirmation
+      if (html5QrcodeScanner && html5QrcodeScanner.stop) await html5QrcodeScanner.stop();
+      pendingRedirect = { acct, bank, amount, recipName };
+      showConfirmation(pendingRedirect);
       return;
     }
 
-    // Otherwise treat decodedText as account number or deeplink — redirect to transfer with account number
+    // Otherwise treat decodedText as account number or deeplink — show confirmation and redirect on confirm
     if (!payload && decodedText) {
-      if (html5QrcodeScanner) html5QrcodeScanner.stop();
-      const u = new URL(window.location.origin + '/transfer.html');
-      u.searchParams.set('toAccountNumber', decodedText);
-      window.location.href = u.toString();
+      if (html5QrcodeScanner && html5QrcodeScanner.stop) await html5QrcodeScanner.stop();
+      pendingRedirect = { acct: decodedText, bank: '', amount: '', recipName: '' };
+      showConfirmation(pendingRedirect);
     }
   }
 
@@ -89,5 +86,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     container.innerHTML = '';
     new QRCode(container, { text: JSON.stringify(payload), width: 200, height: 200 });
   } catch (e) { console.error('QR gen failed', e); }
+
+  // Confirmation UI handlers
+  const confirmPane = document.getElementById('confirmPane');
+  const confirmDetails = document.getElementById('confirmDetails');
+  const confirmBtn = document.getElementById('confirmBtn');
+  const cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
+
+  function showConfirmation(p) {
+    // hide scan pane and show confirmation block
+    scanPane.classList.add('hidden');
+    confirmPane.classList.remove('hidden');
+    const lines = [];
+    if (p.recipName) lines.push(`<strong>Recipient:</strong> ${p.recipName}`);
+    lines.push(`<strong>Account:</strong> ${p.acct}`);
+    if (p.bank) lines.push(`<strong>Bank:</strong> ${p.bank}`);
+    if (p.amount) lines.push(`<strong>Amount:</strong> $${p.amount}`);
+    confirmDetails.innerHTML = lines.join('<br>');
+  }
+
+  async function resumeScanner() {
+    confirmPane.classList.add('hidden');
+    scanPane.classList.remove('hidden');
+    resultEl.textContent = 'No scan yet';
+    pendingRedirect = null;
+    try {
+      if (!html5QrcodeScanner) html5QrcodeScanner = new Html5Qrcode(readerId);
+      await html5QrcodeScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: 250 }, onScanSuccess, onScanFailure);
+      startBtn.style.display = 'none'; stopBtn.style.display = 'inline-block';
+    } catch (err) { console.error('Resume scanner failed', err); }
+  }
+
+  confirmBtn.addEventListener('click', () => {
+    if (!pendingRedirect) return;
+    const u = new URL(window.location.origin + '/transfer.html');
+    if (pendingRedirect.acct) u.searchParams.set('toAccountNumber', pendingRedirect.acct);
+    if (pendingRedirect.bank) u.searchParams.set('bank', pendingRedirect.bank);
+    if (pendingRedirect.amount) u.searchParams.set('amount', pendingRedirect.amount);
+    if (pendingRedirect.recipName) u.searchParams.set('recipientName', pendingRedirect.recipName);
+    window.location.href = u.toString();
+  });
+
+  cancelConfirmBtn.addEventListener('click', async () => {
+    await resumeScanner();
+  });
 
 });

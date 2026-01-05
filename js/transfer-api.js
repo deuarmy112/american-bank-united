@@ -23,6 +23,26 @@ document.addEventListener('DOMContentLoaded', async function() {
             hint.classList.remove('hidden');
             hint.textContent = 'International transfers: provide IBAN/SWIFT and recipient bank details. Processing may take 1-5 business days and fees may apply.';
         }
+
+        // Prefill transfer fields from URL (used by QR scanner)
+        const toAcct = params.get('toAccountNumber');
+        const bank = params.get('bank');
+        const amount = params.get('amount');
+        if (toAcct) {
+            // try to match loaded accounts by account number (loadAccounts was awaited earlier)
+            const accounts = window.transferLoadedAccounts || [];
+            const match = accounts.find(a => (a.account_number || a.accountNumber || '').toString() === toAcct.toString());
+            if (match) {
+                const radio = document.querySelector('input[name="transferType"][value="internal"]'); if (radio) radio.checked = true;
+                const toSelect = document.getElementById('toAccount'); if (toSelect) toSelect.value = match.id;
+            } else {
+                const radio = document.querySelector('input[name="transferType"][value="external"]'); if (radio) radio.checked = true;
+                const extAcct = document.getElementById('extAccountNumber'); if (extAcct) extAcct.value = toAcct;
+                const extBank = document.getElementById('extBankName'); if (extBank && bank) extBank.value = bank;
+            }
+            if (hint && (bank || params.get('transferType') === 'international')) { hint.classList.remove('hidden'); }
+        }
+        if (amount) { const amt = document.getElementById('amount'); if (amt) amt.value = amount; }
     } catch (err) {
         console.warn('Failed to parse transfer type from URL', err);
         setupTransferTypeToggle();
@@ -90,7 +110,9 @@ async function loadAccounts() {
                 balanceDisplay.textContent = '';
             }
         });
-        
+            // expose loaded accounts for callers that want to prefill fields
+            window.transferLoadedAccounts = accounts;
+            return accounts;
     } catch (error) {
         console.error('Failed to load accounts:', error);
         showAlert('Failed to load accounts', 'error');
