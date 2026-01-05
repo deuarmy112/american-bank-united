@@ -12,16 +12,18 @@ document.addEventListener('DOMContentLoaded', async function() {
 function setupTransferTypeToggle() {
     const radios = Array.from(document.getElementsByName('transferType'));
     const update = () => {
-        const isExternal = document.querySelector('input[name="transferType"]:checked').value === 'external';
+        const type = document.querySelector('input[name="transferType"]:checked').value;
+        const isExternalLike = type !== 'internal';
         const toAccount = document.getElementById('toAccount');
         const externalFields = document.getElementById('externalFields');
-        toAccount.required = !isExternal;
-        externalFields.classList.toggle('hidden', !isExternal);
+        // destination account is required only for internal transfers
+        toAccount.required = (type === 'internal');
+        externalFields.classList.toggle('hidden', !isExternalLike);
 
-        // Make external inputs required only when external transfer selected
+        // Make external inputs required only when external-like transfer selected
         ['extRecipientName', 'extAccountNumber', 'extBankName', 'extEmail'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.required = isExternal;
+            if (el) el.required = isExternalLike;
         });
     };
 
@@ -81,8 +83,8 @@ document.getElementById('transferForm')?.addEventListener('submit', async functi
         if (fromAccountId === toAccountId) { showAlert('Cannot transfer to the same account', 'error'); return; }
     }
 
-    if (transferType === 'external') {
-        // ensure external fields (including recipient email)
+    if (transferType !== 'internal') {
+        // ensure external-like fields (covers 'external' and 'international')
         const name = document.getElementById('extRecipientName').value.trim();
         const acct = document.getElementById('extAccountNumber').value.trim();
         const bank = document.getElementById('extBankName').value.trim();
@@ -106,7 +108,7 @@ document.getElementById('transferForm')?.addEventListener('submit', async functi
         if (transferType === 'internal') {
             await transactionsAPI.transfer(fromAccountId, toAccountId, amount, description);
         } else {
-            // external transfer
+            // external-like transfer (Other Bank or International) — use same API/flow
             const recipientName = document.getElementById('extRecipientName').value.trim();
             const accountNumber = document.getElementById('extAccountNumber').value.trim();
             const bankName = document.getElementById('extBankName').value.trim();
@@ -114,18 +116,19 @@ document.getElementById('transferForm')?.addEventListener('submit', async functi
             const contact = document.getElementById('extContact').value.trim();
             const saveAsBeneficiary = document.getElementById('saveAsBeneficiary').checked;
 
-                // Use shared apiClient so base URL and auth token are handled consistently
-                await apiClient.post('/external-transfers', {
-                    fromAccountId,
-                    recipientName,
-                    recipientEmail,
-                    accountNumber,
-                    bankName,
-                    contact,
-                    amount,
-                    description,
-                    saveAsBeneficiary
-                });
+            // Use shared apiClient so base URL and auth token are handled consistently
+            await apiClient.post('/external-transfers', {
+                fromAccountId,
+                recipientName,
+                recipientEmail,
+                accountNumber,
+                bankName,
+                contact,
+                amount,
+                description,
+                transferType,
+                saveAsBeneficiary
+            });
         }
         
         showAlert('Transfer completed successfully!', 'success');
