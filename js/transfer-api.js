@@ -29,6 +29,18 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
+// Local beneficiary helpers (used when server is not reachable)
+function getLocalBeneficiaries() {
+    try { return JSON.parse(localStorage.getItem('localBeneficiaries') || '[]'); } catch (e) { return []; }
+}
+
+function saveLocalBeneficiaryLocal(obj) {
+    const arr = getLocalBeneficiaries();
+    const newB = { id: 'local-' + Date.now(), name: obj.name, account_number: obj.account_number || obj.accountNumber || '', bank_name: obj.bank_name || obj.bankName || '', nickname: obj.nickname || '' };
+    arr.push(newB);
+    localStorage.setItem('localBeneficiaries', JSON.stringify(arr));
+}
+
 function setupTransferTypeToggle() {
     const radios = Array.from(document.getElementsByName('transferType'));
     const update = () => {
@@ -172,6 +184,17 @@ document.getElementById('transferForm')?.addEventListener('submit', async functi
             showAlert('Transfer queued (offline demo). It will complete when the server is reachable.', 'success');
             e.target.reset();
             document.getElementById('fromAccountBalance').textContent = '';
+            // If user asked to save as beneficiary, persist locally for offline/demo mode
+            try {
+                if (saveAsBeneficiary) {
+                    if (window.saveLocalBeneficiary) {
+                        window.saveLocalBeneficiary({ name: recipientName, account_number: accountNumber, bank_name: bankName, nickname: '' });
+                    } else {
+                        saveLocalBeneficiaryLocal({ name: recipientName, account_number: accountNumber, bank_name: bankName, nickname: '' });
+                    }
+                    showAlert('Beneficiary saved locally (offline mode).', 'success');
+                }
+            } catch (err) { console.error('Save local beneficiary failed', err); }
         } else {
             showAlert(error.message || 'Transfer failed', 'error');
         }

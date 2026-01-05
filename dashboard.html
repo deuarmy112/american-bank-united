@@ -447,13 +447,16 @@
                     <button onclick="closeFeatureModal('beneficiaries')" class="text-slate-500">Close</button>
                 </div>
                 <div class="mt-4">
-                    <form id="beneficiaryForm" class="space-y-2" onsubmit="createBeneficiary(event)">
+                    <form id="beneficiaryForm" data-editing="" class="space-y-2" onsubmit="createBeneficiary(event)">
                         <input id="benName" type="text" required class="w-full rounded-md border px-3 py-2" placeholder="Full name">
-                        <input id="benAccountNumber" type="text" class="w-full rounded-md border px-3 py-2" placeholder="Account number (optional)">
-                        <input id="benBank" type="text" class="w-full rounded-md border px-3 py-2" placeholder="Bank name (optional)">
-                        <input id="benNickname" type="text" class="w-full rounded-md border px-3 py-2" placeholder="Nickname (optional)">
+                        <input id="benAccountNumber or IBAN" type="text" class="w-full rounded-md border px-3 py-2" placeholder="Account number or IBAN">
+                        <input id="benBank" type="text" class="w-full rounded-md border px-3 py-2" placeholder="Bank name">
+                        <input id="benEmail" type="email" class="w-full rounded-md border px-3 py-2" placeholder="Email">
+                        <input id="benPhone" type="tel" class="w-full rounded-md border px-3 py-2" placeholder="Phone number">
+                   
                         <div class="flex gap-2">
                             <button type="submit" class="flex-1 bg-indigo-600 text-white py-2 rounded-md">Add</button>
+                            <button type="button" id="benCancelBtn" onclick="(function(){ const f=document.getElementById('beneficiaryForm'); f.reset(); f.dataset.editing=''; f.querySelector('button[type=submit]').textContent='Add'; this.style.display='none'; })()" class="flex-1 border py-2 rounded-md hidden">Cancel</button>
                             <button type="button" onclick="closeFeatureModal('beneficiaries')" class="flex-1 border py-2 rounded-md">Done</button>
                         </div>
                     </form>

@@ -223,8 +223,15 @@ async function submitWithdraw(e) {
 async function loadBeneficiaries() {
   try {
     const token = localStorage.getItem('authToken'); if (!token) return;
-    const r = await fetch('/api/beneficiaries', { headers: { Authorization: 'Bearer ' + token } });
-    const list = await r.json();
+    let list = [];
+    try {
+      const r = await fetch('/api/beneficiaries', { headers: { Authorization: 'Bearer ' + token } });
+      if (r.ok) list = await r.json();
+      else list = getLocalBeneficiaries();
+    } catch (err) {
+      // fallback to local storage when API not available
+      list = getLocalBeneficiaries();
+    }
     const container = document.getElementById('beneficiariesList');
     container.innerHTML = list.map(b => `
       <div class="flex items-center justify-between p-2 border rounded">
@@ -234,6 +241,7 @@ async function loadBeneficiaries() {
         </div>
         <div class="flex items-center gap-2">
           <button onclick="payBeneficiary('${b.id}')" class="text-sm px-2 py-1 bg-indigo-600 text-white rounded">Pay</button>
+          <button onclick="editBeneficiary('${b.id}')" class="text-sm px-2 py-1 border rounded">Edit</button>
           <button onclick="deleteBeneficiary('${b.id}')" class="text-sm px-2 py-1 border rounded">Remove</button>
         </div>
       </div>
@@ -248,24 +256,104 @@ async function createBeneficiary(e) {
   const accountNumber = document.getElementById('benAccountNumber').value;
   const bank = document.getElementById('benBank').value;
   const nick = document.getElementById('benNickname').value;
+  const editingId = document.getElementById('beneficiaryForm').dataset.editing;
   try {
-    const res = await fetch('/api/beneficiaries', { method: 'POST', headers: { 'content-type':'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ name, accountNumber, bankName: bank, nickname: nick }) });
-    const j = await res.json(); if (!res.ok) throw new Error(j.error || 'Failed');
-    showToast('Beneficiary added');
+    if (editingId) {
+      // update
+      try {
+        const res = await fetch('/api/beneficiaries/' + editingId, { method: 'PUT', headers: { 'content-type':'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ name, accountNumber, bankName: bank, nickname: nick }) });
+        if (!res.ok) throw new Error('Server update failed');
+      } catch (err) {
+        // fallback to local
+        updateLocalBeneficiary(editingId, { name, account_number: accountNumber, bank_name: bank, nickname: nick });
+      }
+      showToast('Beneficiary updated');
+      document.getElementById('beneficiaryForm').dataset.editing = '';
+      document.getElementById('beneficiaryForm').querySelector('button[type="submit"]').textContent = 'Add';
+      const cancelBtn = document.getElementById('benCancelBtn'); if (cancelBtn) cancelBtn.style.display = 'none';
+    } else {
+      // create
+      try {
+        const res = await fetch('/api/beneficiaries', { method: 'POST', headers: { 'content-type':'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ name, accountNumber, bankName: bank, nickname: nick }) });
+        if (!res.ok) throw new Error('Server add failed');
+      } catch (err) {
+        // fallback to local storage
+        saveLocalBeneficiary({ name, account_number: accountNumber, bank_name: bank, nickname: nick });
+      }
+      showToast('Beneficiary added');
+    }
     document.getElementById('beneficiaryForm').reset();
     loadBeneficiaries();
-  } catch (e) { console.error(e); alert('Failed to add beneficiary') }
+  } catch (e) { console.error(e); alert('Failed to add/update beneficiary') }
 }
 
 async function deleteBeneficiary(id) {
   if (!confirm('Remove beneficiary?')) return;
   const token = localStorage.getItem('authToken'); if (!token) return;
   try {
-    const res = await fetch('/api/beneficiaries/' + id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
-    if (!res.ok) throw new Error('Failed');
+    try {
+      const res = await fetch('/api/beneficiaries/' + id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
+      if (!res.ok) throw new Error('Server delete failed');
+    } catch (err) {
+      // fallback to local
+      removeLocalBeneficiary(id);
+    }
     showToast('Beneficiary removed');
     loadBeneficiaries();
   } catch (e) { console.error(e); alert('Delete failed') }
+}
+
+// Edit handler to populate form with beneficiary data
+async function editBeneficiary(id) {
+  const token = localStorage.getItem('authToken');
+  let b = null;
+  try {
+    try {
+      const r = await fetch('/api/beneficiaries', { headers: { Authorization: 'Bearer ' + token } });
+      if (r.ok) {
+        const list = await r.json();
+        b = list.find(x => x.id === id);
+      }
+    } catch (err) {
+      // ignore
+    }
+    if (!b) b = getLocalBeneficiaries().find(x => x.id === id);
+  } catch (err) { console.error(err); }
+  if (!b) return alert('Beneficiary not found');
+  document.getElementById('benName').value = b.name || '';
+  document.getElementById('benAccountNumber').value = b.account_number || b.accountNumber || '';
+  document.getElementById('benBank').value = b.bank_name || b.bankName || '';
+  document.getElementById('benNickname').value = b.nickname || '';
+  const form = document.getElementById('beneficiaryForm');
+  form.dataset.editing = id;
+  form.querySelector('button[type="submit"]').textContent = 'Update';
+  const cancel = document.getElementById('benCancelBtn'); if (cancel) cancel.style.display = 'inline-block';
+}
+
+// Local storage fallback helpers for beneficiaries
+function getLocalBeneficiaries() {
+  try { return JSON.parse(localStorage.getItem('localBeneficiaries') || '[]'); } catch (e) { return []; }
+}
+
+function saveLocalBeneficiary(obj) {
+  const arr = getLocalBeneficiaries();
+  const newB = { id: 'local-' + Date.now(), name: obj.name, account_number: obj.account_number || obj.accountNumber || '', bank_name: obj.bank_name || obj.bankName || '', nickname: obj.nickname || '' };
+  arr.push(newB);
+  localStorage.setItem('localBeneficiaries', JSON.stringify(arr));
+}
+
+function updateLocalBeneficiary(id, obj) {
+  const arr = getLocalBeneficiaries();
+  const idx = arr.findIndex(x => x.id === id);
+  if (idx === -1) return false;
+  arr[idx] = { ...arr[idx], ...obj };
+  localStorage.setItem('localBeneficiaries', JSON.stringify(arr));
+  return true;
+}
+
+function removeLocalBeneficiary(id) {
+  const arr = getLocalBeneficiaries().filter(x => x.id !== id);
+  localStorage.setItem('localBeneficiaries', JSON.stringify(arr));
 }
 
 async function payBeneficiary(id) {
