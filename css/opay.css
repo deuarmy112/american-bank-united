@@ -18,9 +18,9 @@ body{
 }
 
 /* Convenience helpers to match the profile single-color theme */
-.opay-orange { color: var(--opay-start); }
-.opay-bg { background-color: var(--opay-start); }
-.opay-text { color: var(--opay-start); }
+.opay-orange { color: var(--abu-grey) !important; }
+.opay-bg { background-color: var(--abu-silver) !important; }
+.opay-text { color: var(--abu-grey) !important; }
 .opay-card{
   background: var(--card);
   border-radius: 1rem;
@@ -35,6 +35,75 @@ body{
 .opay-quick i, .opay-header i, .opay-bottom-nav a i, .opay-bottom-nav .fab i {
   color: var(--abu-grey) !important;
 }
+
+/* Make icons and interactive controls use a neutral silver/grey tone by default */
+:root {
+  --abu-control: var(--abu-grey);
+}
+
+/* Icons, font-awesome glyphs and inline SVGs */
+.fas, .far, .fab, .opay-quick i, .opay-header i, .opay-bottom-nav a i, .opay-bottom-nav a, .opay-text {
+  color: var(--abu-control) !important;
+}
+
+/* Neutralize Tailwind orange utility usages common in quick-actions */
+.bg-orange-50 { background-color: #ffffff !important; }
+.hover\:bg-orange-100:hover { background-color: #f8fafc !important; }
+
+/* Neutralize stronger orange utilities used in buttons and text */
+.bg-orange-600 { background-color: #f7f8f8 !important; color: var(--abu-control) !important; border: 1px solid #e6e9ea !important; }
+.hover\:bg-orange-700:hover { background-color: #eef0f1 !important; }
+.text-orange-600 { color: var(--abu-control) !important; }
+.text-orange-600:hover { color: var(--abu-control) !important; }
+.bg-amber-500, .text-amber-500 { background: #f7f8f8 !important; color: var(--abu-control) !important; }
+
+/* Catch other common classes that may color controls */
+.btn-primary, .btn-accent { background: #f7f8f8 !important; color: var(--abu-control) !important; border:1px solid #e6e9ea !important; }
+
+/* Neutralize Indigo utilities (buttons/active states) */
+.bg-indigo-600, .bg-indigo-500, .text-indigo-600, .text-indigo-500 {
+  background: #f7f8f8 !important;
+  color: var(--abu-control) !important;
+  border: 1px solid #e6e9ea !important;
+}
+.hover\:bg-indigo-700:hover, .hover\:bg-indigo-600:hover { background: #eef0f1 !important; }
+
+/* Override inline-colored icons: prefer the silver/grey control tone for icon glyphs */
+i[style*="color"], .fas[style*="color"], .far[style*="color"], .fab[style*="color"] {
+  color: var(--abu-control) !important;
+}
+
+/* Ensure links and small interactive text use the neutral control color */
+a[style*="color"] { color: var(--abu-control) !important; }
+
+
+/* Primary buttons and action controls: make them subtle silver/grey */
+.opay-btn {
+  background: linear-gradient(90deg,#f5f7f8,#eef0f1) !important;
+  color: var(--abu-control) !important;
+  box-shadow: 0 4px 10px rgba(15,23,42,0.04) !important;
+  border: 1px solid #e6e9ea !important;
+}
+
+/* Floating action button and bottom nav primary button */
+.opay-bottom-nav .fab {
+  background: #ffffff !important;
+  color: var(--abu-control) !important;
+  box-shadow: 0 6px 14px rgba(15,23,42,0.06) !important;
+  transform: translateY(-20%);
+  border: 1px solid #e6e9ea !important;
+}
+
+/* Quick action tiles: keep icon background neutral and icon color grey */
+.opay-quick .w-14, .opay-action, .w-14.h-14 { background: #ffffff !important; border: 1px solid #eef2f4 !important; }
+.opay-quick i { color: var(--abu-control) !important; }
+
+/* Ensure pills and small controls follow the neutral tone */
+.opay-pill, .opay-card .small, .opay-card .title { color: var(--abu-control) !important; }
+
+/* Ensure header buttons/icons remain grey */
+.opay-header button, .opay-header a { color: var(--abu-control) !important; }
+
 
 /* Tints for SVG logos when used inline */
 .opay-brand img, .opay-logo img { filter: none; }
