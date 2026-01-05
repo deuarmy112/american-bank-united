@@ -26,26 +26,24 @@ body{
 .opay-action{background:var(--card);border-radius:9999px;padding:.6rem;box-shadow:0 6px 14px rgba(15,23,42,0.06)}
 .opay-quick .w-14{width:3.5rem;height:3.5rem}
 .opay-quick i{font-size:1.1rem}
-/* Ensure quick-action icons and header icons match ABU palette */
-.opay-quick i, .opay-header i, .opay-brand img, .opay-logo, .opay-bottom-nav a i, .opay-bottom-nav .fab i {
-  color: var(--abu-gold) !important;
+/* Ensure quick-action icons and header icons use silver/grey */
+.opay-quick i, .opay-header i, .opay-bottom-nav a i, .opay-bottom-nav .fab i {
+  color: var(--abu-grey) !important;
 }
 
 /* Tints for SVG logos when used inline */
 .opay-brand img, .opay-logo img { filter: none; }
 
-/* Icon circle backgrounds: use silver -> grey gradient for quick actions and header buttons */
+/* Icon circle backgrounds: keep control background white */
 .w-14.h-14 {
-  background: linear-gradient(90deg, var(--abu-silver), var(--abu-grey)) !important;
-  color: var(--abu-gold) !important;
+  background: var(--card) !important;
 }
 
 .opay-header button {
-  background: linear-gradient(90deg, var(--abu-silver), var(--abu-grey));
-  color: var(--abu-gold);
+  background: transparent;
 }
 
-/* Slightly dim hover for header buttons while keeping gradient */
+/* Slightly dim hover for header buttons */
 .opay-header button:hover { opacity: 0.92; }
 .opay-bottom-nav{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(90deg,rgba(255,255,255,0.9),rgba(255,255,255,0.95));box-shadow:0 -6px 24px rgba(15,23,42,0.06);padding:8px 12px}
 .opay-bottom-nav .fab{width:56px;height:56px;border-radius:9999px;background:linear-gradient(135deg,var(--opay-start),var(--opay-end));display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 8px 24px rgba(255,45,85,0.18);transform:translateY(-20%)}
