@@ -64,14 +64,83 @@
             <div id="modal-deposit" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50">
                 <div class="bg-white rounded-lg w-11/12 max-w-md p-4">
                     <h3 class="text-lg font-semibold mb-2">Deposit Funds</h3>
-                    <form onsubmit="submitDeposit(event)">
-                        <label class="block text-sm">Account</label>
-                        <select id="depositAccount" class="w-full border rounded p-2 mb-2"></select>
-                        <label class="block text-sm">Amount</label>
-                        <input id="depositAmount" type="number" step="0.01" class="w-full border rounded p-2 mb-2" placeholder="0.00" />
+
+                    <!-- Method chooser -->
+                    <div class="flex gap-2 mb-3">
+                        <button type="button" class="px-3 py-1 rounded bg-slate-100" onclick="showDepositMethod('bank')">Bank / Account</button>
+                        <button type="button" class="px-3 py-1 rounded bg-slate-100" onclick="showDepositMethod('card')">Card</button>
+                        <button type="button" class="px-3 py-1 rounded bg-slate-100" onclick="showDepositMethod('crypto')">Crypto</button>
+                    </div>
+
+                    <!-- Common: select destination account -->
+                    <label class="block text-sm">Deposit To</label>
+                    <select id="depositAccount" class="w-full border rounded p-2 mb-3"></select>
+
+                    <!-- Bank / account method -->
+                    <form id="deposit-form-bank" class="deposit-method" onsubmit="submitDeposit(event)">
+                        <div class="mb-2">
+                            <label class="text-sm">Source Account Number / IBAN</label>
+                            <input id="bankSourceAccount" type="text" class="w-full border rounded p-2" placeholder="Account number or IBAN">
+                        </div>
+                        <div class="mb-2">
+                            <label class="text-sm">Source Bank (optional)</label>
+                            <input id="bankSourceName" type="text" class="w-full border rounded p-2" placeholder="Bank name">
+                        </div>
+                        <div class="mb-2">
+                            <label class="text-sm">Amount</label>
+                            <input id="depositAmount" type="number" step="0.01" class="w-full border rounded p-2" placeholder="0.00" />
+                        </div>
                         <div class="flex justify-end gap-2">
                             <button type="button" onclick="closeFeatureModal('deposit')" class="px-4 py-2">Cancel</button>
                             <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Deposit</button>
+                        </div>
+                    </form>
+
+                    <!-- Card method -->
+                    <form id="deposit-form-card" class="deposit-method hidden" onsubmit="submitDeposit(event)">
+                        <div class="mb-2">
+                            <label class="text-sm">Cardholder Name</label>
+                            <input id="cardName" type="text" class="w-full border rounded p-2" placeholder="Name on card">
+                        </div>
+                        <div class="mb-2 grid grid-cols-3 gap-2">
+                            <input id="cardNumber" type="text" class="col-span-3 border rounded p-2" placeholder="Card number">
+                        </div>
+                        <div class="mb-2 grid grid-cols-3 gap-2">
+                            <input id="cardExpiry" type="text" class="border rounded p-2" placeholder="MM/YY">
+                            <input id="cardCvv" type="text" class="border rounded p-2" placeholder="CVV">
+                            <input id="cardZip" type="text" class="border rounded p-2" placeholder="ZIP">
+                        </div>
+                        <div class="mb-2">
+                            <label class="text-sm">Amount</label>
+                            <input id="cardAmount" type="number" step="0.01" class="w-full border rounded p-2" placeholder="0.00" />
+                        </div>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" onclick="closeFeatureModal('deposit')" class="px-4 py-2">Cancel</button>
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Charge Card</button>
+                        </div>
+                    </form>
+
+                    <!-- Crypto method -->
+                    <form id="deposit-form-crypto" class="deposit-method hidden" onsubmit="submitDeposit(event)">
+                        <div class="mb-2">
+                            <label class="text-sm">Currency</label>
+                            <select id="cryptoCurrency" class="w-full border rounded p-2 mb-2">
+                                <option value="btc">BTC</option>
+                                <option value="usdt">USDT</option>
+                                <option value="eth">ETH</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="text-sm">Transaction ID (TXID)</label>
+                            <input id="cryptoTxid" type="text" class="w-full border rounded p-2" placeholder="Blockchain transaction id">
+                        </div>
+                        <div class="mb-2">
+                            <label class="text-sm">Amount</label>
+                            <input id="cryptoAmount" type="number" step="0.00000001" class="w-full border rounded p-2" placeholder="0.00000000" />
+                        </div>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" onclick="closeFeatureModal('deposit')" class="px-4 py-2">Cancel</button>
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Submit Deposit</button>
                         </div>
                     </form>
                 </div>

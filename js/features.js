@@ -58,20 +58,51 @@ async function submitDeposit(e) {
   e.preventDefault();
   const token = localStorage.getItem('authToken'); if (!token) return alert('Not signed in');
   const accountId = document.getElementById('depositAccount').value;
-  const amount = parseFloat(document.getElementById('depositAmount').value);
-  if (!accountId || !amount || amount <= 0) return alert('Complete form');
+  // Determine which method form is visible
+  const method = document.getElementById('deposit-form-card').classList.contains('hidden') && document.getElementById('deposit-form-crypto').classList.contains('hidden') ? 'bank' : (document.getElementById('deposit-form-card').classList.contains('hidden') ? 'crypto' : 'card');
 
   try {
+    let payload = { accountId, method };
+    if (method === 'bank') {
+      const amount = parseFloat(document.getElementById('depositAmount').value);
+      const src = document.getElementById('bankSourceAccount').value;
+      const bank = document.getElementById('bankSourceName').value;
+      if (!accountId || !amount || amount <= 0) return alert('Complete form');
+      payload = { ...payload, amount, sourceAccount: src, sourceBank: bank };
+    } else if (method === 'card') {
+      const amount = parseFloat(document.getElementById('cardAmount').value);
+      const name = document.getElementById('cardName').value;
+      const number = document.getElementById('cardNumber').value;
+      const expiry = document.getElementById('cardExpiry').value;
+      const cvv = document.getElementById('cardCvv').value;
+      if (!accountId || !amount || amount <= 0 || !number) return alert('Complete card details');
+      payload = { ...payload, amount, card: { name, number, expiry, cvv } };
+    } else if (method === 'crypto') {
+      const amount = parseFloat(document.getElementById('cryptoAmount').value);
+      const txid = document.getElementById('cryptoTxid').value;
+      const currency = document.getElementById('cryptoCurrency').value;
+      if (!accountId || !amount || amount <= 0 || !txid) return alert('Complete crypto deposit details');
+      payload = { ...payload, amount, txid, currency };
+    }
+
     const res = await fetch('/api/accounts/deposit', {
       method: 'POST', headers: { 'content-type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify({ accountId, amount })
+      body: JSON.stringify(payload)
     });
     const json = await res.json(); if (!res.ok) throw new Error(json.error || 'Deposit failed');
-    alert('Deposit successful — new balance: ' + json.newBalance);
+    alert('Deposit submitted — operation result: ' + (json.message || 'success'));
     closeFeatureModal('deposit');
     // refresh dashboard
     if (window.loadDashboardData) window.loadDashboardData();
   } catch (e) { console.error(e); alert('Deposit failed: ' + e.message); }
+}
+
+// Toggle deposit method visibility
+function showDepositMethod(which) {
+  document.querySelectorAll('.deposit-method').forEach(el => el.classList.add('hidden'));
+  if (which === 'bank') document.getElementById('deposit-form-bank').classList.remove('hidden');
+  if (which === 'card') document.getElementById('deposit-form-card').classList.remove('hidden');
+  if (which === 'crypto') document.getElementById('deposit-form-crypto').classList.remove('hidden');
 }
 
 async function submitWithdraw(e) {
