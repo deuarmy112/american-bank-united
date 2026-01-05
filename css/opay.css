@@ -104,6 +104,23 @@ a[style*="color"] { color: var(--abu-control) !important; }
 /* Ensure header buttons/icons remain grey */
 .opay-header button, .opay-header a { color: var(--abu-control) !important; }
 
+/* Balance card: silver -> grey -> gold gradient for ABU branding */
+.opay-balance-gradient {
+  background: linear-gradient(135deg, var(--abu-silver) 0%, var(--abu-grey) 55%, var(--abu-gold) 100%);
+  color: #ffffff; /* keep text readable */
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 10px 30px rgba(15,23,42,0.08);
+}
+
+/* Ensure action buttons inside balance card are visible on the gradient */
+.opay-balance-gradient .btn, .opay-balance-gradient button {
+  background: rgba(255,255,255,0.18) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+
 
 /* Tints for SVG logos when used inline */
 .opay-brand img, .opay-logo img { filter: none; }
