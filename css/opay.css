@@ -161,6 +161,26 @@ h1.opay-title{font-size:1.1rem;font-weight:700;margin:0}
 .opay-card { padding:1rem }
 .opay-card .title { font-weight:600 }
 
+/* Accounts page styles */
+.account-card-full, .account-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 8px 18px rgba(15,23,42,0.05);
+  border: 1px solid rgba(15,23,42,0.03);
+}
+.account-card .account-header, .account-card-full .account-header { display:flex; justify-content:space-between; align-items:center; gap:8px }
+.account-card .account-number, .account-card-full .account-number { color:var(--muted); font-size:0.9rem }
+.account-card .account-balance, .account-card-full .account-balance { font-size:1.25rem; font-weight:700; margin-top:6px }
+.account-card .account-type-badge { background: #f1f5f9; color:var(--abu-grey); padding:4px 8px; border-radius:9999px; font-size:0.75rem }
+.selected-account { border: 1px solid rgba(124,58,237,0.12); box-shadow: 0 8px 22px rgba(124,58,237,0.06); }
+.account-actions { display:flex; gap:8px; margin-top:10px }
+.account-actions button { padding:.5rem .75rem; border-radius:8px; border:1px solid rgba(15,23,42,0.04); background:#fbfdfe }
+
+@media (min-width: 768px) {
+  .max-w-2xl { max-width: 920px !important }
+}
+
 /* Buttons */
 .opay-btn { background:linear-gradient(90deg,var(--opay-start),var(--opay-end)); color:#fff; padding:.6rem 1rem; border-radius:10px; border:0 }
 

@@ -27,27 +27,33 @@ function displayAccounts(accounts) {
     }
     
     accountsList.innerHTML = '';
-    
+
     const selectedId = localStorage.getItem('selectedAccountId');
 
     accounts.forEach(account => {
-        const accountCard = document.createElement('div');
-        accountCard.className = 'account-card-full';
-        // highlight if selected
-        if (selectedId && selectedId === account.id) accountCard.classList.add('selected-account');
-        accountCard.innerHTML = `
+        const card = document.createElement('div');
+        card.className = 'account-card';
+        if (selectedId && selectedId === account.id) card.classList.add('selected-account');
+        card.innerHTML = `
             <div class="account-header">
-                <h3>${account.account_type.charAt(0).toUpperCase() + account.account_type.slice(1)} Account</h3>
-                <span class="account-status ${account.status}">${account.status}</span>
+                <div>
+                  <div class="text-sm text-slate-500">${account.account_type.charAt(0).toUpperCase() + account.account_type.slice(1)} Account</div>
+                  <div class="text-xs text-slate-400">${account.account_nickname || ''}</div>
+                </div>
+                <div class="account-type-badge">${account.account_type.charAt(0).toUpperCase() + account.account_type.slice(1)}</div>
             </div>
-            <p class="account-number">Account Number: ${account.account_number}</p>
-            <p class="account-balance">${formatCurrency(account.balance)}</p>
-            <p class="account-date">Opened: ${formatDate(account.created_at)}</p>
             <div class="mt-3">
-                <button class="btn btn-sm btn-primary" onclick='selectAccount(${JSON.stringify(account)})'>Use this account</button>
+                <div class="account-number">**** ${account.account_number.slice(-4)}</div>
+                <div class="account-balance">${formatCurrency(account.balance)}</div>
+                <div class="account-date text-xs text-slate-400">Opened: ${formatDate(account.created_at)}</div>
+            </div>
+            <div class="account-actions">
+                <button onclick='selectAccount(${JSON.stringify(account)})'>Select</button>
+                <button onclick="location.href='transactions.html?account=${account.id}'">Transactions</button>
+                <button onclick="location.href='transfer.html'">Transfer</button>
             </div>
         `;
-        accountsList.appendChild(accountCard);
+        accountsList.appendChild(card);
     });
 }
 

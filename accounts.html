@@ -16,19 +16,15 @@
     <style>body{background:#f8fafc}</style>
 </head>
 <body class="opay-ui">
-        <header class="fixed top-0 left-0 right-0 bg-white shadow z-20">
-            <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <a href="dashboard.html" class="text-indigo-600 text-lg"><i class="fas fa-chevron-left"></i></a>
-                    <h1 class="text-lg font-semibold">Accounts</h1>
-                </div>
-                <div></div>
-            </div>
-        </header>
         <header class="opay-header fixed top-0 left-0 right-0 z-20">
             <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <a href="dashboard.html" class="opay-brand"><div style="margin-left:.5rem"><div class="opay-name">Accounts</div><div class="opay-sub">Manage your accounts</div></div></a>
+                </div>
+                <div>
+                    <button onclick="showCreateAccountModal()" class="inline-flex items-center gap-2 bg-slate-100 text-sm text-slate-700 px-3 py-2 rounded-md">
+                        <i class="fas fa-plus"></i> New
+                    </button>
                 </div>
             </div>
         </header>
@@ -36,15 +32,23 @@
         <main class="pt-20 pb-24 max-w-2xl mx-auto px-4">
             <div id="alert" class="hidden"></div>
 
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-base font-medium">Your Accounts</h2>
-                <button onclick="showCreateAccountModal()" class="inline-flex items-center gap-2 bg-indigo-600 text-white px-3 py-2 rounded-md text-sm">
-                    <i class="fas fa-plus"></i> New
-                </button>
-            </div>
+            <div class="mb-4">
+                <div class="opay-card p-4 mb-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-sm text-slate-500">Total available balance</div>
+                            <div id="accountsTotalBalance" class="text-2xl font-bold mt-1">$0.00</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="location.href='transfer.html'" class="px-3 py-2 bg-white/10 text-white rounded">Transfer</button>
+                            <button onclick="openFeatureModal('deposit')" class="px-3 py-2 bg-white/10 text-white rounded">Deposit</button>
+                        </div>
+                    </div>
+                </div>
 
-            <div id="accountsList" class="space-y-3">
-                <!-- Accounts will be loaded here as mobile cards -->
+                <div id="accountsList" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Accounts will be loaded here as cards -->
+                </div>
             </div>
         </main>
 
