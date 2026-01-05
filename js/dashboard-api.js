@@ -50,6 +50,15 @@ async function loadDashboardData() {
         // Load accounts
         loadDashboardAccounts(accounts);
 
+        // Set current account display (use first account as default)
+        if (accounts && accounts.length > 0) {
+            const acct = accounts[0];
+            const labelEl = document.getElementById('currentAccountLabel');
+            const availEl = document.getElementById('currentAccountAvailable');
+            if (labelEl) labelEl.textContent = `${capitalize(acct.account_type)} • ****${acct.account_number.slice(-4)}`;
+            if (availEl) availEl.textContent = formatCurrency(acct.balance);
+        }
+
         // Start accounts carousel autoplay
         startAccountsCarousel();
 
