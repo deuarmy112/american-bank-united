@@ -395,13 +395,27 @@
                     <button onclick="closeFeatureModal('bill')" class="text-slate-500">Close</button>
                 </div>
                 <form id="billForm" class="mt-4 space-y-3" onsubmit="submitBill(event)">
+                    <label class="text-xs text-slate-500">Biller</label>
                     <select id="billerSelect" required class="w-full rounded-md border px-3 py-2">
                         <option value="">Select biller</option>
                     </select>
+
+                    <label class="text-xs text-slate-500">Billing Item</label>
+                    <select id="billingSelect" class="w-full rounded-md border px-3 py-2">
+                        <option value="">Select billing (optional)</option>
+                    </select>
+
+                    <label class="text-xs text-slate-500">Payer</label>
+                    <input id="billPayerName" type="text" readonly class="w-full rounded-md border px-3 py-2 bg-slate-50" placeholder="Your name">
+
+                    <label class="text-xs text-slate-500">From account</label>
                     <select id="fromAccountSelect" required class="w-full rounded-md border px-3 py-2">
                         <option value="">From account</option>
                     </select>
+
+                    <label class="text-xs text-slate-500">Amount</label>
                     <input id="billAmount" type="number" step="0.01" min="0.1" required class="w-full rounded-md border px-3 py-2" placeholder="Amount">
+
                     <input id="billMemo" type="text" class="w-full rounded-md border px-3 py-2" placeholder="Memo (optional)">
                     <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-md">Pay Now</button>
                 </form>

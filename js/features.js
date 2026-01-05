@@ -29,13 +29,36 @@ async function populateBillModal() {
     const r1 = await fetch('/api/bills/billers', { headers: { Authorization: 'Bearer ' + token } });
     const billers = await r1.json();
     const billerSelect = document.getElementById('billerSelect');
-    billerSelect.innerHTML = '<option value="">Select biller</option>' + billers.map(b=>`<option value="${b.id}">${b.name} (${b.category})</option>`).join('');
+    billerSelect.innerHTML = '<option value="">Select biller</option>' + billers.map(b=>`<option value="${b.id}" data-biller='${JSON.stringify(b)}'>${b.name} (${b.category})</option>`).join('');
+
+    // when biller changes, try to load billing items for that biller
+    billerSelect.onchange = async function() {
+      const id = this.value; const billingSelect = document.getElementById('billingSelect');
+      billingSelect.innerHTML = '<option value="">Select billing (optional)</option>';
+      if (!id) return;
+      try {
+        const r = await fetch(`/api/bills/billers/${id}/items`, { headers: { Authorization: 'Bearer ' + token } });
+        if (!r.ok) return; // no items endpoint
+        const items = await r.json();
+        if (Array.isArray(items) && items.length) {
+          billingSelect.innerHTML = '<option value="">Select billing (optional)</option>' + items.map(it => `<option value="${it.id}" data-amount="${it.amount||''}">${it.description || it.name} ${it.amount? '• ' + Number(it.amount).toFixed(2): ''}</option>`).join('');
+          billingSelect.onchange = function(){ const sel = this.selectedOptions[0]; if (sel && sel.dataset && sel.dataset.amount) document.getElementById('billAmount').value = sel.dataset.amount; };
+        }
+      } catch (e) { console.warn('No billing items for biller', e); }
+    };
 
     // fetch accounts
     const r2 = await fetch('/api/accounts', { headers: { Authorization: 'Bearer ' + token } });
     const accounts = await r2.json();
     const accSel = document.getElementById('fromAccountSelect');
     accSel.innerHTML = '<option value="">From account</option>' + accounts.map(a=>`<option value="${a.id}">${a.account_number} • ${a.account_type} • $${Number(a.balance).toFixed(2)}</option>`).join('');
+
+    // populate payer name from profile
+    try {
+      const profile = await authAPI.getProfile();
+      const payer = document.getElementById('billPayerName');
+      if (payer) payer.value = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+    } catch (e) { console.warn('Failed to load profile for payer name', e); }
   } catch (e) {
     console.error('Populate bill modal error', e);
   }
@@ -296,9 +319,11 @@ async function submitBill(e) {
   const token = localStorage.getItem('authToken');
   if (!token) return alert('Not signed in');
   const billerId = document.getElementById('billerSelect').value;
+  const billingItemId = document.getElementById('billingSelect') ? document.getElementById('billingSelect').value : null;
   const fromAccountId = document.getElementById('fromAccountSelect').value;
   const amount = document.getElementById('billAmount').value;
   const memo = document.getElementById('billMemo').value;
+  const payer = document.getElementById('billPayerName') ? document.getElementById('billPayerName').value : '';
 
   if (!billerId || !fromAccountId || !amount) return alert('Please complete the form');
 
@@ -306,7 +331,7 @@ async function submitBill(e) {
     const res = await fetch('/api/bills/payments', {
       method: 'POST',
       headers: { 'content-type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify({ billerId, fromAccountId, amount: parseFloat(amount), paymentDate: new Date().toISOString(), memo })
+      body: JSON.stringify({ billerId, billingItemId, fromAccountId, amount: parseFloat(amount), paymentDate: new Date().toISOString(), memo, payer })
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'Payment failed');
