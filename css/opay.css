@@ -14,8 +14,13 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 .opay-gradient{
-  background: linear-gradient(90deg,var(--opay-start),var(--opay-end));
+  background: linear-gradient(135deg,var(--opay-start),var(--opay-end));
 }
+
+/* Convenience helpers to match the profile single-color theme */
+.opay-orange { color: var(--opay-start); }
+.opay-bg { background-color: var(--opay-start); }
+.opay-text { color: var(--opay-start); }
 .opay-card{
   background: var(--card);
   border-radius: 1rem;
