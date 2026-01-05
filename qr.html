@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>QR — American Bank United</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/opay.css">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+</head>
+<body class="opay-ui">
+  <header class="opay-header">
+    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="dashboard.html" class="opay-brand"><div class="opay-logo"><i class="fas fa-qrcode"></i></div></a>
+        <div>
+          <div class="opay-sub">QR Payments</div>
+          <h1 class="opay-title">Scan or Show QR</h1>
+        </div>
+      </div>
+      <div>
+        <button onclick="location.href='dashboard.html'" class="opay-btn">Back</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="pt-20 max-w-2xl mx-auto p-4">
+    <div class="bg-white rounded-lg p-4 shadow space-y-4">
+      <div class="flex gap-2">
+        <button id="scanTab" class="opay-btn">Scan to Pay</button>
+        <button id="showTab" class="opay-btn">My QR (Receive)</button>
+      </div>
+
+      <div id="scanPane" class="mt-2">
+        <div id="reader" style="width:100%"></div>
+        <div class="mt-3">
+          <label class="text-sm text-slate-600">Detected:</label>
+          <div id="scanResult" class="text-sm text-slate-700 mt-1">No scan yet</div>
+        </div>
+        <div class="mt-3">
+          <button id="startScan" class="opay-btn">Start Scanner</button>
+          <button id="stopScan" class="opay-btn" style="margin-left:8px; display:none">Stop</button>
+        </div>
+      </div>
+
+      <div id="showPane" class="hidden mt-2 text-center">
+        <div id="myQrContainer" style="display:inline-block;padding:12px;background:#fff;border-radius:6px"></div>
+        <div class="mt-3 text-sm text-slate-600">Share this QR to receive deposits to your primary ABU account.</div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/qr.js"></script>
+</body>
+</html>
