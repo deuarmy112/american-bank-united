@@ -210,3 +210,10 @@ body.desktop .navbar, body.desktop .navbar-container { display: block }
 /* Ensure feature sheet doesn't cover desktop screens — keep it hidden by default */
 body.desktop #featureSheet { display: none !important }
 
+/* Cards page tweaks */
+.dashboard-actions { display:flex; gap:8px; align-items:center }
+.card-virtual-badge { display:inline-block; background:rgba(255,255,255,0.12); color:#fff; padding:2px 8px; border-radius:9999px; font-size:0.75rem; margin-left:8px }
+.credit-card { width:260px; border-radius:14px; color:#fff; padding:16px; box-shadow:0 10px 30px rgba(2,6,23,0.08); margin:8px }
+.cards-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:12px }
+.card-footer { display:flex; justify-content:space-between; align-items:center; margin-top:12px }
+
