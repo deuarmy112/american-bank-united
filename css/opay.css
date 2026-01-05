@@ -33,6 +33,20 @@ body{
 
 /* Tints for SVG logos when used inline */
 .opay-brand img, .opay-logo img { filter: none; }
+
+/* Icon circle backgrounds: use silver -> grey gradient for quick actions and header buttons */
+.w-14.h-14 {
+  background: linear-gradient(90deg, var(--abu-silver), var(--abu-grey)) !important;
+  color: var(--abu-gold) !important;
+}
+
+.opay-header button {
+  background: linear-gradient(90deg, var(--abu-silver), var(--abu-grey));
+  color: var(--abu-gold);
+}
+
+/* Slightly dim hover for header buttons while keeping gradient */
+.opay-header button:hover { opacity: 0.92; }
 .opay-bottom-nav{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(90deg,rgba(255,255,255,0.9),rgba(255,255,255,0.95));box-shadow:0 -6px 24px rgba(15,23,42,0.06);padding:8px 12px}
 .opay-bottom-nav .fab{width:56px;height:56px;border-radius:9999px;background:linear-gradient(135deg,var(--opay-start),var(--opay-end));display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 8px 24px rgba(255,45,85,0.18);transform:translateY(-20%)}
 .opay-pill{background:rgba(255,255,255,0.08);padding:.35rem .6rem;border-radius:9999px;color:#fff;font-size:.85rem}
