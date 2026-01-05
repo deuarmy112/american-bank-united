@@ -347,10 +347,27 @@ async function submitAirtime(e) {
   e.preventDefault();
   const phone = document.getElementById('phoneNumber').value;
   const amount = document.getElementById('airtimeAmount').value;
-  if (!phone || !amount) return alert('Complete details');
-  // Simulate purchase — in real app call operator API and create transaction
-  alert(`Airtime bought: $${amount} for ${phone} (demo)`);
-  closeFeatureModal('airtime');
+  const provider = document.getElementById('airtimeProvider') ? document.getElementById('airtimeProvider').value : null;
+  if (!phone || !amount || !provider) return alert('Complete details');
+  const token = localStorage.getItem('authToken');
+  try {
+    if (token) {
+      const res = await fetch('/api/airtime/purchase', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify({ phone, amount: parseFloat(amount), provider })
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Purchase failed');
+      alert('Airtime bought: $' + amount + ' for ' + phone + ' via ' + provider + (json.newBalance ? ' — new balance: ' + json.newBalance : ''));
+    } else {
+      alert(`Airtime bought: $${amount} for ${phone} via ${provider} (demo)`);
+    }
+    closeFeatureModal('airtime');
+  } catch (err) {
+    console.error(err);
+    alert('Airtime purchase failed: ' + (err.message || err));
+  }
 }
 
 async function submitBet(e) {

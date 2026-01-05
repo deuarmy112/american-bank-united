@@ -472,6 +472,11 @@
                 </div>
                 <form id="airtimeForm" class="mt-4 space-y-3" onsubmit="submitAirtime(event)">
                     <input id="phoneNumber" type="tel" required class="w-full rounded-md border px-3 py-2" placeholder="Phone number">
+                    <select id="airtimeProvider" class="w-full rounded-md border px-3 py-2">
+                        <option value="att">AT&T</option>
+                        <option value="tmobile">T-Mobile</option>
+                        <option value="verizon">Verizon</option>
+                    </select>
                     <select id="airtimeAmount" class="w-full rounded-md border px-3 py-2">
                         <option value="5">$5</option>
                         <option value="10">$10</option>
