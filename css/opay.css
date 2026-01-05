@@ -113,6 +113,21 @@ a[style*="color"] { color: var(--abu-control) !important; }
   box-shadow: 0 10px 30px rgba(15,23,42,0.08);
 }
 
+/* Smoke-gold gradient for promo tiles */
+.opay-smoke-gold { background: linear-gradient(90deg, rgba(245,245,247,0.95) 0%, rgba(226,221,210,0.95) 40%, rgba(212,175,55,0.12) 100%); color: #0f172a }
+
+/* Carousel / promo styles */
+.promo-carousel { position: relative; overflow: hidden }
+.promo-carousel .promo-slides { display: flex; transition: transform 400ms ease; gap:12px }
+.promo-slide { min-width: 100%; box-sizing: border-box; border-radius: 12px; padding: 16px; box-shadow: 0 10px 30px rgba(2,6,23,0.06) }
+.promo-indicators { display:flex; gap:8px; justify-content:center; margin-top:8px }
+.promo-indicators button { width:8px; height:8px; border-radius:9999px; background:rgba(15,23,42,0.08); border:0 }
+.promo-indicators button.active { background: linear-gradient(90deg, var(--abu-silver), var(--abu-grey), var(--abu-gold)); box-shadow:0 4px 10px rgba(0,0,0,0.06) }
+
+@media(min-width:768px){
+  .promo-slide { padding:24px }
+}
+
 /* Ensure action buttons inside balance card are visible on the gradient */
 .opay-balance-gradient .btn, .opay-balance-gradient button {
   background: rgba(255,255,255,0.18) !important;
@@ -149,11 +164,30 @@ a[style*="color"] { color: var(--abu-control) !important; }
 
 /* Bottom nav buttons (bn-item) styling to match ABU silver/grey theme */
 .opay-bottom-nav { display:flex; gap:8px; align-items:flex-end; justify-content:space-between; padding:10px 14px; z-index:60 }
-.opay-bottom-nav .bn-item { background:transparent; border:0; outline:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--abu-control); font-size:12px; padding:6px 8px; border-radius:10px }
+.opay-bottom-nav .bn-item { background:transparent; border:0; outline:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--abu-control); font-size:12px; padding:10px 8px 14px; border-radius:10px; position:relative }
 .opay-bottom-nav .bn-item i { font-size:18px; color:var(--abu-control); margin-bottom:3px }
 .opay-bottom-nav .bn-item.active { color:var(--abu-grey); background:rgba(0,0,0,0.02); }
-.opay-bottom-nav .bn-item.bn-action { background:linear-gradient(90deg,var(--abu-silver),var(--abu-gold)); color:#fff; box-shadow:0 8px 20px rgba(0,0,0,0.08); padding:10px 12px; border-radius:14px }
-.opay-bottom-nav .bn-item.bn-action i { color: #fff }
+
+/* Active button gradient underline */
+.opay-bottom-nav .bn-item.active::after {
+  content: '';
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  height: 3px;
+  bottom: 6px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--abu-silver) 0%, var(--abu-grey) 55%, var(--abu-gold) 100%);
+}
+.opay-bottom-nav .bn-item.bn-action {
+  background: transparent !important;
+  color: var(--abu-control) !important;
+  box-shadow: none !important;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,0.04);
+}
+.opay-bottom-nav .bn-item.bn-action i { color: var(--abu-control) !important }
 
 @media(min-width:768px){
   /* hide on larger screens (desktop) — desktop mode will show top navigation instead */

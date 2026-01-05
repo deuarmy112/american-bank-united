@@ -55,7 +55,10 @@
                     <p class="text-xs text-slate-500">Smart banking at your fingertips</p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <!-- Notifications and profile moved to header/sidebar -->
+                    <!-- Small profile avatar placed next to greeting for quick access -->
+                    <button id="topProfileBtn" onclick="location.href='profile.html'" aria-label="Open profile" title="Profile" class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow">
+                        <i class="fas fa-user text-slate-700"></i>
+                    </button>
                 </div>
             </div>
 
@@ -254,30 +257,30 @@
                 </div>
             </div>
 
-            <!-- Promo banner -->
+            <!-- SmartSave promo carousel (4 slides) -->
             <div class="mb-4">
-                <div class="bg-gradient-to-r from-sky-500 to-indigo-600 text-white rounded-lg p-4 shadow">
-                    <h3 class="font-semibold">Save more with SmartSave</h3>
-                    <p class="text-xs opacity-90">Auto-save daily, weekly or monthly — earn interest</p>
-                </div>
-            </div>
-
-            <!-- Accounts carousel -->
-            <div class="mb-4">
-                <h3 class="text-sm font-medium mb-2">Your Accounts</h3>
-                <div id="accountsList" class="flex gap-3 overflow-x-auto">
-                    <!-- account cards will be injected here -->
-                </div>
-            </div>
-
-            <!-- Recent activity -->
-            <div>
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-sm font-medium">Recent Activity</h3>
-                    <a href="transactions.html" class="text-xs text-slate-500">See all</a>
-                </div>
-                <div id="recentTransactions" class="space-y-2">
-                    <!-- transactions injected here -->
+                <div id="promoCarousel" class="promo-carousel">
+                    <div class="promo-slides">
+                        <div class="promo-slide opay-smoke-gold">
+                            <h3 class="font-semibold">Save more with SmartSave</h3>
+                            <p class="text-xs mt-2">Auto-save daily, weekly or monthly — earn interest</p>
+                        </div>
+                        <div class="promo-slide opay-card">
+                            <h3 class="font-semibold">Special Offer: 0% Fee on Transfers</h3>
+                            <p class="text-xs mt-2">Make transfers with no fees this month. Limited time offer.</p>
+                        </div>
+                        <div class="promo-slide opay-card">
+                            <h3 class="font-semibold">Ad: Get Premium Checking</h3>
+                            <p class="text-xs mt-2">Upgrade to Premium and earn cashback on purchases.</p>
+                            <a href="cards.html" class="text-sm text-indigo-600 mt-2 inline-block">Learn more</a>
+                        </div>
+                        <div class="promo-slide opay-card">
+                            <h3 class="font-semibold">What's Trendy?</h3>
+                            <p class="text-xs mt-2">Explore top financial tips and trending products curated for you.</p>
+                            <a href="investments.html" class="text-sm text-indigo-600 mt-2 inline-block">Visit trends</a>
+                        </div>
+                    </div>
+                    <div class="promo-indicators mt-3"></div>
                 </div>
             </div>
         </main>
@@ -288,7 +291,7 @@
         <script src="js/dashboard-api.js"></script>
         <script src="js/features.js"></script>
         <script src="js/ui.js"></script>
-                <script>
+            <script>
                     // expose small helper for beneficiaries open from quick actions
                     async function openBeneficiariesModal() { if (window.openFeatureModal) { openFeatureModal('beneficiaries'); await loadBeneficiaries(); } }
 
@@ -309,6 +312,38 @@
                         }
                     }
                 </script>
+
+                    <script>
+                        // Simple promo carousel logic
+                        (function(){
+                            const carousel = document.getElementById('promoCarousel');
+                            if (!carousel) return;
+                            const slidesWrap = carousel.querySelector('.promo-slides');
+                            const slides = Array.from(carousel.querySelectorAll('.promo-slide'));
+                            const indicators = carousel.querySelector('.promo-indicators');
+                            let idx = 0;
+
+                            function renderIndicators(){
+                                indicators.innerHTML = '';
+                                slides.forEach((s,i)=>{
+                                    const btn = document.createElement('button');
+                                    btn.addEventListener('click', ()=> { goTo(i); });
+                                    if (i===idx) btn.classList.add('active');
+                                    indicators.appendChild(btn);
+                                });
+                            }
+
+                            function update(){
+                                slidesWrap.style.transform = `translateX(${-idx * 100}%)`;
+                                Array.from(indicators.children).forEach((b,i)=> b.classList.toggle('active', i===idx));
+                            }
+
+                            function goTo(i){ idx = i % slides.length; update(); }
+
+                            renderIndicators(); update();
+                            setInterval(()=>{ idx = (idx+1) % slides.length; update(); }, 5000);
+                        })();
+                    </script>
 
         <!-- Feature sheet + bottom nav -->
         <div id="featureBackdrop" onclick="featureBackdropClick(event)" class="hidden fixed inset-0 bg-black/40 z-40"></div>
