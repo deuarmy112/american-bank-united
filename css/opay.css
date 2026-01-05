@@ -22,7 +22,7 @@ body{
   box-shadow: 0 8px 20px rgba(15,23,42,0.06);
 }
 .opay-balance{color:white;padding:1rem;border-radius:1rem}
-.opay-abu-gradient{background: linear-gradient(90deg,var(--abu-silver),var(--abu-grey),var(--abu-gold));}
+.opay-abu-gradient{background: linear-gradient(90deg,var(--abu-silver),var(--abu-grey));}
 .opay-action{background:var(--card);border-radius:9999px;padding:.6rem;box-shadow:0 6px 14px rgba(15,23,42,0.06)}
 .opay-quick .w-14{width:3.5rem;height:3.5rem}
 .opay-quick i{font-size:1.1rem}
