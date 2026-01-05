@@ -76,15 +76,29 @@
                     <label class="block text-sm">Deposit To</label>
                     <select id="depositAccount" class="w-full border rounded p-2 mb-3"></select>
 
-                    <!-- Bank / account method -->
+                    <!-- Bank / account method (display-only details + amount) -->
                     <form id="deposit-form-bank" class="deposit-method" onsubmit="submitDeposit(event)">
-                        <div class="mb-2">
-                            <label class="text-sm">Source Account Number / IBAN</label>
-                            <input id="bankSourceAccount" type="text" class="w-full border rounded p-2" placeholder="Account number or IBAN">
-                        </div>
-                        <div class="mb-2">
-                            <label class="text-sm">Source Bank (optional)</label>
-                            <input id="bankSourceName" type="text" class="w-full border rounded p-2" placeholder="Bank name">
+                        <div class="mb-2 grid grid-cols-2 gap-2">
+                            <div>
+                                <div class="text-xs text-slate-500">Account number</div>
+                                <div id="bankAccountNumberLabel" class="font-medium">—</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-slate-500">IBAN</div>
+                                <div id="bankIbanLabel" class="font-medium">—</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-slate-500">Account type</div>
+                                <div id="bankAccountTypeLabel" class="font-medium">—</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-slate-500">Email</div>
+                                <div id="bankEmailLabel" class="font-medium">—</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-slate-500">Phone</div>
+                                <div id="bankPhoneLabel" class="font-medium">—</div>
+                            </div>
                         </div>
                         <div class="mb-2">
                             <label class="text-sm">Amount</label>
@@ -97,18 +111,9 @@
                     </form>
 
                     <!-- Card method -->
-                    <form id="deposit-form-card" class="deposit-method hidden" onsubmit="submitDeposit(event)">
-                        <div class="mb-2">
-                            <label class="text-sm">Cardholder Name</label>
-                            <input id="cardName" type="text" class="w-full border rounded p-2" placeholder="Name on card">
-                        </div>
-                        <div class="mb-2 grid grid-cols-3 gap-2">
-                            <input id="cardNumber" type="text" class="col-span-3 border rounded p-2" placeholder="Card number">
-                        </div>
-                        <div class="mb-2 grid grid-cols-3 gap-2">
-                            <input id="cardExpiry" type="text" class="border rounded p-2" placeholder="MM/YY">
-                            <input id="cardCvv" type="text" class="border rounded p-2" placeholder="CVV">
-                            <input id="cardZip" type="text" class="border rounded p-2" placeholder="ZIP">
+                    <div id="cardDetails" class="deposit-method hidden">
+                        <div class="space-y-2 mb-2" id="cardsList">
+                            <!-- cards populated here (display-only). Click to select -->
                         </div>
                         <div class="mb-2">
                             <label class="text-sm">Amount</label>
@@ -116,23 +121,14 @@
                         </div>
                         <div class="flex justify-end gap-2">
                             <button type="button" onclick="closeFeatureModal('deposit')" class="px-4 py-2">Cancel</button>
-                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Charge Card</button>
+                            <button type="button" onclick="submitDeposit(event)" class="px-4 py-2 bg-blue-600 text-white rounded">Use Selected Card</button>
                         </div>
-                    </form>
+                    </div>
 
                     <!-- Crypto method -->
-                    <form id="deposit-form-crypto" class="deposit-method hidden" onsubmit="submitDeposit(event)">
-                        <div class="mb-2">
-                            <label class="text-sm">Currency</label>
-                            <select id="cryptoCurrency" class="w-full border rounded p-2 mb-2">
-                                <option value="btc">BTC</option>
-                                <option value="usdt">USDT</option>
-                                <option value="eth">ETH</option>
-                            </select>
-                        </div>
-                        <div class="mb-2">
-                            <label class="text-sm">Transaction ID (TXID)</label>
-                            <input id="cryptoTxid" type="text" class="w-full border rounded p-2" placeholder="Blockchain transaction id">
+                    <div id="cryptoDetails" class="deposit-method hidden">
+                        <div class="space-y-2 mb-2" id="walletsList">
+                            <!-- wallet addresses populated here -->
                         </div>
                         <div class="mb-2">
                             <label class="text-sm">Amount</label>
@@ -140,9 +136,9 @@
                         </div>
                         <div class="flex justify-end gap-2">
                             <button type="button" onclick="closeFeatureModal('deposit')" class="px-4 py-2">Cancel</button>
-                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Submit Deposit</button>
+                            <button type="button" onclick="submitDeposit(event)" class="px-4 py-2 bg-blue-600 text-white rounded">Confirm Deposit</button>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
 

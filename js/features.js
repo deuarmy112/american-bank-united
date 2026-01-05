@@ -10,6 +10,7 @@ async function openFeatureModal(id) {
   // populate selects for billers and accounts when bill modal opens
   if (id === 'bill') await populateBillModal();
   if (id === 'deposit' || id === 'withdraw') await populateAccountSelectsForCashOp(id);
+  if (id === 'deposit') { await populateDepositDetails(); showDepositMethod('bank'); }
   if (id === 'qr') await populateQRFromAccounts();
 }
 
@@ -54,35 +55,106 @@ async function populateAccountSelectsForCashOp(kind) {
   }
 }
 
+function formatCardNumber(number) {
+  if (!number) return '';
+  const s = String(number).replace(/\s+/g,'').replace(/[^0-9]/g,'');
+  return s.match(/.{1,4}/g)?.join(' ') || s;
+}
+
+async function populateDepositDetails() {
+  try {
+    const token = localStorage.getItem('authToken'); if (!token) return;
+    // clear previous selections
+    document.getElementById('selectedCardId')?.remove();
+    document.getElementById('selectedWallet')?.remove();
+    // accounts -> populate depositAccount select and bank detail labels
+    const accounts = await accountsAPI.getAll();
+    const sel = document.getElementById('depositAccount');
+    if (sel) {
+      sel.innerHTML = '<option value="">Select destination account</option>' + accounts.map(a=>`<option value="${a.id}">${a.account_number} • ${a.account_type}</option>`).join('');
+      sel.onchange = () => {
+        const id = sel.value; const acc = accounts.find(x=>x.id==id);
+        if (acc) {
+          document.getElementById('bankAccountNumberLabel').textContent = acc.account_number || '—';
+          document.getElementById('bankIbanLabel').textContent = acc.iban || '—';
+          document.getElementById('bankAccountTypeLabel').textContent = (acc.account_type||'') ? acc.account_type.charAt(0).toUpperCase()+acc.account_type.slice(1) : '—';
+          document.getElementById('bankEmailLabel').textContent = acc.email || (acc.owner && acc.owner.email) || '—';
+          document.getElementById('bankPhoneLabel').textContent = acc.phone || (acc.owner && acc.owner.phone) || '—';
+        }
+      };
+    }
+
+    // cards -> populate cardsList (display-only)
+    try {
+      const cards = await cardsAPI.getAll();
+      const cardsList = document.getElementById('cardsList');
+      if (cardsList) {
+        cardsList.innerHTML = cards.length ? cards.map(c=>`
+          <div class="p-2 border rounded cursor-pointer card-select" data-card-id="${c.id}">
+            <div class="font-medium">${c.card_type.toUpperCase()} • ${formatCardNumber(c.card_number)}</div>
+            <div class="text-xs text-slate-500">Exp: ${new Date(c.expiry_date).toLocaleDateString()}</div>
+          </div>
+        `).join('') : '<div class="text-xs text-slate-500">No saved cards</div>';
+        // wire up selection
+        cardsList.querySelectorAll('.card-select').forEach(el=>el.addEventListener('click', ()=>{
+          cardsList.querySelectorAll('.card-select').forEach(x=>x.classList.remove('ring','ring-indigo-300'));
+          el.classList.add('ring','ring-indigo-300');
+          document.getElementById('selectedCardId')?.remove();
+          const inp = document.createElement('input'); inp.type='hidden'; inp.id='selectedCardId'; inp.value = el.getAttribute('data-card-id'); document.getElementById('modal-deposit').appendChild(inp);
+        }));
+      }
+    } catch (e) { console.warn('No cards or failed to load cards', e); }
+
+    // crypto wallets: try to read from profile
+    try {
+      const profile = await authAPI.getProfile();
+      const wallets = profile.wallets || profile.cryptoWallets || profile.wallet_addresses || profile.wallets_addresses || [];
+      const walletsList = document.getElementById('walletsList');
+      if (walletsList) {
+        if (Array.isArray(wallets) && wallets.length) {
+          walletsList.innerHTML = wallets.map(w=>`<div class="p-2 border rounded cursor-pointer wallet-select" data-wallet-address="${w.address}" data-currency="${w.currency}"><div class="font-medium">${w.currency.toUpperCase()} • ${w.address}</div><div class="text-xs text-slate-500">${w.note||''}</div></div>`).join('');
+          walletsList.querySelectorAll('.wallet-select').forEach(el=>el.addEventListener('click', ()=>{
+            walletsList.querySelectorAll('.wallet-select').forEach(x=>x.classList.remove('ring','ring-indigo-300'));
+            el.classList.add('ring','ring-indigo-300');
+            document.getElementById('selectedWallet')?.remove();
+            const inp = document.createElement('input'); inp.type='hidden'; inp.id='selectedWallet'; inp.value = JSON.stringify({ address: el.getAttribute('data-wallet-address'), currency: el.getAttribute('data-currency') }); document.getElementById('modal-deposit').appendChild(inp);
+          }));
+        } else {
+          walletsList.innerHTML = '<div class="text-xs text-slate-500">No linked crypto wallets</div>';
+        }
+      }
+    } catch (e) { console.warn('Failed to load profile wallets', e); }
+
+  } catch (e) { console.error('populateDepositDetails error', e); }
+}
+
 async function submitDeposit(e) {
   e.preventDefault();
   const token = localStorage.getItem('authToken'); if (!token) return alert('Not signed in');
   const accountId = document.getElementById('depositAccount').value;
-  // Determine which method form is visible
-  const method = document.getElementById('deposit-form-card').classList.contains('hidden') && document.getElementById('deposit-form-crypto').classList.contains('hidden') ? 'bank' : (document.getElementById('deposit-form-card').classList.contains('hidden') ? 'crypto' : 'card');
+  // Determine which method section is visible
+  const isCardVisible = !document.getElementById('cardDetails').classList.contains('hidden');
+  const isCryptoVisible = !document.getElementById('cryptoDetails').classList.contains('hidden');
+  const method = isCardVisible ? 'card' : (isCryptoVisible ? 'crypto' : 'bank');
 
   try {
     let payload = { accountId, method };
     if (method === 'bank') {
       const amount = parseFloat(document.getElementById('depositAmount').value);
-      const src = document.getElementById('bankSourceAccount').value;
-      const bank = document.getElementById('bankSourceName').value;
       if (!accountId || !amount || amount <= 0) return alert('Complete form');
-      payload = { ...payload, amount, sourceAccount: src, sourceBank: bank };
+      // destination account is accountId; send amount and note that source details were displayed
+      payload = { ...payload, amount };
     } else if (method === 'card') {
       const amount = parseFloat(document.getElementById('cardAmount').value);
-      const name = document.getElementById('cardName').value;
-      const number = document.getElementById('cardNumber').value;
-      const expiry = document.getElementById('cardExpiry').value;
-      const cvv = document.getElementById('cardCvv').value;
-      if (!accountId || !amount || amount <= 0 || !number) return alert('Complete card details');
-      payload = { ...payload, amount, card: { name, number, expiry, cvv } };
+      const selectedCardId = document.getElementById('selectedCardId') ? document.getElementById('selectedCardId').value : null;
+      if (!accountId || !amount || amount <= 0 || !selectedCardId) return alert('Select a card and amount');
+      payload = { ...payload, amount, cardId: selectedCardId };
     } else if (method === 'crypto') {
       const amount = parseFloat(document.getElementById('cryptoAmount').value);
-      const txid = document.getElementById('cryptoTxid').value;
-      const currency = document.getElementById('cryptoCurrency').value;
-      if (!accountId || !amount || amount <= 0 || !txid) return alert('Complete crypto deposit details');
-      payload = { ...payload, amount, txid, currency };
+      const selectedWalletRaw = document.getElementById('selectedWallet') ? document.getElementById('selectedWallet').value : null;
+      if (!accountId || !amount || amount <= 0 || !selectedWalletRaw) return alert('Select a wallet and amount');
+      const selectedWallet = JSON.parse(selectedWalletRaw);
+      payload = { ...payload, amount, crypto: selectedWallet };
     }
 
     const res = await fetch('/api/accounts/deposit', {
@@ -101,8 +173,8 @@ async function submitDeposit(e) {
 function showDepositMethod(which) {
   document.querySelectorAll('.deposit-method').forEach(el => el.classList.add('hidden'));
   if (which === 'bank') document.getElementById('deposit-form-bank').classList.remove('hidden');
-  if (which === 'card') document.getElementById('deposit-form-card').classList.remove('hidden');
-  if (which === 'crypto') document.getElementById('deposit-form-crypto').classList.remove('hidden');
+  if (which === 'card') document.getElementById('cardDetails').classList.remove('hidden');
+  if (which === 'crypto') document.getElementById('cryptoDetails').classList.remove('hidden');
 }
 
 async function submitWithdraw(e) {
