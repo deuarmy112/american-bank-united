@@ -121,8 +121,9 @@ const accountsAPI = {
         return apiClient.get(`/accounts/${accountId}`);
     },
 
-    async create(accountType) {
-        return apiClient.post('/accounts', { accountType });
+    async create(payload) {
+        // payload: { accountType, initialDeposit?, nickname? }
+        return apiClient.post('/accounts', payload);
     },
 
     async getTransactions(accountId) {
