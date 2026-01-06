@@ -61,23 +61,57 @@ async function initBalanceSlides(){
       container.appendChild(el);
     });
 
-    // indicators
-    indicators.innerHTML = '';
-    slides.forEach((s,i)=>{
-      const b = document.createElement('button');
-      b.className = i===0? 'w-3 h-3 rounded-full bg-slate-800': 'w-3 h-3 rounded-full bg-slate-300';
-      b.addEventListener('click', ()=> goToSlide(i));
-      indicators.appendChild(b);
-    });
+      // indicators
+      indicators.innerHTML = '';
+      slides.forEach((s,i)=>{
+        const b = document.createElement('button');
+        b.className = i===0? 'w-3 h-3 rounded-full bg-slate-800': 'w-3 h-3 rounded-full bg-slate-300';
+        b.addEventListener('click', ()=> goToSlide(i));
+        indicators.appendChild(b);
+      });
 
-    // sliding logic
-    let idx = 0;
-    function goToSlide(i){
-      idx = i; container.style.transform = `translateX(${-idx * 100}%)`;
-      Array.from(indicators.children).forEach((c,ci)=> c.classList.toggle('bg-slate-800', ci===idx));
-    }
-    // attach global function for click handlers above
-    window.goToBalanceSlide = goToSlide;
+      // sliding logic with pointer/touch drag and prev/next
+      let idx = 0;
+      let isDown = false;
+      let startX = 0;
+      let currentTranslate = 0;
+
+      function setTranslate(x){ container.style.transform = `translateX(${x}px)`; }
+
+      function updateIndicators(){ Array.from(indicators.children).forEach((c,ci)=> c.classList.toggle('bg-slate-800', ci===idx)); }
+
+      function goToSlide(i){
+        idx = Math.max(0, Math.min(i, slides.length-1));
+        const width = container.clientWidth || container.offsetWidth || container.parentElement.offsetWidth;
+        container.style.transition = 'transform 300ms';
+        container.style.transform = `translateX(${-idx * width}px)`;
+        updateIndicators();
+        setTimeout(()=> container.style.transition = '', 300);
+      }
+
+      // pointer events
+      container.addEventListener('pointerdown', (e)=>{
+        isDown = true; startX = e.clientX; currentTranslate = -idx * container.clientWidth; container.setPointerCapture(e.pointerId);
+      });
+      container.addEventListener('pointermove', (e)=>{
+        if(!isDown) return;
+        const dx = e.clientX - startX;
+        setTranslate(currentTranslate + dx);
+      });
+      container.addEventListener('pointerup', (e)=>{
+        if(!isDown) return; isDown = false; const dx = e.clientX - startX; const threshold = (container.clientWidth || 300) * 0.15;
+        if (dx < -threshold) goToSlide(idx+1);
+        else if (dx > threshold) goToSlide(idx-1);
+        else goToSlide(idx);
+      });
+      container.addEventListener('pointercancel', ()=>{ if(isDown){ isDown=false; goToSlide(idx); } });
+
+      // prev/next controls (exposed globally)
+      window.balancePrev = ()=> goToSlide(idx-1);
+      window.balanceNext = ()=> goToSlide(idx+1);
+
+      // attach global function for click handlers above
+      window.goToBalanceSlide = goToSlide;
 
   }catch(err){
     console.error('Balance slides failed', err);
