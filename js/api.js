@@ -106,6 +106,11 @@ const authAPI = {
         return apiClient.get('/auth/profile');
     },
 
+    async updateProfile(payload) {
+        // payload: { first_name, last_name, email, phone, avatar }
+        return apiClient.patch('/auth/profile', payload);
+    },
+
     logout() {
         apiClient.removeToken();
         window.location.href = '/index.html';

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - Opay</title>
+    <title>Profile - American Bank United</title>
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <script>
         if (!localStorage.getItem('authToken')) {
@@ -119,9 +119,45 @@
 
     <!-- bottom nav removed per request (consolidated UI without bottom navigation) -->
 
-    <script src="js/api.js"></script>
-    <script src="js/auth.js"></script>
-    <script>
+        <script src="js/api.js"></script>
+        <script src="js/utils.js"></script>
+        <script src="js/auth.js"></script>
+        <!-- Edit Profile Modal -->
+        <div id="editProfileModal" class="hidden fixed inset-0 bg-black/40 items-center justify-center p-4">
+            <div class="bg-white max-w-md w-full rounded-lg p-4">
+                <h3 class="font-semibold mb-2">Edit Profile</h3>
+                <form id="editProfileForm" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-xs text-slate-600">First name</label>
+                            <input id="editFirstName" class="w-full border rounded px-3 py-2" />
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-600">Last name</label>
+                            <input id="editLastName" class="w-full border rounded px-3 py-2" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-600">Email</label>
+                        <input id="editEmail" class="w-full border rounded px-3 py-2" />
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-600">Phone</label>
+                        <input id="editPhone" class="w-full border rounded px-3 py-2" />
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-600">Avatar URL</label>
+                        <input id="editAvatar" class="w-full border rounded px-3 py-2" placeholder="https://..." />
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" class="border px-3 py-2 rounded" onclick="closeEditModal()">Cancel</button>
+                        <button type="submit" class="opay-btn">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
         async function loadProfile() {
             try {
                 const user = await authAPI.getProfile();
@@ -135,18 +171,50 @@
                 } else if (user.account && user.account.balance !== undefined) {
                     document.getElementById('balance').textContent = `$${Number(user.account.balance).toFixed(2)}`;
                 }
+                                // store current user for edit
+                                window.__currentUser = user || {};
             } catch (err) {
                 console.error('Failed to load profile', err);
             }
         }
 
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            if (confirm('Logout?')) authAPI.logout();
-        });
+                // Edit modal helpers
+                function openEditModal(){
+                    const u = window.__currentUser || {};
+                    document.getElementById('editFirstName').value = u.first_name || '';
+                    document.getElementById('editLastName').value = u.last_name || '';
+                    document.getElementById('editEmail').value = u.email || '';
+                    document.getElementById('editPhone').value = u.phone || '';
+                    document.getElementById('editAvatar').value = u.avatar || '';
+                    const m = document.getElementById('editProfileModal'); if(!m) return; m.classList.remove('hidden'); m.classList.add('flex');
+                }
+                function closeEditModal(){ const m = document.getElementById('editProfileModal'); if(!m) return; m.classList.add('hidden'); m.classList.remove('flex'); }
 
-        document.getElementById('editProfileBtn').addEventListener('click', () => {
-            alert('Edit profile - not implemented in this demo');
-        });
+                document.getElementById('editProfileBtn').addEventListener('click', () => { openEditModal(); });
+
+                document.getElementById('editProfileForm').addEventListener('submit', async function(e){
+                    e.preventDefault();
+                    const payload = {
+                        first_name: document.getElementById('editFirstName').value.trim(),
+                        last_name: document.getElementById('editLastName').value.trim(),
+                        email: document.getElementById('editEmail').value.trim(),
+                        phone: document.getElementById('editPhone').value.trim(),
+                        avatar: document.getElementById('editAvatar').value.trim(),
+                    };
+                    try{
+                        const btn = e.target.querySelector('button[type=submit]'); btn.disabled=true; btn.textContent='Saving...';
+                        const updated = await authAPI.updateProfile(payload);
+                        showToast('Profile updated');
+                        window.__currentUser = updated;
+                        closeEditModal();
+                        loadProfile();
+                    }catch(err){ console.error('Profile update failed', err); showToast(err.message||'Update failed'); }
+                    finally{ const btn = e.target.querySelector('button[type=submit]'); if(btn){btn.disabled=false; btn.textContent='Save';} }
+                });
+
+                document.getElementById('logoutBtn').addEventListener('click', () => {
+                        if (confirm('Logout?')) authAPI.logout();
+                });
 
         document.getElementById('actionSend').addEventListener('click', () => { window.location.href = 'send-money.html'; });
         document.getElementById('actionReceive').addEventListener('click', () => { alert('Receive - show QR code'); });
