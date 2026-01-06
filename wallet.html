@@ -27,9 +27,84 @@
     <h1 class="text-lg font-semibold mb-2">Wallet</h1>
     <p class="text-sm text-slate-600">View your wallet balance and linked payment methods.</p>
     <div class="mt-4">
-      <p class="text-xs text-slate-500">Placeholder — implement wallet features and endpoints.</p>
+      <div class="opay-card p-4 flex items-center justify-between">
+        <div>
+          <div class="text-xs text-slate-500">Total Wallet Balance</div>
+          <div class="text-xl font-semibold" id="walletTotal">$0.00</div>
+        </div>
+        <div class="flex flex-col items-end">
+          <button class="opay-btn" onclick="openLinkWalletModal()">Link Wallet</button>
+          <a href="send-money.html" class="mt-2 text-xs text-slate-500">Manage transfers</a>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <div class="text-sm font-medium mb-2">Linked Wallets</div>
+        <div id="walletsList" class="space-y-3"></div>
+      </div>
+
+      <div class="mt-6">
+        <div class="text-sm font-medium mb-2">Recent Wallet Transactions</div>
+        <div id="walletTxs" class="space-y-2 text-sm text-slate-600"></div>
+      </div>
     </div>
   </main>
+  <!-- Link Wallet Modal -->
+  <div id="linkWalletModal" class="hidden fixed inset-0 bg-black/40 items-center justify-center p-4">
+    <div class="bg-white max-w-md w-full rounded-lg p-4">
+      <h3 class="font-semibold mb-2">Link Wallet</h3>
+      <form id="linkWalletForm" class="space-y-3">
+        <div>
+          <label class="text-xs text-slate-600">Wallet Address</label>
+          <input id="linkAddress" class="w-full border rounded px-3 py-2" placeholder="0x... or address" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-600">Currency</label>
+          <input id="linkCurrency" class="w-full border rounded px-3 py-2" placeholder="e.g. BTC, ETH, USDT" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-600">Note (optional)</label>
+          <input id="linkNote" class="w-full border rounded px-3 py-2" placeholder="Personal note" />
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" class="border px-3 py-2 rounded" onclick="closeLinkWalletModal()">Cancel</button>
+          <button type="submit" class="opay-btn">Link Wallet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Send Wallet Modal -->
+  <div id="sendWalletModal" class="hidden fixed inset-0 bg-black/40 items-center justify-center p-4">
+    <div class="bg-white max-w-md w-full rounded-lg p-4">
+      <h3 class="font-semibold mb-2">Send from Wallet</h3>
+      <form id="sendWalletForm" class="space-y-3">
+        <input type="hidden" id="sendFromId" />
+        <div id="sendFromLabel" class="text-sm text-slate-600">From: </div>
+        <div>
+          <label class="text-xs text-slate-600">To Address</label>
+          <input id="sendToAddress" class="w-full border rounded px-3 py-2" placeholder="Recipient address" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-600">Amount</label>
+          <input id="sendAmount" type="number" step="any" class="w-full border rounded px-3 py-2" placeholder="0.00" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-600">Memo (optional)</label>
+          <input id="sendMemo" class="w-full border rounded px-3 py-2" placeholder="Note" />
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" class="border px-3 py-2 rounded" onclick="closeSendModal()">Cancel</button>
+          <button type="submit" class="opay-btn">Send</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/wallet.js"></script>
   <script src="js/bottom-nav.js"></script>
 </body>
 </html>
