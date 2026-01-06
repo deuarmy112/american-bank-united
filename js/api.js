@@ -164,6 +164,23 @@ const cardsAPI = {
     },
 };
 
+const walletsAPI = {
+    async getAll() {
+        return apiClient.get('/wallets');
+    },
+    async linkWallet(payload) {
+        // payload: { address, currency, note }
+        return apiClient.post('/wallets', payload);
+    },
+    async send(fromWalletId, payload) {
+        // payload: { toAddress, amount, memo }
+        return apiClient.post(`/wallets/${fromWalletId}/send`, payload);
+    },
+    async getTransactions(walletId) {
+        return apiClient.get(`/wallets/${walletId}/transactions`);
+    }
+};
+
 const billsAPI = {
     async getBillers() {
         return apiClient.get('/bills/billers');
