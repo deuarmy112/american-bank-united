@@ -203,26 +203,139 @@
                     };
                     try{
                         const btn = e.target.querySelector('button[type=submit]'); btn.disabled=true; btn.textContent='Saving...';
-                        const updated = await authAPI.updateProfile(payload);
-                        showToast('Profile updated');
-                        window.__currentUser = updated;
-                        closeEditModal();
-                        loadProfile();
-                    }catch(err){ console.error('Profile update failed', err); showToast(err.message||'Update failed'); }
-                    finally{ const btn = e.target.querySelector('button[type=submit]'); if(btn){btn.disabled=false; btn.textContent='Save';} }
-                });
+                        <!-- Quick Actions (configurable) -->
+                        <section class="bg-white rounded-xl shadow p-4 mb-5">
+                                <div class="flex items-center justify-between mb-3">
+                                        <h3 class="text-lg font-semibold">Quick Actions</h3>
+                                        <button class="text-sm text-slate-500" onclick="openEditQuickActions()">Edit</button>
+                                </div>
+                                <div id="quickActionsGrid" class="grid grid-cols-4 gap-3"></div>
+                        </section>
 
-                document.getElementById('logoutBtn').addEventListener('click', () => {
-                        if (confirm('Logout?')) authAPI.logout();
-                });
+                        <!-- Edit Quick Actions Modal -->
+                        <div id="editQuickActionsModal" class="hidden fixed inset-0 bg-black/40 items-center justify-center p-4">
+                            <div class="bg-white max-w-2xl w-full rounded-lg p-4">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-semibold">Edit Quick Actions</h3>
+                                    <button onclick="closeEditQuickActions()" class="text-slate-500">Close</button>
+                                </div>
+                                <p class="text-sm text-slate-500 mt-2">Select which actions appear and reorder them. Click Save when done.</p>
+                                <div class="grid grid-cols-2 gap-3 mt-4">
+                                    <div>
+                                        <div class="text-sm font-medium mb-2">Available Actions</div>
+                                        <div id="availableActions" class="space-y-2 max-h-64 overflow-auto"></div>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-medium mb-2">Selected Actions</div>
+                                        <div id="selectedActions" class="space-y-2 max-h-64 overflow-auto"></div>
+                                    </div>
+                                </div>
+                                <div class="mt-4 flex justify-end gap-2">
+                                    <button class="border px-3 py-2 rounded" onclick="closeEditQuickActions()">Cancel</button>
+                                    <button id="saveQuickActionsBtn" class="opay-btn">Save</button>
+                                </div>
+                            </div>
+                        </div>
 
-        document.getElementById('actionSend').addEventListener('click', () => { window.location.href = 'send-money.html'; });
-        document.getElementById('actionReceive').addEventListener('click', () => { alert('Receive - show QR code'); });
-        document.getElementById('actionPay').addEventListener('click', () => { window.location.href = 'bills.html'; });
-        document.getElementById('actionTopup').addEventListener('click', () => { window.location.href = 'transfer.html'; });
+                        <script>
+                            // Quick actions registry copied from dashboard feature sheet
+                            const QUICK_ACTIONS_REGISTRY = [
+                                { id: 'accounts', label: 'Accounts', icon: 'fas fa-wallet', href: 'accounts.html' },
+                                { id: 'trade', label: 'Trade', icon: 'fas fa-chart-line', href: 'trade.html' },
+                                { id: 'intl', label: 'Intl Transfer', icon: 'fas fa-globe', href: 'transfer.html?type=international' },
+                                { id: 'history', label: 'History', icon: 'fas fa-history', href: 'transactions.html' },
+                                { id: 'deposit', label: 'Deposit', icon: 'fas fa-money-bill-wave', href: '#' },
+                                { id: 'withdraw', label: 'Withdraw', icon: 'fas fa-hand-holding-dollar', href: '#' },
+                                { id: 'billpay', label: 'Bill Pay', icon: 'fas fa-file-invoice-dollar', href: 'bills.html' },
+                                { id: 'cards', label: 'Cards', icon: 'fas fa-credit-card', href: 'cards.html' },
+                                { id: 'qr', label: 'QR Pay', icon: 'fas fa-qrcode', href: 'qr.html' },
+                                { id: 'send', label: 'Send Money', icon: 'fas fa-paper-plane', href: 'transfer.html' },
+                            ];
 
-        loadProfile();
-    </script>
-    <script src="js/bottom-nav.js"></script>
-</body>
-</html>
+                            const QUICK_CONFIG_KEY = 'abu_quick_actions';
+
+                            function defaultQuickConfig(){
+                                // default as requested: pay bills, cards, qr pay, edit
+                                return ['billpay','cards','qr','edit'];
+                            }
+
+                            function loadQuickConfig(){
+                                try{ const raw = localStorage.getItem(QUICK_CONFIG_KEY); if(!raw) return defaultQuickConfig(); return JSON.parse(raw); }catch(e){ return defaultQuickConfig(); }
+                            }
+
+                            function saveQuickConfig(arr){ localStorage.setItem(QUICK_CONFIG_KEY, JSON.stringify(arr)); }
+
+                            function findActionById(id){ return QUICK_ACTIONS_REGISTRY.find(a=>a.id===id); }
+
+                            function renderQuickActions(){
+                                const grid = document.getElementById('quickActionsGrid'); if(!grid) return;
+                                grid.innerHTML = '';
+                                const config = loadQuickConfig();
+                                config.forEach(id=>{
+                                    if(id==='edit'){
+                                        const btn = document.createElement('button'); btn.className='flex flex-col items-center p-3 bg-slate-50 rounded-lg';
+                                        btn.innerHTML = `<i class="fas fa-edit text-2xl opay-text mb-2"></i><span class="text-xs">Edit</span>`;
+                                        btn.addEventListener('click', ()=> openEditQuickActions());
+                                        grid.appendChild(btn); return;
+                                    }
+                                    const act = findActionById(id);
+                                    if(!act) return;
+                                    const a = document.createElement('a'); a.href = act.href || '#'; a.className='flex flex-col items-center p-3 bg-slate-50 rounded-lg';
+                                    a.innerHTML = `<i class="${act.icon} text-lg text-indigo-600"></i><span class="text-xs mt-1">${act.label}</span>`;
+                                    grid.appendChild(a);
+                                });
+                            }
+
+                            // Edit modal behavior
+                            function openEditQuickActions(){
+                                const m = document.getElementById('editQuickActionsModal'); if(!m) return; m.classList.remove('hidden'); m.classList.add('flex');
+                                populateEditLists();
+                            }
+                            function closeEditQuickActions(){ const m = document.getElementById('editQuickActionsModal'); if(!m) return; m.classList.add('hidden'); m.classList.remove('flex'); }
+
+                            function populateEditLists(){
+                                const avail = document.getElementById('availableActions'); const sel = document.getElementById('selectedActions'); avail.innerHTML=''; sel.innerHTML='';
+                                const config = loadQuickConfig();
+                                // selected first
+                                config.forEach(id=>{
+                                    const el = buildSelectedItem(id); if(el) sel.appendChild(el);
+                                });
+                                // available remaining
+                                QUICK_ACTIONS_REGISTRY.forEach(a=>{ if(!config.includes(a.id)){ const el = buildAvailableItem(a); avail.appendChild(el); } });
+                            }
+
+                            function buildAvailableItem(action){
+                                const d = document.createElement('div'); d.className='flex items-center justify-between p-2 border rounded';
+                                d.innerHTML = `<div class="flex items-center gap-3"><i class="${action.icon} opay-text"></i><div class="text-sm">${action.label}</div></div><div><button class="text-xs text-indigo-600">Add</button></div>`;
+                                d.querySelector('button').addEventListener('click', ()=>{ addToSelected(action.id); });
+                                return d;
+                            }
+
+                            function buildSelectedItem(id){
+                                const action = findActionById(id);
+                                const d = document.createElement('div'); d.className='flex items-center justify-between p-2 border rounded';
+                                const label = id==='edit'? 'Edit' : (action? action.label : id);
+                                const icon = id==='edit'? 'fas fa-edit' : (action? action.icon : 'fas fa-question');
+                                d.innerHTML = `<div class="flex items-center gap-3"><i class="${icon} opay-text"></i><div class="text-sm">${label}</div></div>
+                                    <div class="flex items-center gap-2">
+                                        <button class="text-xs text-slate-500">↑</button>
+                                        <button class="text-xs text-slate-500">↓</button>
+                                        <button class="text-xs text-rose-600">Remove</button>
+                                    </div>`;
+                                const up = d.querySelectorAll('button')[0]; const down = d.querySelectorAll('button')[1]; const rem = d.querySelectorAll('button')[2];
+                                up.addEventListener('click', ()=> moveSelected(id, -1));
+                                down.addEventListener('click', ()=> moveSelected(id, 1));
+                                rem.addEventListener('click', ()=> removeFromSelected(id));
+                                return d;
+                            }
+
+                            function getSelectedArray(){ const raw = loadQuickConfig(); return Array.isArray(raw)? raw.slice() : []; }
+                            function addToSelected(id){ const arr = getSelectedArray(); if(arr.includes(id)) return; arr.push(id); saveQuickConfig(arr); populateEditLists(); }
+                            function removeFromSelected(id){ let arr = getSelectedArray(); arr = arr.filter(x=>x!==id); saveQuickConfig(arr); populateEditLists(); }
+                            function moveSelected(id, delta){ const arr = getSelectedArray(); const i = arr.indexOf(id); if(i<0) return; const j = i+delta; if(j<0||j>=arr.length) return; const tmp = arr[i]; arr[i]=arr[j]; arr[j]=tmp; saveQuickConfig(arr); populateEditLists(); }
+
+                            document.getElementById('saveQuickActionsBtn').addEventListener('click', ()=>{ saveQuickConfig( getSelectedArray() ); renderQuickActions(); closeEditQuickActions(); });
+
+                            // initial render
+                            document.addEventListener('DOMContentLoaded', ()=>{ renderQuickActions(); });
+                        </script>
