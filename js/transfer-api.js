@@ -49,6 +49,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.warn('Failed to parse transfer type from URL', err);
         setupTransferTypeToggle();
     }
+    // load recent transfers
+    loadRecentTransfers();
 });
 
 // Local beneficiary helpers (used when server is not reachable)
@@ -121,6 +123,28 @@ async function loadAccounts() {
     }
 }
 
+// Load recent transfers for this user
+async function loadRecentTransfers() {
+    try {
+        const recent = await transactionsAPI.getAll();
+        const wrap = document.getElementById('recentTransfers');
+        if (!wrap) return;
+        if (!recent || recent.length === 0) {
+            wrap.innerHTML = '<div class="text-xs text-slate-500">No recent transfers</div>';
+            return;
+        }
+        wrap.innerHTML = '';
+        recent.slice(0,6).forEach(tx => {
+            const el = document.createElement('div');
+            el.className = 'flex justify-between items-center';
+            el.innerHTML = `<div class="text-sm">${tx.to_account_number || tx.to || tx.accountNumber || 'External'}</div><div class="text-sm font-semibold">${formatCurrency(tx.amount)}</div>`;
+            wrap.appendChild(el);
+        });
+    } catch (err) {
+        console.warn('Failed to load recent transfers', err);
+    }
+}
+
 // Handle transfer form submission
 document.getElementById('transferForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -141,11 +165,14 @@ document.getElementById('transferForm')?.addEventListener('submit', async functi
 
     if (transferType !== 'internal') {
         // ensure external-like fields (covers 'external' and 'international')
-        const name = document.getElementById('extRecipientName').value.trim();
-        const acct = document.getElementById('extAccountNumber').value.trim();
-        const bank = document.getElementById('extBankName').value.trim();
-        const email = document.getElementById('extEmail').value.trim();
-        if (!name || !acct || !bank || !email) {
+        // pull external fields up so they remain available in catch block
+        var recipientName = document.getElementById('extRecipientName').value.trim();
+        var accountNumber = document.getElementById('extAccountNumber').value.trim();
+        var bankName = document.getElementById('extBankName').value.trim();
+        var recipientEmail = document.getElementById('extEmail').value.trim();
+        var contact = document.getElementById('extContact').value.trim();
+        var saveAsBeneficiary = document.getElementById('saveAsBeneficiary').checked;
+        if (!recipientName || !accountNumber || !bankName || !recipientEmail) {
             showAlert('Please provide recipient name, account number/IBAN, bank name and recipient email', 'error');
             return;
         }
@@ -165,13 +192,6 @@ document.getElementById('transferForm')?.addEventListener('submit', async functi
             await transactionsAPI.transfer(fromAccountId, toAccountId, amount, description);
         } else {
             // external-like transfer (Other Bank or International) — use same API/flow
-            const recipientName = document.getElementById('extRecipientName').value.trim();
-            const accountNumber = document.getElementById('extAccountNumber').value.trim();
-            const bankName = document.getElementById('extBankName').value.trim();
-            const recipientEmail = document.getElementById('extEmail').value.trim();
-            const contact = document.getElementById('extContact').value.trim();
-            const saveAsBeneficiary = document.getElementById('saveAsBeneficiary').checked;
-
             // Use shared apiClient so base URL and auth token are handled consistently
             await apiClient.post('/external-transfers', {
                 fromAccountId,
@@ -195,6 +215,8 @@ document.getElementById('transferForm')?.addEventListener('submit', async functi
         
         // Reload accounts to update balances
         await loadAccounts();
+        // refresh recent transfers
+        await loadRecentTransfers();
         
         submitBtn.textContent = 'Transfer';
         submitBtn.disabled = false;
@@ -210,7 +232,7 @@ document.getElementById('transferForm')?.addEventListener('submit', async functi
             document.getElementById('fromAccountBalance').textContent = '';
             // If user asked to save as beneficiary, persist locally for offline/demo mode
             try {
-                if (saveAsBeneficiary) {
+                if (typeof saveAsBeneficiary !== 'undefined' && saveAsBeneficiary) {
                     if (window.saveLocalBeneficiary) {
                         window.saveLocalBeneficiary({ name: recipientName, account_number: accountNumber, bank_name: bankName, nickname: '' });
                     } else {
