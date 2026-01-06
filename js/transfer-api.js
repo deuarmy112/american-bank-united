@@ -51,6 +51,19 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     // load recent transfers
     loadRecentTransfers();
+
+    // Confirmation modal handlers
+    const backdrop = document.getElementById('transferConfirmBackdrop');
+    const cancelBtn = document.getElementById('cancelConfirmBtn');
+    const confirmBtn = document.getElementById('confirmTransferBtn');
+    const editBtn = document.getElementById('editTransferBtn');
+    if (cancelBtn) cancelBtn.addEventListener('click', hideConfirmModal);
+    if (editBtn) editBtn.addEventListener('click', hideConfirmModal);
+    if (backdrop) backdrop.addEventListener('click', (e)=>{ if (e.target === backdrop) hideConfirmModal(); });
+    if (confirmBtn) confirmBtn.addEventListener('click', async function(e){
+        e.preventDefault();
+        await confirmModalSubmit();
+    });
 });
 
 // Local beneficiary helpers (used when server is not reachable)
@@ -134,10 +147,15 @@ async function loadRecentTransfers() {
             return;
         }
         wrap.innerHTML = '';
-        recent.slice(0,6).forEach(tx => {
+        recent.slice(0,8).forEach(tx => {
             const el = document.createElement('div');
-            el.className = 'flex justify-between items-center';
-            el.innerHTML = `<div class="text-sm">${tx.to_account_number || tx.to || tx.accountNumber || 'External'}</div><div class="text-sm font-semibold">${formatCurrency(tx.amount)}</div>`;
+            el.className = 'flex items-center justify-between border-b border-slate-100 pb-2 mb-2';
+            const left = document.createElement('div');
+            left.innerHTML = `<div class="text-sm font-medium">${tx.recipientName || tx.to_name || tx.to || tx.to_account_number || 'External'}</div><div class="text-xs text-slate-500">${formatDate(tx.created_at || tx.date || tx.timestamp || new Date())}</div>`;
+            const right = document.createElement('div');
+            right.innerHTML = `<div class="text-sm font-semibold">${formatCurrency(tx.amount)}</div><div class="text-xs ${tx.status === 'failed' ? 'text-rose-600' : 'text-slate-500'}">${capitalize(tx.status || 'completed')}</div>`;
+            el.appendChild(left);
+            el.appendChild(right);
             wrap.appendChild(el);
         });
     } catch (err) {
@@ -182,45 +200,32 @@ document.getElementById('transferForm')?.addEventListener('submit', async functi
         showAlert('Please enter a valid amount', 'error');
         return;
     }
+
+    // If the amount is large, show a confirmation modal first
+    const LARGE_THRESHOLD = 1000; // configurable threshold
+    if (amount >= LARGE_THRESHOLD) {
+        showConfirmModal({ fromAccountId, transferType, toAccountId, amount, description, recipientName, accountNumber, bankName, recipientEmail, contact, saveAsBeneficiary });
+        return;
+    }
     
     try {
         const submitBtn = e.target.querySelector('button[type="submit"]');
         submitBtn.textContent = 'Processing...';
         submitBtn.disabled = true;
-        
-        if (transferType === 'internal') {
-            await transactionsAPI.transfer(fromAccountId, toAccountId, amount, description);
-        } else {
-            // external-like transfer (Other Bank or International) — use same API/flow
-            // Use shared apiClient so base URL and auth token are handled consistently
-            await apiClient.post('/external-transfers', {
-                fromAccountId,
-                recipientName,
-                recipientEmail,
-                accountNumber,
-                bankName,
-                contact,
-                amount,
-                description,
-                transferType,
-                saveAsBeneficiary
-            });
-        }
-        
-        showAlert('Transfer completed successfully!', 'success');
-        
+
+        await performTransfer({ fromAccountId, transferType, toAccountId, amount, description, recipientName, accountNumber, bankName, recipientEmail, contact, saveAsBeneficiary });
+
         // Reset form
         e.target.reset();
         document.getElementById('fromAccountBalance').textContent = '';
-        
+
         // Reload accounts to update balances
         await loadAccounts();
         // refresh recent transfers
         await loadRecentTransfers();
-        
+
         submitBtn.textContent = 'Transfer';
         submitBtn.disabled = false;
-        
     } catch (error) {
         console.error('Transfer failed:', error);
 
@@ -250,3 +255,60 @@ document.getElementById('transferForm')?.addEventListener('submit', async functi
         submitBtn.disabled = false;
     }
 });
+
+// Perform the transfer (internal or external). Separated for reuse by the modal confirm flow.
+async function performTransfer(data) {
+    const { fromAccountId, transferType, toAccountId, amount, description, recipientName, accountNumber, bankName, recipientEmail, contact, saveAsBeneficiary } = data;
+    if (transferType === 'internal') {
+        await transactionsAPI.transfer(fromAccountId, toAccountId, amount, description);
+    } else {
+        await apiClient.post('/external-transfers', {
+            fromAccountId,
+            recipientName,
+            recipientEmail,
+            accountNumber,
+            bankName,
+            contact,
+            amount,
+            description,
+            transferType,
+            saveAsBeneficiary
+        });
+    }
+    showAlert('Transfer completed successfully!', 'success');
+}
+
+// Confirmation modal helpers
+let __pendingTransfer = null;
+function showConfirmModal(payload) {
+    __pendingTransfer = payload;
+    const backdrop = document.getElementById('transferConfirmBackdrop');
+    if (!backdrop) return;
+    document.getElementById('confirmAmount').textContent = formatCurrency(payload.amount);
+    const recip = (payload.recipientName || payload.accountNumber || payload.toAccountId || 'External');
+    document.getElementById('confirmRecipient').textContent = 'To: ' + recip;
+    backdrop.style.display = 'flex';
+    backdrop.setAttribute('aria-hidden', 'false');
+}
+
+function hideConfirmModal() {
+    const backdrop = document.getElementById('transferConfirmBackdrop');
+    if (!backdrop) return;
+    backdrop.style.display = 'none';
+    backdrop.setAttribute('aria-hidden', 'true');
+    __pendingTransfer = null;
+}
+
+async function confirmModalSubmit() {
+    if (!__pendingTransfer) return hideConfirmModal();
+    try {
+        await performTransfer(__pendingTransfer);
+        hideConfirmModal();
+        // refresh accounts & recent
+        await loadAccounts();
+        await loadRecentTransfers();
+    } catch (err) {
+        console.error('Confirm transfer failed', err);
+        showAlert(err.message || 'Transfer failed', 'error');
+    }
+}

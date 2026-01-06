@@ -251,6 +251,20 @@ body.desktop .max-w-2xl, body.desktop .max-w-md, body.desktop .max-w-3xl { max-w
 body.desktop .opay-card { border-radius: 12px; }
 body.desktop .opay-toast { bottom: 4rem }
 
+/* Transfer confirmation modal styles */
+.transfer-confirm-backdrop { position: fixed; inset:0; background: rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:60 }
+.transfer-confirm { background: #fff; padding:18px; border-radius:12px; width:92%; max-width:480px; box-shadow:0 12px 40px rgba(2,6,23,0.2) }
+.transfer-confirm .muted { color:var(--muted); font-size:0.95rem }
+.transfer-confirm .confirm-amount { font-size:1.4rem; font-weight:700 }
+.transfer-confirm .confirm-meta { margin-top:8px }
+.transfer-confirm .btns { display:flex; gap:8px; margin-top:14px }
+
+/* Desktop tweaks: make transfer page slightly wider and align cards side-by-side */
+@media(min-width:1100px){
+  body.desktop main { max-width: 1000px }
+  .transfer-layout { display:grid; grid-template-columns: 1fr 340px; gap:20px }
+}
+
 /* Show a desktop top nav if needed (keeps layout simple) */
 body.desktop .navbar, body.desktop .navbar-container { display: block }
 

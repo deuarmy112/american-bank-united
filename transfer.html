@@ -25,12 +25,14 @@
         </header>
 
         <main class="pt-20 pb-24 max-w-2xl mx-auto px-4">
-            <p class="text-sm text-slate-600 mb-4">Move money between your accounts instantly</p>
-            <p id="transferHint" class="text-sm text-slate-500 mb-4 hidden"></p>
+                        <div class="transfer-layout">
+                            <div>
+                                <p class="text-sm text-slate-600 mb-4">Move money between your accounts instantly</p>
+                                <p id="transferHint" class="text-sm text-slate-500 mb-4 hidden"></p>
 
-            <div id="alert" class="hidden"></div>
+                                <div id="alert" class="hidden"></div>
 
-            <form id="transferForm" class="space-y-3 opay-card p-4">
+                                <form id="transferForm" class="space-y-3 opay-card p-4">
                 <div class="flex gap-2 items-center">
                     <label class="inline-flex items-center"><input type="radio" name="transferType" value="internal" checked class="mr-2"> Internal</label>
                     <label class="inline-flex items-center"><input type="radio" name="transferType" value="external" class="mr-2"> Other Bank</label>
@@ -77,11 +79,34 @@
                     <button type="submit" class="w-full opay-btn">Transfer</button>
                 </div>
             </form>
-            <div id="recentTransfersWrap" class="mt-4">
+              </div>
+              <aside class="mt-4">
                 <div class="opay-card p-4">
                     <h3 class="text-sm font-medium">Recent Transfers</h3>
                     <div id="recentTransfers" class="mt-2 space-y-2">
                         <!-- recent items -->
+                    </div>
+                </div>
+              </aside>
+            </div>
+
+            <!-- Transfer confirmation modal -->
+            <div id="transferConfirmBackdrop" class="transfer-confirm-backdrop" aria-hidden="true">
+                <div class="transfer-confirm">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="muted">Confirm Transfer</div>
+                            <div id="confirmAmount" class="confirm-amount">$0.00</div>
+                            <div id="confirmRecipient" class="confirm-meta muted">To: —</div>
+                        </div>
+                        <div>
+                            <button id="cancelConfirmBtn" class="border px-3 py-2 rounded-md">Cancel</button>
+                        </div>
+                    </div>
+                    <div class="confirm-note text-sm text-slate-600 mt-3">This action may be irreversible. Please confirm you want to proceed.</div>
+                    <div class="btns">
+                        <button id="confirmTransferBtn" class="opay-btn">Confirm Transfer</button>
+                        <button id="editTransferBtn" class="border px-3 py-2 rounded-md">Edit</button>
                     </div>
                 </div>
             </div>
