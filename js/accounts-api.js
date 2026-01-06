@@ -12,6 +12,8 @@ async function loadAccounts() {
     try {
         const accounts = await accountsAPI.getAll();
         displayAccounts(accounts);
+        // notify other components (balance carousel) that accounts were updated
+        window.dispatchEvent(new CustomEvent('accounts:updated', { detail: accounts }));
     } catch (error) {
         console.error('Failed to load accounts:', error);
         showAlert('Failed to load accounts', 'error');
