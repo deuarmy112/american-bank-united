@@ -162,89 +162,69 @@
             </div>
 
             <!-- Balance carousel: total + per-account slides -->
-            <div class="balance-carousel mb-4">
-                <div class="carousel-track overflow-hidden rounded-2xl shadow-lg">
+            <div class="balance-carousel mb-4 relative">
+                <div class="carousel-track overflow-hidden rounded-2xl shadow-lg relative">
                     <div id="balanceSlides" class="flex transition-transform duration-300"></div>
+                    <button onclick="balancePrev()" aria-label="Previous" class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/30 p-2 rounded-full">‹</button>
+                    <button onclick="balanceNext()" aria-label="Next" class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/30 p-2 rounded-full">›</button>
                 </div>
                 <div id="balanceIndicators" class="mt-3 flex justify-center gap-2"></div>
             </div>
 
-            <!-- Quick actions (circular) -->
+            <!-- Quick actions (configurable, mirrors profile selection if present) -->
             <div class="mb-4">
-                <div class="grid grid-cols-4 gap-3">
-                    <button onclick="location.href='accounts.html'" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-wallet text-indigo-600"></i></div>
-                        <span class="text-xs">Accounts</span>
-                    </button>
-                    <button onclick="location.href='trade.html'" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-chart-line text-emerald-600"></i></div>
-                        <span class="text-xs">Trade</span>
-                    </button>
-                    <button onclick="location.href='transfer.html?type=international'" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-globe text-sky-500"></i></div>
-                        <span class="text-xs">Intl Transfer</span>
-                    </button>
-                    <button onclick="location.href='transactions.html'" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-history text-slate-700"></i></div>
-                        <span class="text-xs">History</span>
-                    </button>
-                    <button onclick="openFeatureModal('bill')" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-file-invoice-dollar text-red-500"></i></div>
-                        <span class="text-xs">Pay Bills</span>
-                    </button>
-                    <button onclick="openFeatureModal('airtime')" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-signal text-green-500"></i></div>
-                        <span class="text-xs">Loads</span>
-                    </button>
-                    <button onclick="openFeatureModal('bet')" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-football-ball text-indigo-500"></i></div>
-                        <span class="text-xs">Betting</span>
-                    </button>
-
-                    <button onclick="location.href='cards.html'" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-credit-card text-sky-500"></i></div>
-                        <span class="text-xs">Cards</span>
-                    </button>
-                    <button onclick="location.href='qr.html'" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-qrcode text-slate-700"></i></div>
-                        <span class="text-xs">QR Pay</span>
-                    </button>
-                    <button onclick="openBeneficiariesModal()" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-users text-indigo-600"></i></div>
-                        <span class="text-xs">Beneficiaries</span>
-                    </button>
-                    <button onclick="location.href='other-banks.html'" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-university text-emerald-600"></i></div>
-                        <span class="text-xs">Other Banks</span>
-                    </button>
-
-                    <button onclick="location.href='wallet.html'" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-wallet text-fuchsia-600"></i></div>
-                        <span class="text-xs">Wallet</span>
-                    </button>
-                    <button id="moreToggle" onclick="toggleMoreMenu()" class="flex flex-col items-center gap-1 p-2">
-                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-ellipsis-h text-slate-700"></i></div>
-                        <span class="text-xs">More...</span>
-                    </button>
-                    <!-- Hidden more menu (loan, investments, shop) -->
-                    <div id="moreMenu" class="hidden col-span-4">
-                        <div class="mt-2 grid grid-cols-3 gap-3">
-                            <button onclick="openFeatureModal('loan')" class="flex flex-col items-center gap-1 p-2">
-                                <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-hand-holding-dollar text-rose-500"></i></div>
-                                <span class="text-xs">Loan</span>
-                            </button>
-                            <button onclick="location.href='investments.html'" class="flex flex-col items-center gap-1 p-2">
-                                <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-chart-line text-sky-600"></i></div>
-                                <span class="text-xs">Investment</span>
-                            </button>
-                            <button onclick="location.href='shop.html'" class="flex flex-col items-center gap-1 p-2">
-                                <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-store text-yellow-600"></i></div>
-                                <span class="text-xs">Shop Now</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <div id="homeQuickActionsGrid" class="grid grid-cols-4 gap-3"></div>
             </div>
+
+            <script>
+                (function(){
+                    const QUICK_ACTIONS_REGISTRY = [
+                        { id: 'accounts', label: 'Accounts', icon: 'fas fa-wallet', color: 'text-indigo-600', href: 'accounts.html' },
+                        { id: 'trade', label: 'Trade', icon: 'fas fa-chart-line', color: 'text-emerald-600', href: 'trade.html' },
+                        { id: 'intl', label: 'Intl Transfer', icon: 'fas fa-globe', color: 'text-sky-500', href: 'transfer.html?type=international' },
+                        { id: 'history', label: 'History', icon: 'fas fa-history', color: 'text-slate-700', href: 'transactions.html' },
+                        { id: 'deposit', label: 'Deposit', icon: 'fas fa-money-bill-wave', color: 'text-green-600', href: '#' },
+                        { id: 'withdraw', label: 'Withdraw', icon: 'fas fa-hand-holding-dollar', color: 'text-rose-600', href: '#' },
+                        { id: 'billpay', label: 'Pay Bills', icon: 'fas fa-file-invoice-dollar', color: 'text-yellow-600', href: "javascript:openFeatureModal('bill')" },
+                        { id: 'cards', label: 'Cards', icon: 'fas fa-credit-card', color: 'text-indigo-500', href: 'cards.html' },
+                        { id: 'qr', label: 'QR Pay', icon: 'fas fa-qrcode', color: 'text-slate-700', href: 'qr.html' },
+                        { id: 'send', label: 'Send Money', icon: 'fas fa-paper-plane', color: 'text-indigo-600', href: 'transfer.html' },
+                        { id: 'beneficiaries', label: 'Beneficiaries', icon: 'fas fa-users', color: 'text-indigo-600', href: 'javascript:openBeneficiariesModal()' },
+                        { id: 'otherbanks', label: 'Other Banks', icon: 'fas fa-university', color: 'text-emerald-600', href: 'other-banks.html' },
+                        { id: 'wallet', label: 'Wallet', icon: 'fas fa-wallet', color: 'text-fuchsia-600', href: 'wallet.html' },
+                    ];
+
+                    const QUICK_CONFIG_KEY = 'abu_quick_actions';
+                    function loadQuickConfig(){ try{ const raw = localStorage.getItem(QUICK_CONFIG_KEY); if(!raw) return null; return JSON.parse(raw); }catch(e){return null;} }
+
+                    function findById(id){ return QUICK_ACTIONS_REGISTRY.find(a=>a.id===id); }
+
+                    function render(){
+                        const grid = document.getElementById('homeQuickActionsGrid'); if(!grid) return;
+                        grid.innerHTML='';
+                        const config = loadQuickConfig();
+                        const list = config && Array.isArray(config) ? config : QUICK_ACTIONS_REGISTRY.map(a=>a.id);
+                        list.forEach(id=>{
+                            const act = findById(id);
+                            if(!act) return;
+                            const el = document.createElement(act.href && act.href.startsWith('javascript:')? 'button':'a');
+                            if(act.href && !act.href.startsWith('javascript:')) el.href = act.href;
+                            el.className = 'flex flex-col items-center p-2';
+                            el.innerHTML = `<div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="${act.icon} ${act.color}"></i></div><span class="text-xs">${act.label}</span>`;
+                            if(act.href && act.href.startsWith('javascript:')){
+                                el.addEventListener('click', ()=>{ try{ eval(act.href); }catch(e){ console.warn(e);} });
+                            }
+                            grid.appendChild(el);
+                        });
+                        // append More... button if not present
+                        const more = document.createElement('button'); more.id='moreToggle'; more.className='flex flex-col items-center p-2'; more.innerHTML = `<div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-ellipsis-h text-slate-700"></i></div><span class="text-xs">More...</span>`;
+                        more.addEventListener('click', ()=> toggleMoreMenu());
+                        grid.appendChild(more);
+                    }
+
+                    document.addEventListener('DOMContentLoaded', render);
+                })();
+            </script>
 
             <!-- SmartSave promo carousel (4 slides) -->
             <div class="mb-4">

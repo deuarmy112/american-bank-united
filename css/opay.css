@@ -194,6 +194,9 @@ a[style*="color"] { color: var(--abu-control) !important; }
   .opay-bottom-nav { display:flex !important }
 }
 
+/* Force show bottom nav on specific pages even in desktop mode */
+body.desktop .opay-bottom-nav.force-visible { display: flex !important; }
+
 /* Header / Brand */
 .opay-header{background:white; border-bottom:0;padding:14px 0; position:fixed; top:0; left:0; right:0; z-index:20}
 .opay-brand{display:flex;align-items:center;gap:.6rem;font-weight:600;color:#0f172a}

@@ -5,337 +5,378 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile - American Bank United</title>
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/opay.css">
     <script>
         if (!localStorage.getItem('authToken')) {
             window.location.href = 'index.html';
         }
     </script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/opay.css">
-    <!-- Theme now applied globally via css/opay.css -->
 </head>
-<body class="opay-ui bg-slate-50">
-    <header class="fixed top-0 left-0 right-0 bg-white shadow z-20">
-        <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <a href="dashboard.html" class="opay-text text-lg"><i class="fas fa-chevron-left"></i></a>
-                <div>
-                    <div class="text-sm text-slate-400">Welcome back</div>
-                    <h1 class="text-lg font-semibold">Profile</h1>
-                </div>
-            </div>
-            <div>
-                <button id="logoutBtn" class="text-sm text-rose-600">Logout</button>
+<body class="bg-slate-50">
+    <main class="max-w-md mx-auto bg-white min-h-screen pb-20">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-slate-800 to-slate-600 text-white p-4">
+            <div class="flex items-center justify-between">
+                <button onclick="history.back()" class="text-white">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="text-lg font-semibold">Profile</h1>
+                <div></div>
             </div>
         </div>
-    </header>
 
-    <main class="pt-20 pb-28 max-w-2xl mx-auto px-4">
-        <!-- Profile Header -->
-        <section class="bg-white rounded-xl shadow p-6 mb-5">
-            <div class="flex items-center gap-4">
-                <img id="profileAvatar" src="https://via.placeholder.com/80" alt="avatar" class="w-20 h-20 rounded-full border-2 border-orange-200">
-                <div class="flex-1">
-                    <h2 id="profileName" class="text-xl font-semibold text-slate-800">Loading...</h2>
-                    <p id="profileEmail" class="text-sm text-slate-500">&nbsp;</p>
-                    <p id="profilePhone" class="text-sm text-slate-500">&nbsp;</p>
-                </div>
-                <button id="editProfileBtn" class="opay-bg text-white px-4 py-2 rounded-lg text-sm">
-                    <i class="fas fa-edit mr-1"></i> Edit
-                </button>
-            </div>
-        </section>
-
-        <!-- Account Balance -->
-        <section class="opay-balance-gradient text-white rounded-xl shadow p-5 mb-5">
-            <div class="flex items-start justify-between">
+        <!-- Profile Info -->
+        <div class="p-4">
+            <div class="flex items-center gap-4 mb-6">
+                <img id="profileAvatar" src="https://via.placeholder.com/60" class="w-16 h-16 rounded-full">
                 <div>
-                    <div class="text-sm opacity-90">Available balance</div>
-                    <div id="balance" class="text-2xl font-bold mt-1">$0.00</div>
-                </div>
-                <div class="text-right">
-                    <div class="text-xs opacity-80">Primary account</div>
-                    <div class="text-sm">**** 1234</div>
+                    <h2 id="profileName" class="text-xl font-semibold">User</h2>
+                    <p id="profileEmail" class="text-slate-600 text-sm">email@example.com</p>
+                    <p id="profilePhone" class="text-slate-600 text-sm">+1234567890</p>
                 </div>
             </div>
-                    <div class="mt-4 flex gap-3">
-                <button onclick="openFeatureModal('deposit')" class="w-28 text-center bg-white/20 px-3 py-2 rounded text-sm">Add money</button>
-                <button class="w-28 text-center bg-white/20 px-3 py-2 rounded text-sm">Withdraw</button>
-            </div>
-        </section>
 
-        <!-- Quick Actions -->
-        <section class="bg-white rounded-xl shadow p-4 mb-5">
-            <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
-            <div class="grid grid-cols-2 gap-4">
-                <button class="flex flex-col items-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100" id="actionSend">
-                    <i class="fas fa-paper-plane text-2xl opay-text mb-2"></i>
-                    <span class="text-sm font-medium">Send Money</span>
-                </button>
-                <button class="flex flex-col items-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100" id="actionReceive">
-                    <i class="fas fa-qrcode text-2xl opay-text mb-2"></i>
-                    <span class="text-sm font-medium">Receive</span>
-                </button>
-                <button class="flex flex-col items-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100" id="actionPay">
-                    <i class="fas fa-credit-card text-2xl opay-text mb-2"></i>
-                    <span class="text-sm font-medium">Pay Bills</span>
-                </button>
-                <button class="flex flex-col items-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100" id="actionTopup">
-                    <i class="fas fa-wallet text-2xl opay-text mb-2"></i>
-                    <span class="text-sm font-medium">Top-up</span>
-                </button>
+            <!-- Balance -->
+            <div class="bg-gradient-to-r from-slate-100 to-slate-200 rounded-lg p-4 mb-6 opay-balance-gradient">
+                <div class="text-sm text-slate-600">Total Balance</div>
+                <div id="balance" class="text-2xl font-bold">$0.00</div>
             </div>
-        </section>
 
-        <!-- Account Settings -->
-        <section class="bg-white rounded-xl shadow p-4">
-            <h3 class="text-lg font-semibold mb-4">Account Settings</h3>
-            <div class="space-y-3">
-                <div class="flex items-center justify-between py-3 border-b border-slate-100">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-bell opay-text"></i>
-                        <span class="text-sm">Notifications</span>
-                    </div>
-                    <span class="text-sm text-slate-500">On</span>
+            <!-- Quick Actions -->
+            <section class="bg-white rounded-xl shadow p-4 mb-5">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-lg font-semibold">Quick Actions</h3>
+                    <button class="text-sm text-slate-500" onclick="openEditQuickActions()">Edit</button>
                 </div>
-                <div class="flex items-center justify-between py-3 border-b border-slate-100">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-language opay-text"></i>
-                        <span class="text-sm">Language</span>
-                    </div>
-                    <span class="text-sm text-slate-500">English</span>
-                </div>
-                <div class="flex items-center justify-between py-3">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-lock opay-text"></i>
-                        <span class="text-sm">Two-factor auth</span>
-                    </div>
-                    <span class="text-sm text-slate-500">Not set</span>
-                </div>
-            </div>
-        </section>
+                <div id="quickActionsGrid" class="grid grid-cols-4 gap-3"></div>
+            </section>
+
+            <!-- Edit Profile Button -->
+            <button id="editProfileBtn" class="w-full bg-slate-800 text-white py-3 rounded-lg font-semibold mb-4">
+                Edit Profile
+            </button>
+
+            <!-- Logout -->
+            <button id="logoutBtn" class="w-full border border-red-500 text-red-500 py-3 rounded-lg font-semibold">
+                Logout
+            </button>
+        </div>
     </main>
 
-    <!-- bottom nav removed per request (consolidated UI without bottom navigation) -->
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center p-4">
+        <div class="bg-white max-w-md w-full rounded-lg p-4">
+            <h3 class="font-semibold mb-2">Edit Profile</h3>
+            <form id="editProfileForm" class="space-y-3">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-xs text-slate-600">First name</label>
+                        <input id="editFirstName" class="w-full border rounded px-3 py-2" />
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-600">Last name</label>
+                        <input id="editLastName" class="w-full border rounded px-3 py-2" />
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-600">Email</label>
+                    <input id="editEmail" class="w-full border rounded px-3 py-2" />
+                </div>
+                <div>
+                    <label class="text-xs text-slate-600">Phone</label>
+                    <input id="editPhone" class="w-full border rounded px-3 py-2" />
+                </div>
+                <div>
+                    <label class="text-xs text-slate-600">Avatar URL</label>
+                    <input id="editAvatar" class="w-full border rounded px-3 py-2" placeholder="https://..." />
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" class="border px-3 py-2 rounded" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="opay-btn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        <script src="js/api.js"></script>
-        <script src="js/utils.js"></script>
-        <script src="js/auth.js"></script>
-        <!-- Edit Profile Modal -->
-        <div id="editProfileModal" class="hidden fixed inset-0 bg-black/40 items-center justify-center p-4">
-            <div class="bg-white max-w-md w-full rounded-lg p-4">
-                <h3 class="font-semibold mb-2">Edit Profile</h3>
-                <form id="editProfileForm" class="space-y-3">
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="text-xs text-slate-600">First name</label>
-                            <input id="editFirstName" class="w-full border rounded px-3 py-2" />
-                        </div>
-                        <div>
-                            <label class="text-xs text-slate-600">Last name</label>
-                            <input id="editLastName" class="w-full border rounded px-3 py-2" />
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-600">Email</label>
-                        <input id="editEmail" class="w-full border rounded px-3 py-2" />
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-600">Phone</label>
-                        <input id="editPhone" class="w-full border rounded px-3 py-2" />
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-600">Avatar URL</label>
-                        <input id="editAvatar" class="w-full border rounded px-3 py-2" placeholder="https://..." />
-                    </div>
-                    <div class="flex justify-end gap-2">
-                        <button type="button" class="border px-3 py-2 rounded" onclick="closeEditModal()">Cancel</button>
-                        <button type="submit" class="opay-btn">Save</button>
-                    </div>
-                </form>
+    <!-- Edit Quick Actions Modal -->
+    <div id="editQuickActionsModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center p-4">
+        <div class="bg-white max-w-2xl w-full rounded-lg p-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold">Edit Quick Actions</h3>
+                <button onclick="closeEditQuickActions()" class="text-slate-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h4 class="font-medium mb-2">Available Actions</h4>
+                    <div id="availableActions" class="space-y-2"></div>
+                </div>
+                <div>
+                    <h4 class="font-medium mb-2">Selected Actions</h4>
+                    <div id="selectedActions" class="space-y-2"></div>
+                </div>
+            </div>
+            <div class="flex justify-end mt-4">
+                <button id="saveQuickActionsBtn" class="opay-btn">Save Changes</button>
             </div>
         </div>
+    </div>
 
-        <script>
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Quick Actions Registry
+        const QUICK_ACTIONS_REGISTRY = [
+            { id: 'accounts', label: 'Accounts', icon: 'fas fa-wallet', color: 'text-indigo-600', href: 'accounts.html' },
+            { id: 'trade', label: 'Trade', icon: 'fas fa-chart-line', color: 'text-emerald-600', href: 'trade.html' },
+            { id: 'intl', label: 'Intl Transfer', icon: 'fas fa-globe', color: 'text-sky-500', href: 'transfer.html?type=international' },
+            { id: 'history', label: 'History', icon: 'fas fa-history', color: 'text-slate-700', href: 'transactions.html' },
+            { id: 'deposit', label: 'Deposit', icon: 'fas fa-money-bill-wave', color: 'text-green-600', href: '#' },
+            { id: 'withdraw', label: 'Withdraw', icon: 'fas fa-hand-holding-dollar', color: 'text-rose-600', href: '#' },
+            { id: 'billpay', label: 'Bill Pay', icon: 'fas fa-file-invoice-dollar', color: 'text-yellow-600', href: 'bills.html' },
+            { id: 'cards', label: 'Cards', icon: 'fas fa-credit-card', color: 'text-indigo-500', href: 'cards.html' },
+            { id: 'qr', label: 'QR Pay', icon: 'fas fa-qrcode', color: 'text-slate-700', href: 'qr.html' },
+            { id: 'send', label: 'Send Money', icon: 'fas fa-paper-plane', color: 'text-indigo-600', href: 'transfer.html' },
+        ];
+
+        const QUICK_CONFIG_KEY = 'abu_quick_actions';
+
+        function defaultQuickConfig() { return ['billpay', 'cards', 'qr', 'edit']; }
+        function loadQuickConfig() {
+            try {
+                const raw = localStorage.getItem(QUICK_CONFIG_KEY);
+                if (!raw) return defaultQuickConfig();
+                return JSON.parse(raw);
+            } catch (e) {
+                return defaultQuickConfig();
+            }
+        }
+        function saveQuickConfig(arr) { localStorage.setItem(QUICK_CONFIG_KEY, JSON.stringify(arr)); }
+        function findActionById(id) { return QUICK_ACTIONS_REGISTRY.find(a => a.id === id); }
+
+        function renderQuickActions() {
+            const grid = document.getElementById('quickActionsGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            const config = loadQuickConfig();
+            config.forEach(id => {
+                if (id === 'edit') {
+                    const btn = document.createElement('button');
+                    btn.className = 'flex flex-col items-center p-3 bg-slate-50 rounded-lg';
+                    btn.innerHTML = `<i class="fas fa-edit text-lg opay-text mb-1"></i><span class="text-xs mt-1">Edit</span>`;
+                    btn.addEventListener('click', () => openEditQuickActions());
+                    grid.appendChild(btn);
+                    return;
+                }
+                const act = findActionById(id);
+                if (!act) return;
+                const btn = document.createElement(act.href ? 'a' : 'button');
+                if (act.href) btn.href = act.href;
+                btn.className = 'flex flex-col items-center p-3 bg-slate-50 rounded-lg';
+                btn.innerHTML = `<i class="${act.icon} text-lg ${act.color} mb-1"></i><span class="text-xs mt-1">${act.label}</span>`;
+                grid.appendChild(btn);
+            });
+        }
+
+        function openEditQuickActions() {
+            const m = document.getElementById('editQuickActionsModal');
+            if (!m) return;
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            populateEditLists();
+        }
+        function closeEditQuickActions() {
+            const m = document.getElementById('editQuickActionsModal');
+            if (!m) return;
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function populateEditLists() {
+            const avail = document.getElementById('availableActions');
+            const sel = document.getElementById('selectedActions');
+            if (!avail || !sel) return;
+            avail.innerHTML = '';
+            sel.innerHTML = '';
+            const config = loadQuickConfig();
+            config.forEach(id => {
+                const el = buildSelectedItem(id);
+                if (el) sel.appendChild(el);
+            });
+            QUICK_ACTIONS_REGISTRY.forEach(a => {
+                if (!config.includes(a.id)) {
+                    const el = buildAvailableItem(a);
+                    avail.appendChild(el);
+                }
+            });
+        }
+
+        function buildAvailableItem(action) {
+            const d = document.createElement('div');
+            d.className = 'flex items-center justify-between p-2 border rounded';
+            d.innerHTML = `<div class="flex items-center gap-3"><i class="${action.icon} opay-text"></i><div class="text-sm">${action.label}</div></div><div><button class="text-xs text-indigo-600">Add</button></div>`;
+            d.querySelector('button').addEventListener('click', () => { addToSelected(action.id); });
+            return d;
+        }
+
+        function buildSelectedItem(id) {
+            const action = findActionById(id);
+            const d = document.createElement('div');
+            d.className = 'flex items-center justify-between p-2 border rounded';
+            d.setAttribute('draggable','true');
+            d.dataset.actionId = id;
+            const label = id === 'edit' ? 'Edit' : (action ? action.label : id);
+            const icon = id === 'edit' ? 'fas fa-edit' : (action ? action.icon : 'fas fa-question');
+            d.innerHTML = `<div class="flex items-center gap-3"><i class="${icon} opay-text"></i><div class="text-sm">${label}</div></div><div class="flex items-center gap-2"><button class="text-xs text-slate-500">↑</button><button class="text-xs text-slate-500">↓</button><button class="text-xs text-rose-600">Remove</button></div>`;
+            const up = d.querySelectorAll('button')[0];
+            const down = d.querySelectorAll('button')[1];
+            const rem = d.querySelectorAll('button')[2];
+            up.addEventListener('click', () => moveSelected(id, -1));
+            down.addEventListener('click', () => moveSelected(id, 1));
+            rem.addEventListener('click', () => removeFromSelected(id));
+
+            // Drag & drop handlers for reordering
+            d.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', id);
+                d.classList.add('opacity-50');
+            });
+            d.addEventListener('dragend', (e) => {
+                d.classList.remove('opacity-50');
+            });
+            d.addEventListener('dragover', (e) => { e.preventDefault(); d.classList.add('ring-2','ring-slate-200'); });
+            d.addEventListener('dragleave', (e) => { d.classList.remove('ring-2','ring-slate-200'); });
+            d.addEventListener('drop', (e) => {
+                e.preventDefault(); d.classList.remove('ring-2','ring-slate-200');
+                const srcId = e.dataTransfer.getData('text/plain');
+                if (!srcId || srcId === id) return;
+                moveSelectedById(srcId, id);
+            });
+            return d;
+        }
+
+        function moveSelectedById(srcId, targetId){
+            const arr = getSelectedArray();
+            const srcIdx = arr.indexOf(srcId);
+            const tgtIdx = arr.indexOf(targetId);
+            if (srcIdx < 0 || tgtIdx < 0) return;
+            // remove src
+            arr.splice(srcIdx,1);
+            // insert before target index
+            const insertAt = srcIdx < tgtIdx ? tgtIdx : tgtIdx;
+            arr.splice(insertAt,0,srcId);
+            saveQuickConfig(arr);
+            populateEditLists();
+        }
+
+        function getSelectedArray() { const raw = loadQuickConfig(); return Array.isArray(raw) ? raw.slice() : []; }
+        function addToSelected(id) { const arr = getSelectedArray(); if (arr.includes(id)) return; arr.push(id); saveQuickConfig(arr); populateEditLists(); }
+        function removeFromSelected(id) { let arr = getSelectedArray(); arr = arr.filter(x => x !== id); saveQuickConfig(arr); populateEditLists(); }
+        function moveSelected(id, delta) {
+            const arr = getSelectedArray();
+            const i = arr.indexOf(id);
+            if (i < 0) return;
+            const j = i + delta;
+            if (j < 0 || j >= arr.length) return;
+            const tmp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = tmp;
+            saveQuickConfig(arr);
+            populateEditLists();
+        }
+
+        // Profile functions
         async function loadProfile() {
             try {
                 const user = await authAPI.getProfile();
-                document.getElementById('profileName').textContent = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User';
-                document.getElementById('profileEmail').textContent = user.email || '';
-                document.getElementById('profilePhone').textContent = user.phone || '';
-                if (user.avatar) document.getElementById('profileAvatar').src = user.avatar;
-                // display balance if provided
-                if (user.balance !== undefined) {
-                    document.getElementById('balance').textContent = `$${Number(user.balance).toFixed(2)}`;
-                } else if (user.account && user.account.balance !== undefined) {
-                    document.getElementById('balance').textContent = `$${Number(user.account.balance).toFixed(2)}`;
+                const nameEl = document.getElementById('profileName');
+                if (nameEl) nameEl.textContent = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User';
+                const emailEl = document.getElementById('profileEmail');
+                if (emailEl) emailEl.textContent = user.email || '';
+                const phoneEl = document.getElementById('profilePhone');
+                if (phoneEl) phoneEl.textContent = user.phone || '';
+                const avatarEl = document.getElementById('profileAvatar');
+                if (user.avatar && avatarEl) avatarEl.src = user.avatar;
+                const balanceEl = document.getElementById('balance');
+                if (balanceEl) {
+                    if (user.balance !== undefined) balanceEl.textContent = formatCurrency(user.balance);
+                    else if (user.account && user.account.balance !== undefined) balanceEl.textContent = formatCurrency(user.account.balance);
                 }
-                                // store current user for edit
-                                window.__currentUser = user || {};
+                window.__currentUser = user || {};
             } catch (err) {
                 console.error('Failed to load profile', err);
             }
         }
 
-                // Edit modal helpers
-                function openEditModal(){
-                    const u = window.__currentUser || {};
-                    document.getElementById('editFirstName').value = u.first_name || '';
-                    document.getElementById('editLastName').value = u.last_name || '';
-                    document.getElementById('editEmail').value = u.email || '';
-                    document.getElementById('editPhone').value = u.phone || '';
-                    document.getElementById('editAvatar').value = u.avatar || '';
-                    const m = document.getElementById('editProfileModal'); if(!m) return; m.classList.remove('hidden'); m.classList.add('flex');
+        function openEditModal() {
+            const u = window.__currentUser || {};
+            const fn = document.getElementById('editFirstName');
+            if (fn) fn.value = u.first_name || '';
+            const ln = document.getElementById('editLastName');
+            if (ln) ln.value = u.last_name || '';
+            const em = document.getElementById('editEmail');
+            if (em) em.value = u.email || '';
+            const ph = document.getElementById('editPhone');
+            if (ph) ph.value = u.phone || '';
+            const av = document.getElementById('editAvatar');
+            if (av) av.value = u.avatar || '';
+            const m = document.getElementById('editProfileModal');
+            if (!m) return;
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+        function closeEditModal() {
+            const m = document.getElementById('editProfileModal');
+            if (!m) return;
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            renderQuickActions();
+            loadProfile();
+
+            const editBtn = document.getElementById('editProfileBtn');
+            if (editBtn) editBtn.addEventListener('click', openEditModal);
+
+            const editForm = document.getElementById('editProfileForm');
+            if (editForm) editForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const payload = {
+                    first_name: (document.getElementById('editFirstName')?.value || '').trim(),
+                    last_name: (document.getElementById('editLastName')?.value || '').trim(),
+                    email: (document.getElementById('editEmail')?.value || '').trim(),
+                    phone: (document.getElementById('editPhone')?.value || '').trim(),
+                    avatar: (document.getElementById('editAvatar')?.value || '').trim(),
+                };
+                const btn = e.target.querySelector('button[type=submit]');
+                if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+                try {
+                    const updated = await authAPI.updateProfile(payload);
+                    showToast('Profile updated');
+                    window.__currentUser = updated;
+                    closeEditModal();
+                    await loadProfile();
+                } catch (err) {
+                    console.error('Profile update failed', err);
+                    showToast(err.message || 'Update failed');
+                } finally {
+                    if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
                 }
-                function closeEditModal(){ const m = document.getElementById('editProfileModal'); if(!m) return; m.classList.add('hidden'); m.classList.remove('flex'); }
+            });
 
-                document.getElementById('editProfileBtn').addEventListener('click', () => { openEditModal(); });
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) logoutBtn.addEventListener('click', () => { if (confirm('Logout?')) authAPI.logout(); });
 
-                document.getElementById('editProfileForm').addEventListener('submit', async function(e){
-                    e.preventDefault();
-                    const payload = {
-                        first_name: document.getElementById('editFirstName').value.trim(),
-                        last_name: document.getElementById('editLastName').value.trim(),
-                        email: document.getElementById('editEmail').value.trim(),
-                        phone: document.getElementById('editPhone').value.trim(),
-                        avatar: document.getElementById('editAvatar').value.trim(),
-                    };
-                    try{
-                        const btn = e.target.querySelector('button[type=submit]'); btn.disabled=true; btn.textContent='Saving...';
-                        <!-- Quick Actions (configurable) -->
-                        <section class="bg-white rounded-xl shadow p-4 mb-5">
-                                <div class="flex items-center justify-between mb-3">
-                                        <h3 class="text-lg font-semibold">Quick Actions</h3>
-                                        <button class="text-sm text-slate-500" onclick="openEditQuickActions()">Edit</button>
-                                </div>
-                                <div id="quickActionsGrid" class="grid grid-cols-4 gap-3"></div>
-                        </section>
-
-                        <!-- Edit Quick Actions Modal -->
-                        <div id="editQuickActionsModal" class="hidden fixed inset-0 bg-black/40 items-center justify-center p-4">
-                            <div class="bg-white max-w-2xl w-full rounded-lg p-4">
-                                <div class="flex items-center justify-between">
-                                    <h3 class="font-semibold">Edit Quick Actions</h3>
-                                    <button onclick="closeEditQuickActions()" class="text-slate-500">Close</button>
-                                </div>
-                                <p class="text-sm text-slate-500 mt-2">Select which actions appear and reorder them. Click Save when done.</p>
-                                <div class="grid grid-cols-2 gap-3 mt-4">
-                                    <div>
-                                        <div class="text-sm font-medium mb-2">Available Actions</div>
-                                        <div id="availableActions" class="space-y-2 max-h-64 overflow-auto"></div>
-                                    </div>
-                                    <div>
-                                        <div class="text-sm font-medium mb-2">Selected Actions</div>
-                                        <div id="selectedActions" class="space-y-2 max-h-64 overflow-auto"></div>
-                                    </div>
-                                </div>
-                                <div class="mt-4 flex justify-end gap-2">
-                                    <button class="border px-3 py-2 rounded" onclick="closeEditQuickActions()">Cancel</button>
-                                    <button id="saveQuickActionsBtn" class="opay-btn">Save</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <script>
-                            // Quick actions registry copied from dashboard feature sheet
-                            const QUICK_ACTIONS_REGISTRY = [
-                                { id: 'accounts', label: 'Accounts', icon: 'fas fa-wallet', href: 'accounts.html' },
-                                { id: 'trade', label: 'Trade', icon: 'fas fa-chart-line', href: 'trade.html' },
-                                { id: 'intl', label: 'Intl Transfer', icon: 'fas fa-globe', href: 'transfer.html?type=international' },
-                                { id: 'history', label: 'History', icon: 'fas fa-history', href: 'transactions.html' },
-                                { id: 'deposit', label: 'Deposit', icon: 'fas fa-money-bill-wave', href: '#' },
-                                { id: 'withdraw', label: 'Withdraw', icon: 'fas fa-hand-holding-dollar', href: '#' },
-                                { id: 'billpay', label: 'Bill Pay', icon: 'fas fa-file-invoice-dollar', href: 'bills.html' },
-                                { id: 'cards', label: 'Cards', icon: 'fas fa-credit-card', href: 'cards.html' },
-                                { id: 'qr', label: 'QR Pay', icon: 'fas fa-qrcode', href: 'qr.html' },
-                                { id: 'send', label: 'Send Money', icon: 'fas fa-paper-plane', href: 'transfer.html' },
-                            ];
-
-                            const QUICK_CONFIG_KEY = 'abu_quick_actions';
-
-                            function defaultQuickConfig(){
-                                // default as requested: pay bills, cards, qr pay, edit
-                                return ['billpay','cards','qr','edit'];
-                            }
-
-                            function loadQuickConfig(){
-                                try{ const raw = localStorage.getItem(QUICK_CONFIG_KEY); if(!raw) return defaultQuickConfig(); return JSON.parse(raw); }catch(e){ return defaultQuickConfig(); }
-                            }
-
-                            function saveQuickConfig(arr){ localStorage.setItem(QUICK_CONFIG_KEY, JSON.stringify(arr)); }
-
-                            function findActionById(id){ return QUICK_ACTIONS_REGISTRY.find(a=>a.id===id); }
-
-                            function renderQuickActions(){
-                                const grid = document.getElementById('quickActionsGrid'); if(!grid) return;
-                                grid.innerHTML = '';
-                                const config = loadQuickConfig();
-                                config.forEach(id=>{
-                                    if(id==='edit'){
-                                        const btn = document.createElement('button'); btn.className='flex flex-col items-center p-3 bg-slate-50 rounded-lg';
-                                        btn.innerHTML = `<i class="fas fa-edit text-2xl opay-text mb-2"></i><span class="text-xs">Edit</span>`;
-                                        btn.addEventListener('click', ()=> openEditQuickActions());
-                                        grid.appendChild(btn); return;
-                                    }
-                                    const act = findActionById(id);
-                                    if(!act) return;
-                                    const a = document.createElement('a'); a.href = act.href || '#'; a.className='flex flex-col items-center p-3 bg-slate-50 rounded-lg';
-                                    a.innerHTML = `<i class="${act.icon} text-lg text-indigo-600"></i><span class="text-xs mt-1">${act.label}</span>`;
-                                    grid.appendChild(a);
-                                });
-                            }
-
-                            // Edit modal behavior
-                            function openEditQuickActions(){
-                                const m = document.getElementById('editQuickActionsModal'); if(!m) return; m.classList.remove('hidden'); m.classList.add('flex');
-                                populateEditLists();
-                            }
-                            function closeEditQuickActions(){ const m = document.getElementById('editQuickActionsModal'); if(!m) return; m.classList.add('hidden'); m.classList.remove('flex'); }
-
-                            function populateEditLists(){
-                                const avail = document.getElementById('availableActions'); const sel = document.getElementById('selectedActions'); avail.innerHTML=''; sel.innerHTML='';
-                                const config = loadQuickConfig();
-                                // selected first
-                                config.forEach(id=>{
-                                    const el = buildSelectedItem(id); if(el) sel.appendChild(el);
-                                });
-                                // available remaining
-                                QUICK_ACTIONS_REGISTRY.forEach(a=>{ if(!config.includes(a.id)){ const el = buildAvailableItem(a); avail.appendChild(el); } });
-                            }
-
-                            function buildAvailableItem(action){
-                                const d = document.createElement('div'); d.className='flex items-center justify-between p-2 border rounded';
-                                d.innerHTML = `<div class="flex items-center gap-3"><i class="${action.icon} opay-text"></i><div class="text-sm">${action.label}</div></div><div><button class="text-xs text-indigo-600">Add</button></div>`;
-                                d.querySelector('button').addEventListener('click', ()=>{ addToSelected(action.id); });
-                                return d;
-                            }
-
-                            function buildSelectedItem(id){
-                                const action = findActionById(id);
-                                const d = document.createElement('div'); d.className='flex items-center justify-between p-2 border rounded';
-                                const label = id==='edit'? 'Edit' : (action? action.label : id);
-                                const icon = id==='edit'? 'fas fa-edit' : (action? action.icon : 'fas fa-question');
-                                d.innerHTML = `<div class="flex items-center gap-3"><i class="${icon} opay-text"></i><div class="text-sm">${label}</div></div>
-                                    <div class="flex items-center gap-2">
-                                        <button class="text-xs text-slate-500">↑</button>
-                                        <button class="text-xs text-slate-500">↓</button>
-                                        <button class="text-xs text-rose-600">Remove</button>
-                                    </div>`;
-                                const up = d.querySelectorAll('button')[0]; const down = d.querySelectorAll('button')[1]; const rem = d.querySelectorAll('button')[2];
-                                up.addEventListener('click', ()=> moveSelected(id, -1));
-                                down.addEventListener('click', ()=> moveSelected(id, 1));
-                                rem.addEventListener('click', ()=> removeFromSelected(id));
-                                return d;
-                            }
-
-                            function getSelectedArray(){ const raw = loadQuickConfig(); return Array.isArray(raw)? raw.slice() : []; }
-                            function addToSelected(id){ const arr = getSelectedArray(); if(arr.includes(id)) return; arr.push(id); saveQuickConfig(arr); populateEditLists(); }
-                            function removeFromSelected(id){ let arr = getSelectedArray(); arr = arr.filter(x=>x!==id); saveQuickConfig(arr); populateEditLists(); }
-                            function moveSelected(id, delta){ const arr = getSelectedArray(); const i = arr.indexOf(id); if(i<0) return; const j = i+delta; if(j<0||j>=arr.length) return; const tmp = arr[i]; arr[i]=arr[j]; arr[j]=tmp; saveQuickConfig(arr); populateEditLists(); }
-
-                            document.getElementById('saveQuickActionsBtn').addEventListener('click', ()=>{ saveQuickConfig( getSelectedArray() ); renderQuickActions(); closeEditQuickActions(); });
-
-                            // initial render
-                            document.addEventListener('DOMContentLoaded', ()=>{ renderQuickActions(); });
-                        </script>
+            const saveQuickBtn = document.getElementById('saveQuickActionsBtn');
+            if (saveQuickBtn) saveQuickBtn.addEventListener('click', () => { saveQuickConfig(getSelectedArray()); renderQuickActions(); closeEditQuickActions(); });
+        });
+    </script>
+    <script src="js/bottom-nav.js"></script>
+</body>
+</html></content>
+<parameter name="filePath">c:\Users\Hp\Desktop\american-bank-united\profile.html

@@ -49,6 +49,9 @@
 
   document.addEventListener('DOMContentLoaded', ()=>{
     document.body.appendChild(nav);
+    // allow forcing visible on specific pages (profile, wallet)
+    const filename = window.location.pathname.replace(/\\/g,'/').split('/').pop() || '';
+    if (['profile.html','wallet.html'].includes(filename)) nav.classList.add('force-visible');
     markActive();
     // handle history changes
     window.addEventListener('popstate', markActive);
