@@ -34,7 +34,7 @@ async function initBalanceSlides(){
     slides.forEach(s=>{
       const el = document.createElement('div');
       el.className = 'p-4';
-        el.innerHTML = `<div class="${s.bgClass} text-white rounded-2xl p-4 min-h-44">
+        el.innerHTML = `<div class="${s.bgClass} text-white rounded-2xl p-4" style="min-height:11rem">
           <div class="flex justify-between items-start">
             <div>
               <p class="text-sm opacity-90">${s.title}</p>
