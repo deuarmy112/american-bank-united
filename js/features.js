@@ -195,7 +195,8 @@ async function submitDeposit(e) {
 // Toggle deposit method visibility
 function showDepositMethod(which) {
   document.querySelectorAll('.deposit-method').forEach(el => el.classList.add('hidden'));
-  if (which === 'bank') document.getElementById('deposit-form-bank').classList.remove('hidden');
+  // 'account' is shown using the same internal form as 'bank' for now
+  if (which === 'bank' || which === 'account') document.getElementById('deposit-form-bank').classList.remove('hidden');
   if (which === 'card') document.getElementById('cardDetails').classList.remove('hidden');
   if (which === 'crypto') document.getElementById('cryptoDetails').classList.remove('hidden');
 }
