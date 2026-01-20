@@ -298,6 +298,57 @@ npm install @sentry/node
 - Verify package.json scripts
 - Review build logs in platform dashboard
 
+### Monorepo / Subfolder Deploys (ENOENT: package.json not found)
+
+If your repository places the app inside a subfolder (for example `american-bank-united` or `server`), platform builders (Render, Vercel) may run `npm` at the repository root and fail with an error like:
+
+```
+npm ERR! enoent ENOENT: no such file or directory, open '/opt/render/project/src/package.json'
+```
+
+Fixes (pick one):
+
+1) Set the platform's "Root Directory" to the subfolder that contains `package.json` (recommended). Example for Render: set **Root Directory** to `server` (for the API) or `american-bank-united` if the frontend lives there.
+
+2) Change the build command to run in the subfolder. Example Render build command:
+
+```bash
+cd american-bank-united && npm install && npm run migrate && npm run build
+```
+
+3) Add a minimal `package.json` at the repository root that proxies scripts into the subfolder (optional). This lets platforms run `npm install` at root but delegate to the subproject. Example `package.json` to commit to repo root:
+
+```json
+{
+   "name": "root-proxy",
+   "private": true,
+   "scripts": {
+      "preinstall": "cd american-bank-united && npm install",
+      "migrate": "cd american-bank-united && npm run migrate",
+      "build": "cd american-bank-united && npm run build",
+      "start": "cd american-bank-united && npm start"
+   }
+}
+```
+
+Local test commands to reproduce and validate the fix:
+
+```bash
+git clone <your-repo.git>
+cd <repo>
+# inspect where package.json lives
+ls -la
+ls -la american-bank-united
+
+# run build from the correct folder
+cd american-bank-united
+npm install
+npm run migrate
+npm run build
+```
+
+If you see `ENOENT` in platform logs, make sure the directory you configured on the platform actually contains `package.json`.
+
 ---
 
 ## 🔄 CI/CD Setup

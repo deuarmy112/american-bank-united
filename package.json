@@ -1,0 +1,13 @@
+{
+  "name": "root-proxy",
+  "private": true,
+  "scripts": {
+    "preinstall": "cd american-bank-united && npm install",
+    "migrate": "cd american-bank-united && npm run migrate",
+    "build": "cd american-bank-united && npm run build",
+    "start": "cd american-bank-united && npm start"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
