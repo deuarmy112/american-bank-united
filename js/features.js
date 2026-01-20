@@ -154,11 +154,12 @@ async function populateDepositDetails() {
 async function submitDeposit(e) {
   e.preventDefault();
   const token = localStorage.getItem('authToken'); if (!token) return alert('Not signed in');
-  const accountId = document.getElementById('depositAccount').value;
+  const accountId = (document.getElementById('depositAccount') || {}).value;
   // Determine which method section is visible
   const isCardVisible = !document.getElementById('cardDetails').classList.contains('hidden');
   const isCryptoVisible = !document.getElementById('cryptoDetails').classList.contains('hidden');
-  const method = isCardVisible ? 'card' : (isCryptoVisible ? 'crypto' : 'bank');
+  const isAccountVisible = !document.getElementById('deposit-form-account').classList.contains('hidden');
+  const method = isCardVisible ? 'card' : (isCryptoVisible ? 'crypto' : (isAccountVisible ? 'account' : 'bank'));
 
   try {
     let payload = { accountId, method };
@@ -167,6 +168,30 @@ async function submitDeposit(e) {
       if (!accountId || !amount || amount <= 0) return alert('Complete form');
       // destination account is accountId; send amount and note that source details were displayed
       payload = { ...payload, amount };
+    } else if (method === 'account') {
+      // external account transfer -> show confirmation modal before sending
+      const bankName = document.getElementById('externalBankName').value;
+      const acctNum = document.getElementById('externalAccountNumber').value;
+      const iban = document.getElementById('externalIban').value;
+      const amount = parseFloat(document.getElementById('externalAmount').value);
+      if (!bankName || !acctNum || !amount || amount <= 0) return alert('Complete external account form');
+      // populate confirmation modal
+      const fromAccountLabel = (document.querySelector('#depositAccount option:checked') || {}).textContent || '—';
+      document.getElementById('confirmFromAccount').textContent = fromAccountLabel;
+      document.getElementById('confirmBankName').textContent = bankName;
+      document.getElementById('confirmAccountNumber').textContent = acctNum;
+      document.getElementById('confirmIban').textContent = iban || '—';
+      document.getElementById('confirmAmount').textContent = formatCurrency(amount);
+      // attach data to confirm button for later use
+      const btn = document.getElementById('confirmExternalBtn');
+      btn.dataset.fromAccountId = accountId || '';
+      btn.dataset.bankName = bankName;
+      btn.dataset.accountNumber = acctNum;
+      btn.dataset.routingNumber = iban || '';
+      btn.dataset.amount = String(amount);
+      // show modal
+      document.getElementById('modal-confirm-external').classList.remove('hidden');
+      return; // wait for user confirmation
     } else if (method === 'card') {
       const amount = parseFloat(document.getElementById('cardAmount').value);
       const selectedCardId = document.getElementById('selectedCardId') ? document.getElementById('selectedCardId').value : null;
@@ -190,6 +215,37 @@ async function submitDeposit(e) {
     // refresh dashboard
     if (window.loadDashboardData) window.loadDashboardData();
   } catch (e) { console.error(e); alert('Deposit failed: ' + e.message); }
+}
+
+async function confirmExternalTransfer() {
+  const btn = document.getElementById('confirmExternalBtn');
+  if (!btn) return;
+  const fromAccountId = btn.dataset.fromAccountId;
+  const bankName = btn.dataset.bankName;
+  const accountNumber = btn.dataset.accountNumber;
+  const routingNumber = btn.dataset.routingNumber;
+  const amount = parseFloat(btn.dataset.amount);
+  const token = localStorage.getItem('authToken'); if (!token) return alert('Not signed in');
+  try {
+    const profile = await authAPI.getProfile().catch(()=>({ first_name:'', last_name:'' }));
+    const accountHolderName = `${profile.first_name||''} ${profile.last_name||''}`.trim();
+    const res = await fetch('/api/external-transfers/send-to-bank', {
+      method: 'POST', headers: { 'content-type':'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ fromAccountId, bankName, accountNumber, routingNumber, accountHolderName, amount, description: 'External transfer from dashboard' })
+    });
+    const j = await res.json(); if (!res.ok) throw new Error(j.error || j.message || 'External transfer failed');
+    alert('External transfer submitted: ' + (j.message || 'OK'));
+    closeConfirmExternalTransfer();
+    closeFeatureModal('deposit');
+    if (window.loadDashboardData) window.loadDashboardData();
+  } catch (err) {
+    console.error('External transfer error', err);
+    alert('External transfer failed: ' + (err.message || err));
+  }
+}
+
+function closeConfirmExternalTransfer(){
+  const modal = document.getElementById('modal-confirm-external'); if (!modal) return; modal.classList.add('hidden');
 }
 
 // Toggle deposit method visibility
