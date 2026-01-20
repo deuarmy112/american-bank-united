@@ -21,14 +21,17 @@ async function loadDashboardData() {
         ]);
         
         // Calculate total balance
-        const totalBalance = accounts.reduce((sum, acc) => sum + parseFloat(acc.balance), 0);
-        document.getElementById('totalBalance').textContent = formatCurrency(totalBalance);
-        
+        const totalBalance = (accounts || []).reduce((sum, acc) => sum + (parseFloat(acc.balance) || 0), 0);
+        const totalBalanceEl = document.getElementById('totalBalance');
+        if (totalBalanceEl) totalBalanceEl.textContent = formatCurrency(totalBalance);
+
         // Display account count
-        document.getElementById('totalAccounts').textContent = accounts.length;
-        
+        const totalAccountsEl = document.getElementById('totalAccounts');
+        if (totalAccountsEl) totalAccountsEl.textContent = (accounts || []).length;
+
         // Display transaction count
-        document.getElementById('totalTransactions').textContent = transactions.length;
+        const totalTransactionsEl = document.getElementById('totalTransactions');
+        if (totalTransactionsEl) totalTransactionsEl.textContent = (transactions || []).length;
         
         // Calculate monthly activity (transactions in current month)
         const currentMonth = new Date().getMonth();
@@ -45,7 +48,8 @@ async function loadDashboardData() {
             return sum;
         }, 0);
         
-        document.getElementById('monthlyActivity').textContent = formatCurrency(monthlyAmount);
+        const monthlyActivityEl = document.getElementById('monthlyActivity');
+        if (monthlyActivityEl) monthlyActivityEl.textContent = formatCurrency(monthlyAmount);
         
         // Load accounts
         loadDashboardAccounts(accounts);
@@ -74,8 +78,9 @@ async function loadDashboardData() {
 
 function loadDashboardAccounts(accounts) {
     const accountsList = document.getElementById('accountsList');
+    if (!accountsList) return;
     
-    if (accounts.length === 0) {
+    if (!accounts || accounts.length === 0) {
         accountsList.innerHTML = '<p class="no-data">No accounts yet. <a href="accounts.html">Create your first account</a></p>';
         return;
     }
@@ -128,8 +133,9 @@ function startAccountsCarousel() {
 
 function loadRecentTransactions(transactions) {
     const transactionsList = document.getElementById('recentTransactions');
+    if (!transactionsList) return;
     
-    if (transactions.length === 0) {
+    if (!transactions || transactions.length === 0) {
         transactionsList.innerHTML = '<p class="no-data">No recent transactions</p>';
         return;
     }
