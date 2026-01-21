@@ -167,7 +167,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (window.innerWidth > 1280) return;
       e.preventDefault();
       const title = a.textContent.trim() || url.pathname.split('/').pop();
-      openFullscreenOverlay(url.pathname + url.search, title);
+      // open in a new fullscreen wrapper tab instead of overlay
+      // wrapper expects `src` param URL-encoded (path + search)
+      const wrapper = '/fullscreen.html?src=' + encodeURIComponent(url.pathname + url.search + (url.hash || ''));
+      window.open(wrapper, '_blank');
     } catch (err) { /* ignore parse errors */ }
   });
 });

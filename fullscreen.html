@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Full Screen</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    .fs-header{height:56px;display:flex;align-items:center;padding:8px 12px;border-bottom:1px solid #eee;background:#fff}
+    .fs-back{appearance:none;border:1px solid #e2e8f0;background:#f8fafc;padding:8px 12px;border-radius:8px;margin-right:12px}
+    .fs-title{font-weight:600}
+    #fsFrame{width:100%;height:calc(100% - 56px);border:0}
+    .fs-warning{padding:12px;color:#334155}
+  </style>
+</head>
+<body>
+  <div class="fs-header">
+    <button id="fsBack" class="fs-back"><i class="fas fa-arrow-left"></i> Back</button>
+    <div id="fsTitle" class="fs-title">Loading...</div>
+  </div>
+  <iframe id="fsFrame" src="about:blank" title="Full screen view"></iframe>
+  <script>
+    // parse src param (URL-encoded) or fallback to `url`
+    function getParam(name){
+      const ps = new URLSearchParams(location.search);
+      return ps.get(name) || null;
+    }
+    (function(){
+      const encoded = getParam('src') || getParam('url');
+      if (!encoded) {
+        document.getElementById('fsTitle').textContent = 'No target';
+        document.body.insertAdjacentHTML('beforeend', '<div class="fs-warning">No target URL specified.</div>');
+        return;
+      }
+      // allow path or absolute; keep same-origin only for security
+      try {
+        const target = decodeURIComponent(encoded);
+        const u = new URL(target, location.origin);
+        if (u.origin !== location.origin) {
+          document.getElementById('fsTitle').textContent = 'Blocked';
+          document.body.insertAdjacentHTML('beforeend', '<div class="fs-warning">External origins are not allowed for fullscreen wrapper.</div>');
+          return;
+        }
+        document.getElementById('fsTitle').textContent = u.pathname.split('/').pop() || u.pathname;
+        const frame = document.getElementById('fsFrame');
+        frame.src = u.pathname + u.search + u.hash;
+      } catch(e){
+        document.getElementById('fsTitle').textContent = 'Invalid URL';
+        console.warn('fullscreen wrapper: invalid src', e);
+      }
+    })();
+    document.getElementById('fsBack').addEventListener('click', ()=>{
+      // prefer history back; otherwise navigate to index
+      if (window.history.length > 1) window.history.back(); else window.location.href = '/dashboard.html';
+    });
+  </script>
+</body>
+</html>
