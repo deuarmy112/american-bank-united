@@ -93,11 +93,41 @@ async function populateDepositDetails() {
       sel.onchange = () => {
         const id = sel.value; const acc = accounts.find(x=>x.id==id);
         if (acc) {
-          document.getElementById('bankAccountNumberLabel').textContent = acc.account_number || '—';
-          document.getElementById('bankIbanLabel').textContent = acc.iban || '—';
-          document.getElementById('bankAccountTypeLabel').textContent = (acc.account_type||'') ? acc.account_type.charAt(0).toUpperCase()+acc.account_type.slice(1) : '—';
-          document.getElementById('bankEmailLabel').textContent = acc.email || (acc.owner && acc.owner.email) || '—';
-          document.getElementById('bankPhoneLabel').textContent = acc.phone || (acc.owner && acc.owner.phone) || '—';
+          const aNumEl = document.getElementById('bankAccountNumberLabel');
+          const ibanEl = document.getElementById('bankIbanLabel');
+          const typeEl = document.getElementById('bankAccountTypeLabel');
+          const emailEl = document.getElementById('bankEmailLabel');
+          const phoneEl = document.getElementById('bankPhoneLabel');
+
+          const setAndWire = (el, text) => {
+            if (!el) return;
+            el.textContent = text || '—';
+            el.style.cursor = 'pointer';
+            el.title = 'Click to copy';
+            el.onclick = () => {
+              try { navigator.clipboard.writeText(text || ''); showToast('Copied'); }
+              catch(e){ alert('Copied: ' + (text||'')); }
+            };
+          };
+
+          setAndWire(aNumEl, acc.account_number || '');
+          setAndWire(ibanEl, acc.iban || '');
+          setAndWire(typeEl, (acc.account_type||'') ? acc.account_type.charAt(0).toUpperCase()+acc.account_type.slice(1) : '');
+          setAndWire(emailEl, acc.email || (acc.owner && acc.owner.email) || '');
+          setAndWire(phoneEl, acc.phone || (acc.owner && acc.owner.phone) || '');
+          // populate mini details shown on the choice cards
+          const setMini = (sel, text) => {
+            document.querySelectorAll(sel).forEach(el => {
+              el.textContent = text || '—';
+              el.style.cursor = 'pointer';
+              el.title = 'Click to copy';
+              el.onclick = () => { try { navigator.clipboard.writeText(text||''); showToast('Copied'); } catch(e){ alert('Copied: ' + (text||'')); } };
+            });
+          };
+          setMini('#depositChoice-bank .mini-acct', acc.account_number || '');
+          setMini('#depositChoice-bank .mini-iban', acc.iban || '');
+          setMini('#depositChoice-account .mini-bank', acc.bank_name || acc.bank || '');
+          setMini('#depositChoice-account .mini-acct', acc.account_number || '');
         }
       };
     }
@@ -120,6 +150,13 @@ async function populateDepositDetails() {
           document.getElementById('selectedCardId')?.remove();
           const inp = document.createElement('input'); inp.type='hidden'; inp.id='selectedCardId'; inp.value = el.getAttribute('data-card-id'); document.getElementById('modal-deposit').appendChild(inp);
         }));
+        // update mini card summary on choice card
+        const firstCard = cards[0];
+        if (firstCard) {
+          document.querySelectorAll('#depositChoice-card .mini-card').forEach(el=> el.textContent = `${firstCard.card_type.toUpperCase()} • ${formatCardNumber(firstCard.card_number)}`);
+        } else {
+          document.querySelectorAll('#depositChoice-card .mini-card').forEach(el=> el.textContent = '—');
+        }
       }
     } catch (e) { console.warn('No cards or failed to load cards', e); }
 
@@ -140,6 +177,11 @@ async function populateDepositDetails() {
         } else {
           walletsList.innerHTML = '<div class="text-xs text-slate-500">No linked crypto wallets</div>';
         }
+        // update mini wallet summary on choice card
+        try {
+          const w = Array.isArray(wallets) && wallets.length ? wallets[0] : null;
+          document.querySelectorAll('#depositChoice-crypto .mini-wallet').forEach(el=> el.textContent = w ? `${w.currency.toUpperCase()} • ${w.address}` : '—');
+        } catch(e){}
       }
     } catch (e) { console.warn('Failed to load profile wallets', e); }
 
@@ -255,6 +297,11 @@ function showDepositMethod(which) {
   document.querySelectorAll('.deposit-choice').forEach(c=> c.classList.remove('ring','ring-indigo-300','bg-white'));
   const active = document.getElementById('depositChoice-' + which);
   if (active) active.classList.add('ring','ring-indigo-300','bg-white');
+
+  // show/hide mini details under each choice card
+  document.querySelectorAll('.choice-mini-details').forEach(d => d.classList.add('hidden'));
+  const mini = document.querySelector('#depositChoice-' + which + ' .choice-mini-details');
+  if (mini) mini.classList.remove('hidden');
 }
 
 async function submitWithdraw(e) {
