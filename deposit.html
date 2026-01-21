@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Deposit - American Bank United</title>
+  <script>
+    if (!localStorage.getItem('authToken')) {
+      window.location.href = 'index.html';
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/opay.css">
+  <style>body{background:#f8fafc;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}</style>
+</head>
+<body class="opay-ui">
+  <header class="opay-header">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center gap-3">
+        <button onclick="history.back()" aria-label="Back" class="p-2 rounded-md hover:bg-slate-100"><i class="fas fa-arrow-left"></i></button>
+        <h1 class="text-lg font-semibold">Deposit Funds</h1>
+        <div class="ml-auto text-xs text-slate-500">v20260121.2</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 pb-8">
+    <div class="bg-white rounded-lg p-4 shadow">
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <button id="depositChoice-bank" type="button" onclick="showDepositMethod('bank')" class="deposit-choice p-3 bg-slate-50 rounded-md text-left flex items-start gap-3">
+          <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-university text-indigo-600"></i></div>
+          <div>
+            <div class="font-medium">Bank</div>
+            <div class="text-xs text-slate-500">Use a linked bank account (internal)</div>
+            <div class="choice-mini-details hidden mt-2 text-xs text-slate-600"><div>Acct: <span class="mini-acct">—</span></div><div>IBAN: <span class="mini-iban">—</span></div></div>
+          </div>
+        </button>
+
+        <button id="depositChoice-account" type="button" onclick="showDepositMethod('account')" class="deposit-choice p-3 bg-slate-50 rounded-md text-left flex items-start gap-3">
+          <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-building text-emerald-600"></i></div>
+          <div>
+            <div class="font-medium">Account</div>
+            <div class="text-xs text-slate-500">Send to an external bank account</div>
+            <div class="choice-mini-details hidden mt-2 text-xs text-slate-600"><div>Bank: <span class="mini-bank">—</span></div><div>Acct: <span class="mini-acct">—</span></div></div>
+          </div>
+        </button>
+
+        <button id="depositChoice-card" type="button" onclick="showDepositMethod('card')" class="deposit-choice p-3 bg-slate-50 rounded-md text-left flex items-start gap-3">
+          <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-credit-card text-indigo-500"></i></div>
+          <div>
+            <div class="font-medium">Card</div>
+            <div class="text-xs text-slate-500">Use a saved card to top up</div>
+            <div class="choice-mini-details hidden mt-2 text-xs text-slate-600"><div>Selected: <span class="mini-card">—</span></div></div>
+          </div>
+        </button>
+
+        <button id="depositChoice-crypto" type="button" onclick="showDepositMethod('crypto')" class="deposit-choice p-3 bg-slate-50 rounded-md text-left flex items-start gap-3">
+          <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-coins text-fuchsia-600"></i></div>
+          <div>
+            <div class="font-medium">Crypto</div>
+            <div class="text-xs text-slate-500">Send from your crypto wallet</div>
+            <div class="choice-mini-details hidden mt-2 text-xs text-slate-600"><div>Wallet: <span class="mini-wallet">—</span></div></div>
+          </div>
+        </button>
+      </div>
+
+      <label class="block text-sm">Deposit To</label>
+      <select id="depositAccount" class="w-full border rounded p-2 mb-3"></select>
+
+      <form id="deposit-form-bank" class="deposit-method" onsubmit="submitDeposit(event)">
+        <div class="mb-2 grid grid-cols-2 gap-2">
+          <div><div class="text-xs text-slate-500">Account number</div><div id="bankAccountNumberLabel" class="font-medium">—</div></div>
+          <div><div class="text-xs text-slate-500">IBAN</div><div id="bankIbanLabel" class="font-medium">—</div></div>
+          <div><div class="text-xs text-slate-500">Account type</div><div id="bankAccountTypeLabel" class="font-medium">—</div></div>
+          <div><div class="text-xs text-slate-500">Email</div><div id="bankEmailLabel" class="font-medium">—</div></div>
+          <div><div class="text-xs text-slate-500">Phone</div><div id="bankPhoneLabel" class="font-medium">—</div></div>
+        </div>
+        <div class="mb-2"><label class="text-sm">Amount</label><input id="depositAmount" type="number" step="0.01" class="w-full border rounded p-2" placeholder="0.00" /></div>
+        <div class="flex justify-end gap-2"><a href="dashboard.html" class="px-4 py-2">Cancel</a><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Deposit</button></div>
+      </form>
+
+      <form id="deposit-form-account" class="deposit-method hidden" onsubmit="submitDeposit(event)">
+        <div class="mb-2"><label class="block text-sm">Bank name</label><input id="externalBankName" type="text" class="w-full border rounded p-2" placeholder="Receiving bank name" /></div>
+        <div class="mb-2 grid grid-cols-2 gap-2"><div><label class="text-xs text-slate-500">Account number</label><input id="externalAccountNumber" type="text" class="w-full border rounded p-2" placeholder="Account number" /></div><div><label class="text-xs text-slate-500">IBAN (optional)</label><input id="externalIban" type="text" class="w-full border rounded p-2" placeholder="IBAN" /></div></div>
+        <div class="mb-2"><label class="text-sm">Amount</label><input id="externalAmount" type="number" step="0.01" class="w-full border rounded p-2" placeholder="0.00" /></div>
+        <div class="flex justify-end gap-2"><a href="dashboard.html" class="px-4 py-2">Cancel</a><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Send to External Account</button></div>
+      </form>
+
+      <div id="cardDetails" class="deposit-method hidden">
+        <div class="space-y-2 mb-2" id="cardsList"></div>
+        <div class="mb-2"><label class="text-sm">Amount</label><input id="cardAmount" type="number" step="0.01" class="w-full border rounded p-2" placeholder="0.00" /></div>
+        <div class="flex justify-end gap-2"><a href="dashboard.html" class="px-4 py-2">Cancel</a><button type="button" onclick="submitDeposit(event)" class="px-4 py-2 bg-blue-600 text-white rounded">Use Selected Card</button></div>
+      </div>
+
+      <div id="cryptoDetails" class="deposit-method hidden">
+        <div class="space-y-2 mb-2" id="walletsList"></div>
+        <div class="mb-2"><label class="text-sm">Amount</label><input id="cryptoAmount" type="number" step="0.00000001" class="w-full border rounded p-2" placeholder="0.00000000" /></div>
+        <div class="flex justify-end gap-2"><a href="dashboard.html" class="px-4 py-2">Cancel</a><button type="button" onclick="submitDeposit(event)" class="px-4 py-2 bg-blue-600 text-white rounded">Confirm Deposit</button></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/utils.js?v=20260121.2"></script>
+  <script src="js/api.js?v=20260121.2"></script>
+  <script src="js/auth.js?v=20260121.2"></script>
+  <script src="js/dashboard-api.js?v=20260121.2"></script>
+  <script src="js/features.js?v=20260121.2"></script>
+  <script src="js/ui.js?v=20260121.2"></script>
+  <script>
+    // initialize the page
+    document.addEventListener('DOMContentLoaded', async ()=>{
+      if (window.populateDepositDetails) await populateDepositDetails();
+      showDepositMethod('bank');
+    });
+  </script>
+</body>
+</html>
