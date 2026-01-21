@@ -26,8 +26,7 @@ async function populateBillModal() {
     const token = localStorage.getItem('authToken');
     if (!token) return;
     // fetch billers
-    const r1 = await fetch('/api/bills/billers', { headers: { Authorization: 'Bearer ' + token } });
-    const billers = await r1.json();
+    const billers = await billsAPI.getBillers();
     const billerSelect = document.getElementById('billerSelect');
     billerSelect.innerHTML = '<option value="">Select biller</option>' + billers.map(b=>`<option value="${b.id}" data-biller='${JSON.stringify(b)}'>${b.name} (${b.category})</option>`).join('');
 
@@ -37,9 +36,7 @@ async function populateBillModal() {
       billingSelect.innerHTML = '<option value="">Select billing (optional)</option>';
       if (!id) return;
       try {
-        const r = await fetch(`/api/bills/billers/${id}/items`, { headers: { Authorization: 'Bearer ' + token } });
-        if (!r.ok) return; // no items endpoint
-        const items = await r.json();
+        const items = await apiClient.get(`/bills/billers/${id}/items`);
         if (Array.isArray(items) && items.length) {
           billingSelect.innerHTML = '<option value="">Select billing (optional)</option>' + items.map(it => `<option value="${it.id}" data-amount="${it.amount||''}">${it.description || it.name} ${it.amount? '• ' + Number(it.amount).toFixed(2): ''}</option>`).join('');
           billingSelect.onchange = function(){ const sel = this.selectedOptions[0]; if (sel && sel.dataset && sel.dataset.amount) document.getElementById('billAmount').value = sel.dataset.amount; };
@@ -48,8 +45,7 @@ async function populateBillModal() {
     };
 
     // fetch accounts
-    const r2 = await fetch('/api/accounts', { headers: { Authorization: 'Bearer ' + token } });
-    const accounts = await r2.json();
+    const accounts = await accountsAPI.getAll();
     const accSel = document.getElementById('fromAccountSelect');
     accSel.innerHTML = '<option value="">From account</option>' + accounts.map(a=>`<option value="${a.id}">${a.account_number} • ${a.account_type} • $${Number(a.balance).toFixed(2)}</option>`).join('');
 
@@ -68,8 +64,7 @@ async function populateAccountSelectsForCashOp(kind) {
   try {
     const token = localStorage.getItem('authToken');
     if (!token) return;
-    const r = await fetch('/api/accounts', { headers: { Authorization: 'Bearer ' + token } });
-    const accounts = await r.json();
+    const accounts = await accountsAPI.getAll();
     const sel = document.getElementById(kind === 'deposit' ? 'depositAccount' : 'withdrawAccount');
     if (!sel) return;
     sel.innerHTML = '<option value="">Select account</option>' + accounts.map(a=>`<option value="${a.id}">${a.account_number} • ${a.account_type} • $${Number(a.balance).toFixed(2)}</option>`).join('');
@@ -437,8 +432,7 @@ async function payBeneficiary(id) {
 async function populateQRFromAccounts() {
   try {
     const token = localStorage.getItem('authToken'); if (!token) return;
-    const r = await fetch('/api/accounts', { headers: { Authorization: 'Bearer ' + token } });
-    const accounts = await r.json();
+    const accounts = await accountsAPI.getAll();
     const sel = document.getElementById('qrFromAccount');
     sel.innerHTML = '<option value="">From account</option>' + accounts.map(a=>`<option value="${a.id}">${a.account_number} • ${a.account_type} • $${Number(a.balance).toFixed(2)}</option>`).join('');
   } catch (e) { console.error('Populate QR accounts error', e); }
