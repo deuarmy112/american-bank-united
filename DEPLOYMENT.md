@@ -100,6 +100,21 @@
      - **Output Directory**: `./` (root)
    - Click "Deploy"
 
+---
+
+### Tailwind CSS in Production
+
+- The Tailwind CDN (cdn.tailwindcss.com) is convenient for development, but it's not recommended for production because it includes the full framework and can bloat CSS size.
+- For production builds, install Tailwind as a PostCSS plugin or use the Tailwind CLI to purge unused styles during your build. Example using the Tailwind CLI:
+
+```bash
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+# then reference Tailwind in your CSS and run `npx tailwindcss -i ./src/input.css -o ./dist/output.css --minify`
+```
+
+Adding this to your `DEPLOYMENT.md` ensures faster load times and smaller CSS bundles in production.
+
 4. **Update CORS**
    - Copy your Vercel URL (e.g., `https://your-app.vercel.app`)
    - Go to Render → Your service → Environment
