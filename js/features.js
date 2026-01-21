@@ -251,10 +251,15 @@ function closeConfirmExternalTransfer(){
 // Toggle deposit method visibility
 function showDepositMethod(which) {
   document.querySelectorAll('.deposit-method').forEach(el => el.classList.add('hidden'));
-  // 'account' is shown using the same internal form as 'bank' for now
-  if (which === 'bank' || which === 'account') document.getElementById('deposit-form-bank').classList.remove('hidden');
+  // hide old/other forms and show the selected one
+  if (which === 'bank') document.getElementById('deposit-form-bank')?.classList.remove('hidden');
+  if (which === 'account') document.getElementById('deposit-form-account')?.classList.remove('hidden');
   if (which === 'card') document.getElementById('cardDetails').classList.remove('hidden');
   if (which === 'crypto') document.getElementById('cryptoDetails').classList.remove('hidden');
+  // visual active state for choice cards
+  document.querySelectorAll('.deposit-choice').forEach(c=> c.classList.remove('ring','ring-indigo-300','bg-white'));
+  const active = document.getElementById('depositChoice-' + which);
+  if (active) active.classList.add('ring','ring-indigo-300','bg-white');
 }
 
 async function submitWithdraw(e) {

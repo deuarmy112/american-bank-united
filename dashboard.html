@@ -68,11 +68,38 @@
                     <h3 class="text-lg font-semibold mb-2">Deposit Funds</h3>
 
                     <!-- Method chooser -->
-                    <div class="flex gap-2 mb-3">
-                        <button type="button" class="px-3 py-1 rounded bg-slate-100" onclick="showDepositMethod('bank')">Bank</button>
-                        <button type="button" class="px-3 py-1 rounded bg-slate-100" onclick="showDepositMethod('account')">Account</button>
-                        <button type="button" class="px-3 py-1 rounded bg-slate-100" onclick="showDepositMethod('card')">Card</button>
-                        <button type="button" class="px-3 py-1 rounded bg-slate-100" onclick="showDepositMethod('crypto')">Crypto</button>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <button id="depositChoice-bank" type="button" onclick="showDepositMethod('bank')" class="deposit-choice p-3 bg-slate-50 rounded-md text-left flex items-start gap-3">
+                            <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-university text-indigo-600"></i></div>
+                            <div>
+                                <div class="font-medium">Bank</div>
+                                <div class="text-xs text-slate-500">Use a linked bank account (internal)</div>
+                            </div>
+                        </button>
+
+                        <button id="depositChoice-account" type="button" onclick="showDepositMethod('account')" class="deposit-choice p-3 bg-slate-50 rounded-md text-left flex items-start gap-3">
+                            <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-building text-emerald-600"></i></div>
+                            <div>
+                                <div class="font-medium">Account</div>
+                                <div class="text-xs text-slate-500">Send to an external bank account</div>
+                            </div>
+                        </button>
+
+                        <button id="depositChoice-card" type="button" onclick="showDepositMethod('card')" class="deposit-choice p-3 bg-slate-50 rounded-md text-left flex items-start gap-3">
+                            <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-credit-card text-indigo-500"></i></div>
+                            <div>
+                                <div class="font-medium">Card</div>
+                                <div class="text-xs text-slate-500">Use a saved card to top up</div>
+                            </div>
+                        </button>
+
+                        <button id="depositChoice-crypto" type="button" onclick="showDepositMethod('crypto')" class="deposit-choice p-3 bg-slate-50 rounded-md text-left flex items-start gap-3">
+                            <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-coins text-fuchsia-600"></i></div>
+                            <div>
+                                <div class="font-medium">Crypto</div>
+                                <div class="text-xs text-slate-500">Send from your crypto wallet</div>
+                            </div>
+                        </button>
                     </div>
 
                     <!-- Common: select destination account -->
