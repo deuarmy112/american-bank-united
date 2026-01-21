@@ -114,7 +114,7 @@ a[style*="color"] { color: var(--abu-control) !important; }
 }
 
 /* Smoke-gold gradient for promo tiles */
-.opay-smoke-gold { background: linear-gradient(90deg, rgba(245,245,247,0.95) 0%, rgba(226,221,210,0.95) 40%, rgba(212,175,55,0.12) 100%); color: #0f172a }
+.promo-slide .opay-smoke-gold { background: linear-gradient(90deg, rgba(245,245,247,0.95) 0%, rgba(226,221,210,0.95) 40%, rgba(212,175,55,0.12) 100%); color: #0f172a }
 
 /* Carousel / promo styles */
 .promo-carousel { position: relative; overflow: hidden }
