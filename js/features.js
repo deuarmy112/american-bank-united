@@ -148,7 +148,9 @@ async function populateDepositDetails() {
           cardsList.querySelectorAll('.card-select').forEach(x=>x.classList.remove('ring','ring-indigo-300'));
           el.classList.add('ring','ring-indigo-300');
           document.getElementById('selectedCardId')?.remove();
-          const inp = document.createElement('input'); inp.type='hidden'; inp.id='selectedCardId'; inp.value = el.getAttribute('data-card-id'); document.getElementById('modal-deposit').appendChild(inp);
+          const inp = document.createElement('input'); inp.type='hidden'; inp.id='selectedCardId'; inp.value = el.getAttribute('data-card-id');
+          const targetContainer = document.getElementById('modal-deposit') || document.body;
+          targetContainer.appendChild(inp);
         }));
         // update mini card summary on choice card
         const firstCard = cards[0];
@@ -169,11 +171,13 @@ async function populateDepositDetails() {
         if (Array.isArray(wallets) && wallets.length) {
           walletsList.innerHTML = wallets.map(w=>`<div class="p-2 border rounded cursor-pointer wallet-select" data-wallet-address="${w.address}" data-currency="${w.currency}"><div class="font-medium">${w.currency.toUpperCase()} • ${w.address}</div><div class="text-xs text-slate-500">${w.note||''}</div></div>`).join('');
           walletsList.querySelectorAll('.wallet-select').forEach(el=>el.addEventListener('click', ()=>{
-            walletsList.querySelectorAll('.wallet-select').forEach(x=>x.classList.remove('ring','ring-indigo-300'));
-            el.classList.add('ring','ring-indigo-300');
-            document.getElementById('selectedWallet')?.remove();
-            const inp = document.createElement('input'); inp.type='hidden'; inp.id='selectedWallet'; inp.value = JSON.stringify({ address: el.getAttribute('data-wallet-address'), currency: el.getAttribute('data-currency') }); document.getElementById('modal-deposit').appendChild(inp);
-          }));
+              walletsList.querySelectorAll('.wallet-select').forEach(x=>x.classList.remove('ring','ring-indigo-300'));
+              el.classList.add('ring','ring-indigo-300');
+              document.getElementById('selectedWallet')?.remove();
+              const inp = document.createElement('input'); inp.type='hidden'; inp.id='selectedWallet'; inp.value = JSON.stringify({ address: el.getAttribute('data-wallet-address'), currency: el.getAttribute('data-currency') });
+              const targetContainer = document.getElementById('modal-deposit') || document.body;
+              targetContainer.appendChild(inp);
+            }));
         } else {
           walletsList.innerHTML = '<div class="text-xs text-slate-500">No linked crypto wallets</div>';
         }
