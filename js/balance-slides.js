@@ -48,7 +48,6 @@ async function initBalanceSlides(){
           </div>
           <div class="mt-4 flex gap-3">
             <button onclick="location.href='deposit.html'" class="flex-none w-24 bg-white/20 rounded-lg py-2 text-sm">Deposit</button>
-            <button onclick="location.href='withdraw.html'" class="flex-none w-24 bg-white/20 rounded-lg py-2 text-sm">Withdraw</button>
             <button onclick="location.href='transfer.html'" class="flex-1 bg-white/20 rounded-lg py-2 text-sm">Transfer</button>
           </div>
         </div>`;
