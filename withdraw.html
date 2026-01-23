@@ -5,7 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Withdraw - American Bank United</title>
   <script>
-    if (!localStorage.getItem('authToken')) { window.location.href = 'index.html'; }
+    // Do not force-redirect unauthenticated users; show a gentle sign-in banner instead.
+    if (!localStorage.getItem('authToken')) {
+      document.addEventListener('DOMContentLoaded', ()=>{
+        const main = document.querySelector('main') || document.body;
+        const banner = document.createElement('div');
+        banner.className = 'mb-4 p-3 rounded border bg-rose-50 text-rose-800';
+        banner.innerHTML = 'You are not signed in. <a href="index.html" class="underline">Sign in</a> to access withdraw features.';
+        main.prepend(banner);
+      });
+    }
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/opay.css">
@@ -16,9 +25,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center gap-3">
         <button onclick="history.back()" aria-label="Back" class="p-2 rounded-md hover:bg-slate-100"><i class="fas fa-arrow-left"></i></button>
-        <h1 class="text-lg font-semibold">Withdraw Funds</h1>
-        <div class="ml-auto text-xs text-slate-500">v20260121.2</div>
-      </div>
+        <h1 class="text-lg font-semibold">Withdraw funds</h1>
     </div>
   </header>
 
