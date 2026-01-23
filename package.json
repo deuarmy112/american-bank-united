@@ -2,10 +2,8 @@
   "name": "root-proxy",
   "private": true,
   "scripts": {
-    "preinstall": "cd american-bank-united && npm install",
-    "migrate": "cd american-bank-united && npm run migrate",
-    "build": "cd american-bank-united && npm run build",
-    "start": "cd american-bank-united && npm start"
+    "build": "echo \"No root build step; site is static in repository root\"",
+    "start": "echo \"Start not required at repo root\""
   },
   "engines": {
     "node": ">=16"
