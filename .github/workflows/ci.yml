@@ -1,0 +1,34 @@
+name: CI - Build & Deployment Guard
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run build
+        run: npm run build
+
+      - name: Validate vercel.json
+        run: |
+          if [ ! -f vercel.json ]; then echo "vercel.json missing"; exit 1; fi
+          node -e "const v=require('./vercel.json'); if(!v.outputDirectory){console.error('vercel.json must set outputDirectory'); process.exit(1)}"
+
+      - name: Validate root package.json scripts
+        run: |
+          node -e "const p=require('./package.json'); if(p.scripts && (p.scripts.preinstall || /cd\s+american-bank-united/.test(JSON.stringify(p.scripts)))){ console.error('Invalid root package.json scripts (contains preinstall or cd into subfolder)'); process.exit(1) }"
