@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Withdraw - American Bank United</title>
+  <script>
+    if (!localStorage.getItem('authToken')) { window.location.href = 'index.html'; }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/opay.css">
+  <style>body{background:#f8fafc;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}</style>
+</head>
+<body class="opay-ui">
+  <header class="opay-header">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center gap-3">
+        <button onclick="history.back()" aria-label="Back" class="p-2 rounded-md hover:bg-slate-100"><i class="fas fa-arrow-left"></i></button>
+        <h1 class="text-lg font-semibold">Withdraw Funds</h1>
+        <div class="ml-auto text-xs text-slate-500">v20260121.2</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-lg mx-auto p-6 pb-8">
+    <div class="bg-white rounded-lg p-6 shadow-lg">
+      <p class="text-sm text-slate-600 mb-4">Choose a source to withdraw from: Bank account, Wallet or Card. Select an item, enter amount and confirm.</p>
+
+      <div class="grid grid-cols-3 gap-3 mb-4">
+        <button id="choice-bank" class="p-3 bg-slate-50 rounded-md text-left flex flex-col items-start gap-2">
+          <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-university text-indigo-600"></i></div>
+          <div class="font-medium">Bank Account</div>
+          <div class="text-xs text-slate-500">Linked & external accounts</div>
+        </button>
+
+        <button id="choice-wallet" class="p-3 bg-slate-50 rounded-md text-left flex flex-col items-start gap-2">
+          <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-wallet text-fuchsia-600"></i></div>
+          <div class="font-medium">Wallet</div>
+          <div class="text-xs text-slate-500">Crypto wallets & addresses</div>
+        </button>
+
+        <button id="choice-card" class="p-3 bg-slate-50 rounded-md text-left flex flex-col items-start gap-2">
+          <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-credit-card text-indigo-500"></i></div>
+          <div class="font-medium">Card</div>
+          <div class="text-xs text-slate-500">Linked cards</div>
+        </button>
+      </div>
+
+      <!-- Bank account withdraw -->
+      <div id="panel-bank" class="source-panel">
+        <label class="block text-sm">From account</label>
+        <select id="withdrawAccount" class="w-full border rounded p-2 mb-3"></select>
+        <div class="mb-3 text-xs text-slate-500">Select the ABU account to withdraw from.</div>
+        <label class="block text-sm">Amount</label>
+        <input id="withdrawAmountBank" type="number" step="0.01" class="w-full border rounded p-2 mt-1 mb-3" placeholder="0.00" />
+        <div class="flex justify-end gap-3">
+          <a href="dashboard.html" class="px-4 py-2 text-center border rounded">Cancel</a>
+          <button id="btnWithdrawBank" class="px-4 py-2 bg-rose-600 text-white rounded">Withdraw</button>
+        </div>
+      </div>
+
+      <!-- Wallet withdraw -->
+      <div id="panel-wallet" class="source-panel hidden">
+        <div id="walletsList" class="space-y-2 mb-3 text-sm text-slate-700"></div>
+        <div class="mb-3 text-xs text-slate-500">Select an existing wallet or enter an address below.</div>
+        <label class="text-xs">Or enter wallet address</label>
+        <input id="withdrawWalletAddress" class="w-full border rounded p-2 mt-1 mb-2" placeholder="Wallet address" />
+        <label class="text-xs">Network / Currency</label>
+        <input id="withdrawWalletCurrency" class="w-full border rounded p-2 mt-1 mb-3" placeholder="e.g. BTC, ETH" />
+        <label class="block text-sm">Amount</label>
+        <input id="withdrawAmountWallet" type="number" step="0.00000001" class="w-full border rounded p-2 mt-1 mb-3" placeholder="0.00000000" />
+        <div class="flex justify-end gap-3">
+          <a href="dashboard.html" class="px-4 py-2 text-center border rounded">Cancel</a>
+          <button id="btnWithdrawWallet" class="px-4 py-2 bg-rose-600 text-white rounded">Withdraw</button>
+        </div>
+      </div>
+
+      <!-- Card withdraw -->
+      <div id="panel-card" class="source-panel hidden">
+        <div id="cardsList" class="space-y-2 mb-3 text-sm text-slate-700"></div>
+        <div class="mb-3 text-xs text-slate-500">Select a linked card or use your ABU account card.</div>
+        <label class="block text-sm">Amount</label>
+        <input id="withdrawAmountCard" type="number" step="0.01" class="w-full border rounded p-2 mt-1 mb-3" placeholder="0.00" />
+        <div class="flex justify-end gap-3">
+          <a href="dashboard.html" class="px-4 py-2 text-center border rounded">Cancel</a>
+          <button id="btnWithdrawCard" class="px-4 py-2 bg-rose-600 text-white rounded">Withdraw</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="js/utils.js?v=20260121.2"></script>
+  <script src="js/api.js?v=20260121.2"></script>
+  <script src="js/auth.js?v=20260121.2"></script>
+  <script src="js/features.js?v=20260121.2"></script>
+  <script>
+    // UI toggle
+    document.getElementById('choice-bank').addEventListener('click', ()=>{ document.querySelectorAll('.source-panel').forEach(p=>p.classList.add('hidden')); document.getElementById('panel-bank').classList.remove('hidden'); });
+    document.getElementById('choice-wallet').addEventListener('click', ()=>{ document.querySelectorAll('.source-panel').forEach(p=>p.classList.add('hidden')); document.getElementById('panel-wallet').classList.remove('hidden'); });
+    document.getElementById('choice-card').addEventListener('click', ()=>{ document.querySelectorAll('.source-panel').forEach(p=>p.classList.add('hidden')); document.getElementById('panel-card').classList.remove('hidden'); });
+
+    async function loadWithdrawData(){
+      try{
+        const token = localStorage.getItem('authToken'); if(!token) return;
+        // populate withdraw account select (uses existing helper)
+        if(window.populateAccountSelectsForCashOp) await populateAccountSelectsForCashOp('withdraw');
+
+        // load cards
+        try{
+          const res = await fetch('/api/cards', { headers: { Authorization: 'Bearer ' + token } });
+          if(res.ok){ const cards = await res.json(); const cardsList = document.getElementById('cardsList'); if(cardsList){ if(cards.length){ cardsList.innerHTML = cards.map(c=>`<div class="p-2 border rounded cursor-pointer card-item" data-card-id="${c.id}">${c.card_type.toUpperCase()} • ${c.card_number.slice(-4)}</div>`).join('') } else { cardsList.innerHTML = '<div class="text-xs text-slate-500">No linked cards</div>' } }
+            // wire selection
+            document.querySelectorAll('.card-item').forEach(el=> el.addEventListener('click', ()=>{ document.querySelectorAll('.card-item').forEach(x=>x.classList.remove('ring','ring-indigo-300')); el.classList.add('ring','ring-indigo-300'); document.getElementById('selectedWithdrawCardId')?.remove(); const inp=document.createElement('input'); inp.type='hidden'; inp.id='selectedWithdrawCardId'; inp.value=el.getAttribute('data-card-id'); document.body.appendChild(inp); }));
+          }
+        }catch(e){}
+
+        // load wallets from profile
+        try{ const r = await fetch('/api/auth/profile', { headers: { Authorization: 'Bearer ' + token } }); if(r.ok){ const profile = await r.json(); const wallets = profile.wallets || profile.cryptoWallets || []; const walletsList = document.getElementById('walletsList'); if(walletsList){ if(wallets.length){ walletsList.innerHTML = wallets.map(w=>`<div class="p-2 border rounded cursor-pointer wallet-item" data-address="${w.address}" data-currency="${w.currency}">${w.currency.toUpperCase()} • ${w.address}</div>`).join('') } else { walletsList.innerHTML = '<div class="text-xs text-slate-500">No linked wallets</div>' } document.querySelectorAll('.wallet-item').forEach(el=> el.addEventListener('click', ()=>{ document.querySelectorAll('.wallet-item').forEach(x=>x.classList.remove('ring','ring-indigo-300')); el.classList.add('ring','ring-indigo-300'); document.getElementById('selectedWithdrawWallet')?.remove(); const inp=document.createElement('input'); inp.type='hidden'; inp.id='selectedWithdrawWallet'; inp.value = JSON.stringify({ address: el.getAttribute('data-address'), currency: el.getAttribute('data-currency')}); document.body.appendChild(inp); })); } }
+        }catch(e){}
+      }catch(e){ console.error(e); }
+    }
+
+    // Withdraw handlers
+    document.getElementById('btnWithdrawBank').addEventListener('click', async ()=>{
+      const token = localStorage.getItem('authToken'); if(!token) return alert('Not signed in');
+      const accountId = document.getElementById('withdrawAccount').value; const amount = parseFloat(document.getElementById('withdrawAmountBank').value);
+      if(!accountId || !amount || amount<=0) return alert('Complete form');
+      try{ const res = await fetch('/api/accounts/withdraw', { method:'POST', headers:{ 'content-type':'application/json', Authorization:'Bearer '+token }, body: JSON.stringify({ accountId, amount })}); const j = await res.json(); if(!res.ok) throw new Error(j.error||j.message||'Withdraw failed'); alert('Withdraw submitted: '+ (j.message||'OK')); window.location.href='dashboard.html'; }catch(e){ console.error(e); alert('Withdraw failed: '+e.message); }
+    });
+
+    document.getElementById('btnWithdrawWallet').addEventListener('click', async ()=>{
+      const token = localStorage.getItem('authToken'); if(!token) return alert('Not signed in');
+      const fromAccount = document.getElementById('withdrawAccount').value; const amount = parseFloat(document.getElementById('withdrawAmountWallet').value);
+      let selected = document.getElementById('selectedWithdrawWallet'); let addr=null, cur=null;
+      if(selected){ const s = JSON.parse(selected.value); addr=s.address; cur=s.currency; }
+      // fallback to manual entry
+      if(!addr){ addr = document.getElementById('withdrawWalletAddress').value; cur = document.getElementById('withdrawWalletCurrency').value; }
+      if(!fromAccount || !addr || !cur || !amount || amount<=0) return alert('Complete wallet withdraw form');
+      try{ const res = await fetch('/api/accounts/withdraw', { method:'POST', headers:{ 'content-type':'application/json', Authorization:'Bearer '+token }, body: JSON.stringify({ accountId: fromAccount, method:'crypto', amount, crypto:{ address: addr, currency: cur } })}); const j = await res.json(); if(!res.ok) throw new Error(j.error||j.message||'Withdraw failed'); alert('Withdraw submitted: '+ (j.message||'OK')); window.location.href='dashboard.html'; }catch(e){ console.error(e); alert('Withdraw failed: '+e.message); }
+    });
+
+    document.getElementById('btnWithdrawCard').addEventListener('click', async ()=>{
+      const token = localStorage.getItem('authToken'); if(!token) return alert('Not signed in');
+      const fromAccount = document.getElementById('withdrawAccount').value; const amount = parseFloat(document.getElementById('withdrawAmountCard').value);
+      const selected = document.getElementById('selectedWithdrawCardId'); const cardId = selected ? selected.value : null;
+      if(!fromAccount || !cardId || !amount || amount<=0) return alert('Complete card withdraw form');
+      try{ const res = await fetch('/api/accounts/withdraw', { method:'POST', headers:{ 'content-type':'application/json', Authorization:'Bearer '+token }, body: JSON.stringify({ accountId: fromAccount, method:'card', amount, cardId })}); const j = await res.json(); if(!res.ok) throw new Error(j.error||j.message||'Withdraw failed'); alert('Withdraw submitted: '+ (j.message||'OK')); window.location.href='dashboard.html'; }catch(e){ console.error(e); alert('Withdraw failed: '+e.message); }
+    });
+
+    document.addEventListener('DOMContentLoaded', loadWithdrawData);
+  </script>
+</body>
+</html>
