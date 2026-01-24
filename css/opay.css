@@ -126,7 +126,7 @@ a[style*="color"] { color: var(--abu-control) !important; }
 
 /* Soft gradient background for promo slides (restores bottom tint) */
 .gradient-sg {
-  background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(245,247,250,1) 65%, rgba(241,245,249,1) 100%);
+  background: linear-gradient(180deg, var(--abu-silver) 0%, var(--abu-grey) 60%, var(--abu-gold) 100%);
   color: #0f172a;
 }
 
