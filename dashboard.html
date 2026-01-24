@@ -15,41 +15,19 @@
         <style>
             body { background: #f8fafc }
         </style>
-        <style>
-            /* Promo slide gradient: silver -> grey -> gold */
-            .promo-slide.gradient-sg {
-                background: linear-gradient(90deg, #d9d9db 0%, #9ca3af 50%, #e6c07a 100%);
-                color: #0f172a;
-            }
-        </style>
-        <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-</head>
-<body class="opay-ui">
-        <!-- Navigation -->
-        <header class="opay-header">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center">
-                                        <div class="flex items-center gap-4">
-                                                <a href="/" class="opay-brand flex items-center gap-3">
-                                                    <img src="assets/abu-logo.svg" alt="ABU logo" class="w-10 h-10">
-                                                    <div>
-                                                        <div class="opay-name">American Bank United</div>
-                                                        <div class="opay-sub">ABU — Everyday banking</div>
-                                                    </div>
-                                                </a>
-                                                <div class="ml-8 flex items-center gap-3">
-                                                    <button aria-label="Contact support" title="Contact support" onclick="openCustomerServiceModal()" class="p-2 rounded-full hover:bg-slate-100">
-                                                        <i class="fas fa-headphones text-slate-700"></i>
-                                                    </button>
-                                                    <button aria-label="Notifications" title="Notifications" onclick="location.href='notifications.html'" class="p-2 rounded-full hover:bg-slate-100 relative">
-                                                        <i class="fas fa-bell text-slate-700"></i>
-                                                        <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
-                                                    </button>
-                                                    <button aria-label="Open menu" title="Menu" onclick="toggleSidebar()" class="p-2 rounded-md hover:bg-slate-100">
-                                                        <i class="fas fa-bars text-slate-700"></i>
-                                                    </button>
-                                                </div>
-                                        </div>
+             <div class="ml-8 flex items-center gap-3">
+                <button aria-label="Contact support" title="Contact support" onclick="openCustomerServiceModal()" class="p-2 rounded-full hover:bg-slate-100">
+                    <i class="fas fa-headphones text-slate-700"></i>
+                        </button>
+                            <button aria-label="Notifications" title="Notifications" onclick="location.href='notifications.html'" class="p-2 rounded-full hover:bg-slate-100 relative">
+                               <i class="fas fa-bell text-slate-700"></i>
+                                  <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
+                                    </button>
+                                   <button aria-label="Open menu" title="Menu" onclick="toggleSidebar()" class="p-2 rounded-md hover:bg-slate-100">
+                                <i class="fas fa-bars text-slate-700"></i>                        
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
@@ -98,7 +76,6 @@
                         { id: 'billpay', label: 'Pay Bills', icon: 'fas fa-file-invoice-dollar', color: 'text-yellow-600', href: "javascript:openFeatureModal('bill')" },
                         { id: 'cards', label: 'Cards', icon: 'fas fa-credit-card', color: 'text-indigo-500', href: 'cards.html' },
                         { id: 'qr', label: 'QR Pay', icon: 'fas fa-qrcode', color: 'text-slate-700', href: 'qr.html' },
-                        { id: 'send', label: 'Send Money', icon: 'fas fa-paper-plane', color: 'text-indigo-600', href: 'transfer.html' },
                         { id: 'beneficiaries', label: 'Beneficiaries', icon: 'fas fa-users', color: 'text-indigo-600', href: 'javascript:openBeneficiariesModal()' },
                         { id: 'otherbanks', label: 'Other Banks', icon: 'fas fa-university', color: 'text-emerald-600', href: 'other-banks.html' },
                         { id: 'wallet', label: 'Wallet', icon: 'fas fa-wallet', color: 'text-fuchsia-600', href: 'wallet.html' },
@@ -280,10 +257,6 @@
             <div class="p-4 h-full flex flex-col">
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-3">
-                        <img src="assets/abu-logo.svg" class="w-10 h-10" alt="ABU">
-                        <div>
-                            <div class="font-semibold">American Bank United</div>
-                            <div class="text-xs text-slate-500">ABU</div>
                         </div>
                     </div>
                     <button onclick="closeSidebar()" class="text-slate-500"><i class="fas fa-times"></i></button>
