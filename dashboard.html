@@ -14,18 +14,17 @@
         <link rel="stylesheet" href="css/opay.css">
         <style>
             body { background: #f8fafc }
-        </style>
-        <main class="max-w-md mx-auto p-4 pb-32">
+        </style>        <main class="max-w-md mx-auto p-4 pb-32">
             <!-- Mobile app top area -->
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-3">
+            <div class="flex items-center justify-between mb-4 flex-nowrap">
+                <div class="flex items-center gap-3 min-w-0">
                     <!-- Small profile avatar placed before the greeting for quick access -->
                     <button id="topProfileBtn" onclick="location.href='profile.html'" aria-label="Open profile" title="Profile" class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow">
                         <i class="fas fa-user text-slate-700"></i>
                     </button>
-                    <div>
-                        <h2 class="text-lg font-semibold">Good day, <span id="userGreeting">User</span></h2>
-                        <p class="text-xs text-slate-500">Smart banking at your fingertips</p>
+                    <div class="min-w-0">
+                        <h2 class="text-lg font-semibold truncate">Good day, <span id="userGreeting">User</span></h2>
+                        <p class="text-xs text-slate-500 truncate">Smart banking at your fingertips</p>
                     </div>
                 </div>
 
