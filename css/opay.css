@@ -126,8 +126,11 @@ a[style*="color"] { color: var(--abu-control) !important; }
 
 /* Soft gradient background for promo slides (restores bottom tint) */
 .gradient-sg {
-  background: linear-gradient(180deg, var(--abu-silver) 0%, var(--abu-grey) 60%, var(--abu-gold) 100%);
+  /* Match dashboard background and card styling */
+  background: linear-gradient(180deg, #f8fafc 0%, #f3f4f6 100%);
   color: #0f172a;
+  border: 1px solid rgba(15,23,42,0.03);
+  border-radius: 12px;
 }
 
 @media(min-width:768px){
