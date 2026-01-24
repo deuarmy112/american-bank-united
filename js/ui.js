@@ -206,4 +206,18 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   } catch (e) { console.warn('restore last page failed', e); }
+  // Remove any stray filename text nodes in headers (e.g., "cards.html")
+  try {
+    const headerSelectors = ['header', '.opay-header', '.fs-header'];
+    headerSelectors.forEach(sel => {
+      document.querySelectorAll(sel).forEach(h => {
+        Array.from(h.childNodes).forEach(n => {
+          if (n && n.nodeType === Node.TEXT_NODE && /\b[\w\-\/]+\.html\b/.test(n.textContent)) {
+            n.textContent = n.textContent.replace(/\b[\w\-\/]+\.html\b/g, '').trim();
+            if (!n.textContent) n.remove();
+          }
+        });
+      });
+    });
+  } catch (e) { /* noop */ }
 });
