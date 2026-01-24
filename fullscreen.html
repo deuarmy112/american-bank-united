@@ -16,7 +16,6 @@
 </head>
 <body>
   <div class="fs-header">
-    <button id="fsBack" class="fs-back"><i class="fas fa-arrow-left"></i> Back</button>
     <div id="fsTitle" class="fs-title">Loading...</div>
   </div>
   <iframe id="fsFrame" src="about:blank" title="Full screen view"></iframe>
@@ -50,10 +49,7 @@
         console.warn('fullscreen wrapper: invalid src', e);
       }
     })();
-    document.getElementById('fsBack').addEventListener('click', ()=>{
-      // prefer history back; otherwise navigate to index
-      if (window.history.length > 1) window.history.back(); else window.location.href = '/dashboard.html';
-    });
+    // back control removed — fullscreen wrapper will rely on app navigation
   </script>
 </body>
 </html>

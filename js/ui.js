@@ -173,4 +173,37 @@ document.addEventListener('DOMContentLoaded', () => {
       window.open(wrapper, '_blank');
     } catch (err) { /* ignore parse errors */ }
   });
+  // Persist last visited path so the app can restore state on refresh/navigation
+  try {
+    const LAST_PAGE_KEY = 'abu_last_path';
+    // Save current path on load
+    localStorage.setItem(LAST_PAGE_KEY, location.pathname + location.search + (location.hash || ''));
+
+    // If user lands on index.html or root, attempt to restore last visited page
+    const landingNames = ['/', '/index.html', '/dashboard.html'];
+    if (landingNames.includes(location.pathname)) {
+      const last = localStorage.getItem(LAST_PAGE_KEY);
+      if (last && last !== location.pathname) {
+        // avoid redirect loops: only redirect if last is an HTML path in site
+        try {
+          const u = new URL(last, location.origin);
+          if (u.pathname.endsWith('.html') && u.origin === location.origin) {
+            // navigate to last visited page
+            window.location.replace(u.pathname + u.search + (u.hash || ''));
+          }
+        } catch (e) { /* ignore malformed values */ }
+      }
+    }
+
+    // Highlight bottom-nav item that matches current path (if present)
+    const nav = document.querySelector('.opay-bottom-nav');
+    if (nav) {
+      const items = nav.querySelectorAll('.bn-item');
+      items.forEach(it => {
+        const a = it.closest('a') || it.querySelector('a');
+        const href = a ? (new URL(a.href, location.href)).pathname : null;
+        if (href && href === location.pathname) it.classList.add('active'); else it.classList.remove('active');
+      });
+    }
+  } catch (e) { console.warn('restore last page failed', e); }
 });
