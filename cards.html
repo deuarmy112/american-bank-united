@@ -3,11 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script>
-        if (!localStorage.getItem('authToken')) {
-            window.location.href = 'index.html';
-        }
-    </script>
     <title>Cards - Opay</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
@@ -27,7 +22,7 @@
             </div>
             <div>
                 <span id="userName" class="opay-sub"><i class="fas fa-user-circle"></i> Loading...</span>
-                <button id="cardsLogout" class="opay-btn" style="margin-left:12px;">Logout</button>
+                <button id="cardsLogout" class="opay-btn" style="margin-left:12px;">Back</button>
             </div>
         </div>
     </header>
