@@ -126,8 +126,13 @@ a[style*="color"] { color: var(--abu-control) !important; }
 
 /* Soft gradient background for promo slides (restores bottom tint) */
 .gradient-sg {
-  /* ABU three-stop gradient (silver -> grey -> gold) matching dashboard card design */
-  background: linear-gradient(180deg, var(--abu-silver) 0%, var(--abu-grey) 60%, var(--abu-gold) 100%);
+  /* Smooth, blended silver -> grey -> subtle gold tint matching dashboard design */
+  background: linear-gradient(180deg,
+    var(--abu-silver) 0%,
+    rgba(192,192,192,0.92) 25%,
+    rgba(150,150,150,0.7) 55%,
+    rgba(212,175,55,0.08) 100%
+  );
   color: #0f172a;
   border: 1px solid rgba(15,23,42,0.03);
   border-radius: 12px;
