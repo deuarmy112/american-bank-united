@@ -220,4 +220,20 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   } catch (e) { /* noop */ }
+  // Remove any element nodes whose visible text equals a filename like 'cards.html'
+  try {
+    const headerEls = document.querySelectorAll('header, .opay-header, .fs-header');
+    headerEls.forEach(h => {
+      h.querySelectorAll('*').forEach(el => {
+        const txt = (el.textContent || '').trim();
+        if (/^[\w\-\.\/]+\.html$/i.test(txt)) {
+          el.remove();
+        } else if (txt.indexOf('.html') !== -1) {
+          // strip filename substrings
+          const cleaned = txt.replace(/[\w\-\/]+\.html/g, '').trim();
+          if (cleaned) el.textContent = cleaned; else el.remove();
+        }
+      });
+    });
+  } catch (e) { /* noop */ }
 });
