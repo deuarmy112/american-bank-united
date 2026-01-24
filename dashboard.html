@@ -12,9 +12,17 @@
         <script src="https://cdn.tailwindcss.com"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <link rel="stylesheet" href="css/opay.css">
-        <!-- Small profile avatar placed before the greeting for quick access -->
-          <button id="topProfileBtn" onclick="location.href='profile.html'" aria-label="Open profile" title="Profile" class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow">
-                <i class="fas fa-user text-slate-700"></i>
+        <style>
+            body { background: #f8fafc }
+        </style>
+
+        <main class="max-w-md mx-auto p-4 pb-32">
+            <!-- Mobile app top area -->
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <!-- Small profile avatar placed before the greeting for quick access -->
+                    <button id="topProfileBtn" onclick="location.href='profile.html'" aria-label="Open profile" title="Profile" class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow">
+                        <i class="fas fa-user text-slate-700"></i>
                     </button>
                     <div>
                         <h2 class="text-lg font-semibold">Good day, <span id="userGreeting">User</span></h2>
@@ -30,7 +38,9 @@
                         <i class="fas fa-bell text-slate-700"></i>
                         <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
                     </button>
-                    <!-- top-right menu icon removed per request -->
+                    <button aria-label="Open menu" title="Menu" onclick="toggleSidebar()" class="p-2 rounded-md hover:bg-slate-100">
+                        <i class="fas fa-bars text-slate-700"></i>
+                    </button>
                 </div>
             </div>
 
@@ -55,6 +65,7 @@
             <script>
                 (function(){
                     const QUICK_ACTIONS_REGISTRY = [
+
                         { id: 'trade', label: 'Trade', icon: 'fas fa-chart-line', color: 'text-emerald-600', href: 'trade.html' },
                         { id: 'intl', label: 'Intl Transfer', icon: 'fas fa-globe', color: 'text-sky-500', href: 'transfer.html?type=international' },
                         { id: 'history', label: 'History', icon: 'fas fa-history', color: 'text-slate-700', href: 'transactions.html' },
@@ -98,61 +109,6 @@
                     document.addEventListener('DOMContentLoaded', render);
                 })();
             </script>
-
-            <!-- Recent transactions: 5-item scrollable list + See more button -->
-            <div class="mb-4">
-                <div class="opay-card bg-white">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-semibold">Recent transactions</h3>
-                    </div>
-
-                    <div class="max-h-56 overflow-y-auto space-y-2">
-                        <div class="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
-                            <div class="text-sm">
-                                <div class="font-medium">Coffee Shop</div>
-                                <div class="text-xs text-slate-400">Jan 24 • Card • •</div>
-                            </div>
-                            <div class="text-sm text-rose-600">- $4.50</div>
-                        </div>
-
-                        <div class="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
-                            <div class="text-sm">
-                                <div class="font-medium">Grocery Store</div>
-                                <div class="text-xs text-slate-400">Jan 23 • Account</div>
-                            </div>
-                            <div class="text-sm text-rose-600">- $42.20</div>
-                        </div>
-
-                        <div class="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
-                            <div class="text-sm">
-                                <div class="font-medium">Salary</div>
-                                <div class="text-xs text-slate-400">Jan 22 • Direct deposit</div>
-                            </div>
-                            <div class="text-sm text-emerald-600">+ $2,200.00</div>
-                        </div>
-
-                        <div class="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
-                            <div class="text-sm">
-                                <div class="font-medium">Utilities</div>
-                                <div class="text-xs text-slate-400">Jan 21 • Auto-pay</div>
-                            </div>
-                            <div class="text-sm text-rose-600">- $120.00</div>
-                        </div>
-
-                        <div class="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
-                            <div class="text-sm">
-                                <div class="font-medium">Online Purchase</div>
-                                <div class="text-xs text-slate-400">Jan 20 • Card ending 4321</div>
-                            </div>
-                            <div class="text-sm text-rose-600">- $59.99</div>
-                        </div>
-                    </div>
-
-                    <div class="mt-3 text-center">
-                        <a href="transactions.html" class="inline-block px-4 py-2 bg-indigo-600 text-white rounded-md">See more</a>
-                    </div>
-                </div>
-            </div>
 
             <!-- SmartSave promo carousel (4 slides) -->
             <div class="mb-4">
