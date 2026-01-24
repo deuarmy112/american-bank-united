@@ -24,9 +24,10 @@
       <i class="fa fa-wallet"></i>
       <span>Wallet</span>
     </button>
-    <button class="bn-item" data-href="/profile.html" aria-label="Profile">
-      <i class="fa fa-user"></i>
-      <span>Profile</span>
+    <!-- replaced Profile with Menu icon (opens sidebar) -->
+    <button id="bnMenu" class="bn-item" aria-label="Menu" title="Menu">
+      <i class="fa fa-bars"></i>
+      <span>Menu</span>
     </button>
   `;
 
@@ -37,6 +38,15 @@
     const href = btn.getAttribute('data-href');
     if (href) window.location.href = href;
   });
+
+  // menu button handling (open sidebar) — added because Profile was replaced
+  function menuHandler(e){
+    const m = e.target.closest && e.target.closest('#bnMenu');
+    if (!m) return;
+    if (typeof toggleSidebar === 'function') toggleSidebar();
+    else if (typeof openSidebar === 'function') openSidebar();
+  }
+  nav.addEventListener('click', menuHandler);
 
   // mark active based on path
   function markActive(){
