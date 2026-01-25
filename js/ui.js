@@ -220,6 +220,28 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   } catch (e) { /* noop */ }
+  // Notification badge helper: read from localStorage or allow programmatic update
+  (function(){
+    const BADGE_KEY = 'abu_notif_count';
+    function updateBadge(count){
+      const el = document.getElementById('notifBadge');
+      if (!el) return;
+      const n = parseInt(count,10) || 0;
+      if (n <= 0) { el.style.display = 'none'; }
+      else { el.style.display = 'flex'; el.textContent = String(n > 99 ? '99+' : n); }
+    }
+
+    // expose refresh function
+    window.refreshNotifCount = function(){
+      try{ const stored = localStorage.getItem(BADGE_KEY); updateBadge(stored?parseInt(stored,10):0); }catch(e){ updateBadge(0); }
+    };
+
+    // allow setting via API: setNotifCount(n)
+    window.setNotifCount = function(n){ try{ localStorage.setItem(BADGE_KEY, String(parseInt(n,10)||0)); }catch(e){}; window.refreshNotifCount(); };
+
+    // initial update
+    try{ window.refreshNotifCount(); }catch(e){}
+  })();
   // Remove any element nodes whose visible text equals a filename like 'cards.html'
   try {
     const headerEls = document.querySelectorAll('header, .opay-header, .fs-header');

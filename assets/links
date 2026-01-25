@@ -1,3 +1,5 @@
 Production (user login): https://american-bank-united.vercel.app/ (or https://american-bank-united.vercel.app/index.html)
 Local dev (if you run the server): http://localhost:5000/ (or http://localhost:5000/index.html)
 Admin login (prod/local): https://american-bank-united.vercel.app/admin-login.html — or http://localhost:5000/admin-login.html
+Commit and push terminal command: git add -A; git commit -m "Add recent transactions card to dashboard"; git push
+Changes saved, committed, and pushed to `main`.
