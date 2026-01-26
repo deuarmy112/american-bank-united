@@ -58,7 +58,7 @@
                     <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                         <div>
                             <div class="text-xs text-slate-500 uppercase tracking-wide">Account Number</div>
-                            <div id="abuAcctNumber" class="font-mono text-sm font-medium text-slate-900">—</div>
+                            <div id="abuAcctNumber" class="font-mono text-sm font-medium text-slate-900">Loading...</div>
                         </div>
                         <button class="copy-btn text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors" data-copy-target="abuAcctNumber">Copy</button>
                     </div>
@@ -66,7 +66,7 @@
                     <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                         <div>
                             <div class="text-xs text-slate-500 uppercase tracking-wide">Account Name</div>
-                            <div id="abuAcctName" class="font-medium text-sm text-slate-900">—</div>
+                            <div id="abuAcctName" class="font-medium text-sm text-slate-900">Loading...</div>
                         </div>
                         <button class="copy-btn text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors" data-copy-target="abuAcctName">Copy</button>
                     </div>
@@ -74,7 +74,7 @@
                     <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                         <div>
                             <div class="text-xs text-slate-500 uppercase tracking-wide">SWIFT / BIC</div>
-                            <div id="abuSwift" class="font-mono text-sm font-medium text-slate-900">—</div>
+                            <div id="abuSwift" class="font-mono text-sm font-medium text-slate-900">Loading...</div>
                         </div>
                         <button class="copy-btn text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors" data-copy-target="abuSwift">Copy</button>
                     </div>
@@ -82,7 +82,7 @@
                     <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                         <div>
                             <div class="text-xs text-slate-500 uppercase tracking-wide">IBAN</div>
-                            <div id="abuIban" class="font-mono text-sm font-medium text-slate-900">—</div>
+                            <div id="abuIban" class="font-mono text-sm font-medium text-slate-900">Loading...</div>
                         </div>
                         <button class="copy-btn text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors" data-copy-target="abuIban">Copy</button>
                     </div>
@@ -90,7 +90,7 @@
                     <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                         <div>
                             <div class="text-xs text-slate-500 uppercase tracking-wide">Phone</div>
-                            <div id="abuPhone" class="font-medium text-sm text-slate-900">—</div>
+                            <div id="abuPhone" class="font-medium text-sm text-slate-900">Loading...</div>
                         </div>
                         <button class="copy-btn text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors" data-copy-target="abuPhone">Copy</button>
                     </div>
@@ -98,7 +98,7 @@
                     <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                         <div>
                             <div class="text-xs text-slate-500 uppercase tracking-wide">Email</div>
-                            <div id="abuEmail" class="font-medium text-sm text-slate-900">—</div>
+                            <div id="abuEmail" class="font-medium text-sm text-slate-900">Loading...</div>
                         </div>
                         <button class="copy-btn text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors" data-copy-target="abuEmail">Copy</button>
                     </div>
@@ -156,6 +156,7 @@
 
     <script src="js/bottom-nav.js?v=20260121.1"></script>
     <script src="js/sidebar.js?v=20260121.1"></script>
+  <script src="js/demo-data.js"></script>
   <script>
     // Populate deposit page with sample ABU bank details and saved cards
     async function populateDepositDetails(){
@@ -207,8 +208,23 @@
         }
       }
 
+      // If still no user found, create a demo user for testing
+      if (!currentUser) {
+        console.log('No user found, creating demo user for testing');
+        currentUser = {
+          id: 'demo-user-001',
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'demo@americanbank.com',
+          phone: '(555) 123-4567'
+        };
+      }
+
       const setBank = (type)=>{
+        console.log('setBank called with type:', type, 'currentUser:', currentUser);
+        
         if (!currentUser) {
+          console.log('No current user found, using demo data');
           // Fallback to sample data if no user is logged in
           const data = banks[type] || banks.savings;
           document.getElementById('abuAcctNumber').textContent = data.acctNumber;
@@ -234,6 +250,8 @@
         // Generate IBAN: US + check digits + bank code + account number
         const ibanBase = `US00ABUU${accountNumber}`;
         const iban = ibanBase + userIdHash.slice(-2); // Simple mock IBAN generation
+
+        console.log('Generated account details:', { accountNumber, swiftCode, iban });
 
         // Set account number
         document.getElementById('abuAcctNumber').textContent = accountNumber;
