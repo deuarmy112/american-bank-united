@@ -50,10 +50,13 @@
 
   // mark active based on path
   function markActive(){
-    const path = window.location.pathname.replace(/\\/g,'/').split('/').pop() || 'index.html';
+    const pathname = window.location.pathname || '/index.html';
+    const path = pathname.replace(/\\/g,'/').split('/').pop() || 'index.html';
     nav.querySelectorAll('.bn-item').forEach(b=>{
-      const href = b.getAttribute('data-href').split('/').pop();
-      b.classList.toggle('active', href === path || (path==='index.html' && href==='index.html'));
+      const href = b.getAttribute('data-href');
+      if (!href) return;
+      const hrefPath = href.split('/').pop();
+      b.classList.toggle('active', hrefPath === path || (path==='index.html' && hrefPath==='index.html'));
     });
   }
 

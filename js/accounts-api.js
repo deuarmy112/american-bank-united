@@ -22,6 +22,10 @@ async function loadAccounts() {
 
 function displayAccounts(accounts) {
     const accountsList = document.getElementById('accountsList');
+    if (!accountsList) {
+        console.error('accountsList element not found');
+        return;
+    }
     
     if (!accounts || accounts.length === 0) {
         accountsList.innerHTML = '<p class="no-data">No accounts yet. Create your first account below.</p>';
