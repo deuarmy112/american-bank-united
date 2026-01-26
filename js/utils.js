@@ -37,11 +37,24 @@ function generateAccountNumber() {
 function showAlert(message, type = 'success') {
     const alertDiv = document.getElementById('alert');
     if (!alertDiv) return;
-    
-    alertDiv.className = `alert alert-${type}`;
+
+    // Clear existing classes and add base classes
+    alertDiv.className = 'p-4 rounded-lg mb-6 text-sm font-medium';
+
+    // Add type-specific styling
+    if (type === 'success') {
+        alertDiv.classList.add('bg-green-100', 'text-green-800', 'border', 'border-green-200');
+    } else if (type === 'error') {
+        alertDiv.classList.add('bg-red-100', 'text-red-800', 'border', 'border-red-200');
+    } else if (type === 'warning') {
+        alertDiv.classList.add('bg-yellow-100', 'text-yellow-800', 'border', 'border-yellow-200');
+    } else {
+        alertDiv.classList.add('bg-blue-100', 'text-blue-800', 'border', 'border-blue-200');
+    }
+
     alertDiv.textContent = message;
     alertDiv.style.display = 'block';
-    
+
     // Auto hide after 5 seconds
     setTimeout(() => {
         alertDiv.style.display = 'none';

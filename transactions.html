@@ -3,66 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction History - American Bank United</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/opay.css">
     <script>
         if (!localStorage.getItem('authToken')) {
             window.location.href = 'index.html';
         }
     </script>
-    <title>Transactions - Opay</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/opay.css">
-    <style>body{background:#f8fafc}</style>
 </head>
-<body class="opay-ui">
-        <header class="opay-header fixed top-0 left-0 right-0 z-20">
-            <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="opay-brand"><div style="margin-left:.5rem"><div class="opay-name">Transactions</div><div class="opay-sub">Recent activity</div></div>
+<body class="bg-slate-50">
+    <main class="max-w-6xl mx-auto bg-white min-h-screen pb-20 px-4">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold mb-2">Transaction History</h1>
+                    <p class="text-blue-100">View and manage all your banking activities</p>
+                </div>
+                <div class="hidden md:block">
+                    <i class="fas fa-history text-4xl text-blue-200"></i>
                 </div>
             </div>
-        </header>
+        </div>
 
-        <main class="pt-20 pb-24 max-w-2xl mx-auto px-4">
-            <p class="text-sm text-slate-600 mb-4">View all your banking activities</p>
-
-            <div class="flex gap-2 mb-4">
-                <select id="filterAccount" class="flex-1 rounded-md border px-3 py-2 text-sm" onchange="filterTransactions()">
-                    <option value="">All Accounts</option>
-                </select>
-                <select id="filterType" class="w-36 rounded-md border px-3 py-2 text-sm" onchange="filterTransactions()">
-                    <option value="">All</option>
-                    <option value="transfer">Transfers</option>
-                    <option value="deposit">Deposits</option>
-                    <option value="withdrawal">Withdrawals</option>
-                </select>
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <div class="flex flex-col md:flex-row gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Filter by Account</label>
+                    <select id="filterAccount" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="filterTransactions()">
+                        <option value="">All Accounts</option>
+                    </select>
+                </div>
+                <div class="md:w-48">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Transaction Type</label>
+                    <select id="filterType" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="filterTransactions()">
+                        <option value="">All Types</option>
+                        <option value="transfer">Transfers</option>
+                        <option value="deposit">Deposits</option>
+                        <option value="withdrawal">Withdrawals</option>
+                        <option value="external_in">External In</option>
+                        <option value="external_out">External Out</option>
+                    </select>
+                </div>
+                <div class="md:w-64">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Search</label>
+                    <input type="text" id="searchTransaction" placeholder="Search transactions..." class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" onkeyup="filterTransactions()">
+                </div>
             </div>
+        </div>
 
-            <div class="grid grid-cols-3 gap-3 mb-4">
-                <div class="col-span-2 p-3 bg-white rounded-lg shadow">
-                    <h4 class="text-xs text-slate-500">Total Income</h4>
-                    <p id="totalIncome" class="text-lg font-semibold">$0.00</p>
-                </div>
-                <div class="p-3 bg-white rounded-lg shadow">
-                    <h4 class="text-xs text-slate-500">Net</h4>
-                    <p id="netChange" class="text-lg font-semibold">$0.00</p>
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-500">Total Income</p>
+                        <p id="totalIncome" class="text-2xl font-bold text-green-600">$0.00</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-arrow-up text-green-600 text-xl"></i>
+                    </div>
                 </div>
             </div>
-
-            <section class="space-y-3">
-                <div id="transactionsList">
-                    <!-- Transaction items (mobile cards) -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-500">Total Expenses</p>
+                        <p id="totalExpenses" class="text-2xl font-bold text-red-600">$0.00</p>
+                    </div>
+                    <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-arrow-down text-red-600 text-xl"></i>
+                    </div>
                 </div>
-            </section>
-        </main>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-500">Net Change</p>
+                        <p id="netChange" class="text-2xl font-bold text-slate-900">$0.00</p>
+                    </div>
+                    <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-balance-scale text-slate-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        <!-- bottom nav removed to consolidate profile's bottom nav as app-wide control -->
+        <!-- Transactions List -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6 border-b border-slate-200">
+                <h2 class="text-xl font-semibold">Transactions</h2>
+                <p class="text-sm text-slate-500 mt-1">Your complete transaction history</p>
+            </div>
+            <div id="transactionsList" class="divide-y divide-slate-200">
+                <!-- Transaction items will be loaded here -->
+            </div>
+        </div>
+    </main>
 
-    <script src="js/utils.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/accounts-api.js"></script>
-    <script src="js/transactions.js"></script>
-    <script src="js/bottom-nav.js"></script>
-</body>
-</html>
+    <script src="js/api.js?v=20260121.1"></script>
+    <script src="js/utils.js?v=20260121.1"></script>
+    <script src="js/auth.js?v=20260121.1"></script>
+    <script src="js/accounts-api.js?v=20260121.1"></script>
+    <script src="js/transactions.js?v=20260121.1"></script>
+    <script src="js/bottom-nav.js?v=20260121.1"></script>
