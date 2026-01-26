@@ -147,11 +147,10 @@ function loadRecentTransfers() {
     const container = document.getElementById('recentTransfers');
     
     transactionsAPI.getAll().then(transactions => {
-        // Filter for all transfers, not just recent
-        const allTransfers = transactions.filter(txn => txn.type === 'transfer');
-        renderRecentTransactions(allTransfers, container);
+        // Show all transactions, not just transfers
+        renderRecentTransactions(transactions, container);
     }).catch(error => {
-        console.error('Error loading transfers:', error);
-        container.innerHTML = '<p class="text-center text-slate-500 py-4">Unable to load transfers</p>';
+        console.error('Error loading transactions:', error);
+        container.innerHTML = '<p class="text-center text-slate-500 py-4">Unable to load transactions</p>';
     });
 }

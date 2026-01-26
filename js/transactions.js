@@ -19,9 +19,22 @@ document.addEventListener('DOMContentLoaded', function() {
 function loadTransactionsPage() {
     Promise.all([
         transactionsAPI.getAll(),
-        accountsAPI.getAll()
-    ]).then(([transactions, accounts]) => {
-        allTransactions = transactions;
+        accountsAPI.getAll(),
+        fetch(`${API_BASE_URL}/external-transfers/external`, {
+            headers: { 'Authorization': `Bearer ${apiClient.getToken()}` }
+        }).then(r => r.json()).catch(() => [])
+    ]).then(([transactions, accounts, externalTransfers]) => {
+        // Merge transactions with external transfers
+        const externalTxs = (externalTransfers || []).map(transfer => ({
+            ...transfer,
+            type: transfer.direction === 'outgoing' ? 'external_out' : 'external_in',
+            amount: transfer.amount,
+            description: `${transfer.transfer_type.toUpperCase()}: ${transfer.recipient_name || 'Unknown'} ${transfer.bank_name ? '('+transfer.bank_name+')' : ''}`,
+            createdAt: transfer.created_at,
+            isExternal: true
+        }));
+        
+        allTransactions = [...transactions, ...externalTxs].sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
         filteredTransactions = [...allTransactions];
         
         // Store accounts for later use
