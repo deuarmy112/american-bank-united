@@ -241,6 +241,9 @@
       // Set up account type change listener
       acctTypeEl.addEventListener('change', (e)=> setBank(e.target.value));
 
+      // Initialize with default account type (savings)
+      setBank('savings');
+
       // Simple card setup
       const cardList = document.getElementById('abuCardList');
       if (cardList) {
