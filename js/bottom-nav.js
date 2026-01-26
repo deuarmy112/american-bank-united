@@ -20,9 +20,9 @@
       <i class="fa fa-paper-plane"></i>
       <span>Transfer</span>
     </button>
-    <button class="bn-item" data-href="/wallet.html" aria-label="Wallet">
-      <i class="fa fa-wallet"></i>
-      <span>Wallet</span>
+    <button class="bn-item" data-href="/cards.html" aria-label="Cards">
+      <i class="fa fa-credit-card"></i>
+      <span>Cards</span>
     </button>
     <!-- replaced Profile with Menu icon (opens sidebar) -->
     <button id="bnMenu" class="bn-item" aria-label="Menu" title="Menu">
@@ -62,9 +62,9 @@
 
   document.addEventListener('DOMContentLoaded', ()=>{
     document.body.appendChild(nav);
-    // allow forcing visible on specific pages (profile, wallet)
+    // allow forcing visible on specific pages (profile, cards)
     const filename = window.location.pathname.replace(/\\/g,'/').split('/').pop() || '';
-    if (['profile.html','wallet.html'].includes(filename)) nav.classList.add('force-visible');
+    if (['profile.html','cards.html'].includes(filename)) nav.classList.add('force-visible');
     markActive();
     // handle history changes
     window.addEventListener('popstate', markActive);
