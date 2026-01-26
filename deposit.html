@@ -14,6 +14,23 @@
   <style>body{background:#f8fafc;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}</style>
 </head>
 <body class="opay-ui">
+  <script>
+    // Remove any stray filename text or elements that show 'deposit.html'
+    try{
+      // remove text nodes under body that contain the filename
+      Array.from(document.body.childNodes).forEach(n=>{
+        if (n && n.nodeType===Node.TEXT_NODE && n.textContent && n.textContent.indexOf('deposit.html')!==-1) {
+          n.textContent = n.textContent.replace(/deposit\.html/g,'').trim();
+          if (!n.textContent) n.remove();
+        }
+      });
+      // remove elements whose visible text equals the filename
+      document.querySelectorAll('body *').forEach(el=>{
+        const t = (el.textContent||'').trim();
+        if (t === 'deposit.html') el.remove();
+      });
+    }catch(e){ /* noop */ }
+  </script>
   
 
   <main class="max-w-4xl mx-auto p-6 pb-12">
