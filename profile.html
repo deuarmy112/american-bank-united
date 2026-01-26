@@ -376,8 +376,25 @@
 
             // fetch real transactions and render into the profile recent list
             try{
-                const transactions = await transactionsAPI.getAll();
-                const recent = (transactions && transactions.length) ? transactions.slice(0,5) : [];
+                const [transactions, externalTransfers] = await Promise.all([
+                    transactionsAPI.getAll(),
+                    fetch(`${API_BASE_URL}/external-transfers/external`, {
+                        headers: { 'Authorization': `Bearer ${apiClient.getToken()}` }
+                    }).then(r => r.json()).catch(() => [])
+                ]);
+                
+                // Merge transactions with external transfers
+                const externalTxs = (externalTransfers || []).map(transfer => ({
+                    ...transfer,
+                    type: transfer.direction === 'outgoing' ? 'external_out' : 'external_in',
+                    amount: transfer.amount,
+                    description: `${transfer.transfer_type.toUpperCase()}: ${transfer.recipient_name || 'Unknown'} ${transfer.bank_name ? '('+transfer.bank_name+')' : ''}`,
+                    createdAt: transfer.created_at,
+                    isExternal: true
+                }));
+                
+                const allTransactions = [...transactions, ...externalTxs].sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
+                const recent = (allTransactions && allTransactions.length) ? allTransactions.slice(0,5) : [];
                 const txEl = document.getElementById('recentTxList');
                 if (txEl) {
                     // use shared renderer from dashboard-api.js if available

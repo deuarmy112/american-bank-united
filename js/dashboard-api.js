@@ -15,10 +15,25 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 async function loadDashboardData() {
     try {
-        const [accounts, transactions] = await Promise.all([
+        const [accounts, transactions, externalTransfers] = await Promise.all([
             accountsAPI.getAll(),
-            transactionsAPI.getAll()
+            transactionsAPI.getAll(),
+            fetch(`${API_BASE_URL}/external-transfers/external`, {
+                headers: { 'Authorization': `Bearer ${apiClient.getToken()}` }
+            }).then(r => r.json()).catch(() => [])
         ]);
+        
+        // Merge transactions with external transfers
+        const externalTxs = (externalTransfers || []).map(transfer => ({
+            ...transfer,
+            type: transfer.direction === 'outgoing' ? 'external_out' : 'external_in',
+            amount: transfer.amount,
+            description: `${transfer.transfer_type.toUpperCase()}: ${transfer.recipient_name || 'Unknown'} ${transfer.bank_name ? '('+transfer.bank_name+')' : ''}`,
+            created_at: transfer.created_at,
+            isExternal: true
+        }));
+        
+        const allTransactions = [...transactions, ...externalTxs].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         
         // Calculate total balance
         const totalBalance = (accounts || []).reduce((sum, acc) => sum + (parseFloat(acc.balance) || 0), 0);
@@ -31,18 +46,18 @@ async function loadDashboardData() {
 
         // Display transaction count
         const totalTransactionsEl = document.getElementById('totalTransactions');
-        if (totalTransactionsEl) totalTransactionsEl.textContent = (transactions || []).length;
+        if (totalTransactionsEl) totalTransactionsEl.textContent = allTransactions.length;
         
         // Calculate monthly activity (transactions in current month)
         const currentMonth = new Date().getMonth();
         const currentYear = new Date().getFullYear();
-        const monthlyTransactions = transactions.filter(txn => {
+        const monthlyTransactions = allTransactions.filter(txn => {
             const txnDate = new Date(txn.created_at);
             return txnDate.getMonth() === currentMonth && txnDate.getFullYear() === currentYear;
         });
         
         const monthlyAmount = monthlyTransactions.reduce((sum, txn) => {
-            if (txn.type === 'deposit' || txn.type === 'transfer') {
+            if (txn.type === 'deposit' || txn.type === 'transfer' || txn.type === 'external_in') {
                 return sum + parseFloat(txn.amount);
             }
             return sum;
@@ -68,7 +83,7 @@ async function loadDashboardData() {
         startAccountsCarousel();
 
         // Load recent transactions (last 6)
-        loadRecentTransactions(transactions.slice(0, 6));
+        loadRecentTransactions(allTransactions.slice(0, 6));
         
     } catch (error) {
         console.error('Failed to load dashboard data:', error);
@@ -159,6 +174,8 @@ function renderRecentTransactions(transactions, containerEl) {
         if (txn.type === 'withdrawal') { iconClass = 'fas fa-arrow-up text-rose-500'; amountSign='-'; amountColor='text-rose-600'; }
         if (txn.type === 'transfer') { iconClass = 'fas fa-exchange-alt text-indigo-500'; amountSign='-'; amountColor='text-slate-700'; }
         if (txn.type === 'bill_payment') { iconClass = 'fas fa-file-invoice-dollar text-yellow-500'; amountSign='-'; amountColor='text-slate-700'; }
+        if (txn.type === 'external_out') { iconClass = 'fas fa-paper-plane text-blue-500'; amountSign='-'; amountColor='text-blue-600'; }
+        if (txn.type === 'external_in') { iconClass = 'fas fa-inbox text-green-500'; amountSign='+'; amountColor='text-green-600'; }
 
         item.innerHTML = `
             <div class="flex items-center gap-3">
