@@ -21,50 +21,93 @@
     </div>
   </header>
 
-  <main class="max-w-lg mx-auto p-6 pb-8">
-    <div class="bg-white rounded-lg p-6 shadow-lg">
-      <div class="mb-4">
-        <p class="text-sm text-slate-600">Choose how you'd like to deposit funds to your ABU account. Select a method, pick the destination account, then enter an amount.</p>
-      </div>
-      <div class="grid grid-cols-2 gap-4 mb-4">
-        <button id="depositChoice-bank" type="button" onclick="showDepositMethod('bank')" class="deposit-choice p-3 bg-slate-50 rounded-md text-left flex items-start gap-3">
-          <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-university text-indigo-600"></i></div>
-          <div>
-            <div class="font-medium">Bank</div>
-            <div class="text-xs text-slate-500">Use a linked bank account (internal)</div>
-            <div class="choice-mini-details hidden mt-2 text-xs text-slate-600"><div>Acct: <span class="mini-acct">—</span></div><div>IBAN: <span class="mini-iban">—</span></div></div>
-          </div>
-        </button>
+  <main class="max-w-4xl mx-auto p-6 pb-12">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Bank Funding Details -->
+      <section class="bg-white rounded-lg p-6 shadow-lg">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold">Bank Funding Details</h2>
+          <small class="text-xs text-slate-500">Send a bank transfer to ABU</small>
+        </div>
 
-        <button id="depositChoice-account" type="button" onclick="showDepositMethod('account')" class="deposit-choice p-3 bg-slate-50 rounded-md text-left flex items-start gap-3">
-          <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-building text-emerald-600"></i></div>
+        <p class="text-sm text-slate-600 mb-4">Use the account details below to fund your ABU account. Choose an account type if multiple options are available.</p>
+
+        <div class="mb-4">
+          <label class="block text-xs text-slate-600 mb-2">Account Type</label>
+          <select id="abuAccountType" class="w-full border rounded px-3 py-2 text-sm">
+            <option value="savings">Savings</option>
+            <option value="current">Current</option>
+          </select>
+        </div>
+
+        <div class="space-y-3 text-sm text-slate-700">
+          <div class="flex items-center justify-between">
             <div>
-              <div class="font-medium">Accounts</div>
-              <div class="text-xs text-slate-500">External / linked accounts</div>
-              <div class="choice-mini-details hidden mt-2 text-xs text-slate-600"><div>Bank: <span class="mini-bank">—</span></div><div>Acct: <span class="mini-acct">—</span></div></div>
+              <div class="text-xs text-slate-500">Account Number</div>
+              <div id="abuAcctNumber" class="font-medium">—</div>
             </div>
-        </button>
-
-        <button id="depositChoice-card" type="button" onclick="showDepositMethod('card')" class="deposit-choice p-3 bg-slate-50 rounded-md text-left flex items-start gap-3">
-          <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-credit-card text-indigo-500"></i></div>
-          <div>
-            <div class="font-medium">Wallet</div>
-            <div class="text-xs text-slate-500">Saved payment methods & wallets</div>
-            <div class="choice-mini-details hidden mt-2 text-xs text-slate-600"><div>Selected: <span class="mini-card">—</span></div></div>
+            <button class="copy-btn text-xs text-indigo-600" data-copy-target="abuAcctNumber">Copy</button>
           </div>
-        </button>
 
-        <button id="depositChoice-crypto" type="button" onclick="showDepositMethod('crypto')" class="deposit-choice p-3 bg-slate-50 rounded-md text-left flex items-start gap-3">
-          <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-coins text-fuchsia-600"></i></div>
-          <div>
-            <div class="font-medium">Crypto</div>
-            <div class="text-xs text-slate-500">Send from your crypto wallet</div>
-            <div class="choice-mini-details hidden mt-2 text-xs text-slate-600"><div>Wallet: <span class="mini-wallet">—</span></div></div>
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-xs text-slate-500">Account Name</div>
+              <div id="abuAcctName" class="font-medium">—</div>
+            </div>
+            <button class="copy-btn text-xs text-indigo-600" data-copy-target="abuAcctName">Copy</button>
           </div>
-        </button>
-      </div>
 
-      <div class="mt-2 text-sm text-slate-600">Tap a method to view details.</div>
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-xs text-slate-500">SWIFT / BIC</div>
+              <div id="abuSwift" class="font-medium">—</div>
+            </div>
+            <button class="copy-btn text-xs text-indigo-600" data-copy-target="abuSwift">Copy</button>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-xs text-slate-500">IBAN</div>
+              <div id="abuIban" class="font-medium">—</div>
+            </div>
+            <button class="copy-btn text-xs text-indigo-600" data-copy-target="abuIban">Copy</button>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-xs text-slate-500">Phone</div>
+              <div id="abuPhone" class="font-medium">—</div>
+            </div>
+            <button class="copy-btn text-xs text-indigo-600" data-copy-target="abuPhone">Copy</button>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-xs text-slate-500">Email</div>
+              <div id="abuEmail" class="font-medium">—</div>
+            </div>
+            <button class="copy-btn text-xs text-indigo-600" data-copy-target="abuEmail">Copy</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Card list -->
+      <section class="bg-white rounded-lg p-6 shadow-lg">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold">ABU Cards</h2>
+          <small class="text-xs text-slate-500">Use a saved card to fund instantly</small>
+        </div>
+
+        <p class="text-sm text-slate-600 mb-4">Select one of your saved ABU cards. You can add a new card from your profile if needed.</p>
+
+        <ul id="abuCardList" class="space-y-3 max-h-64 overflow-auto">
+          <!-- cards populated by JS -->
+        </ul>
+
+        <div class="mt-4">
+          <a href="cards.html" class="text-sm text-indigo-600">Manage cards</a>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -75,10 +118,95 @@
   <script src="js/features.js?v=20260121.2"></script>
   <script src="js/ui.js?v=20260121.2"></script>
   <script>
-    // initialize the page
+    // Populate deposit page with sample ABU bank details and saved cards
+    async function populateDepositDetails(){
+      // sample bank details per account type
+      const banks = {
+        savings: {
+          acctNumber: '1234567890',
+          acctName: 'American Bank United - Client Trust',
+          swift: 'ABUUS33',
+          iban: 'GB29ABU01234567890123',
+          phone: '+1 800 555 0100',
+          email: 'support@abu-bank.com'
+        },
+        current: {
+          acctNumber: '0987654321',
+          acctName: 'American Bank United - Current',
+          swift: 'ABUUS44',
+          iban: 'GB29ABU98765432109876',
+          phone: '+1 800 555 0199',
+          email: 'treasury@abu-bank.com'
+        }
+      };
+
+      const cards = [
+        {id: 'c1', brand: 'visa', masked: '**** **** **** 4242', name: 'JOHN DOE', exp: '12/26'},
+        {id: 'c2', brand: 'mastercard', masked: '**** **** **** 1111', name: 'JANE DOE', exp: '09/25'}
+      ];
+
+      const acctTypeEl = document.getElementById('abuAccountType');
+      const setBank = (type)=>{
+        const data = banks[type] || banks.savings;
+        document.getElementById('abuAcctNumber').textContent = data.acctNumber;
+        document.getElementById('abuAcctName').textContent = data.acctName;
+        document.getElementById('abuSwift').textContent = data.swift;
+        document.getElementById('abuIban').textContent = data.iban;
+        document.getElementById('abuPhone').textContent = data.phone;
+        document.getElementById('abuEmail').textContent = data.email;
+      };
+
+      // initial set
+      setBank(acctTypeEl.value || 'savings');
+
+      acctTypeEl.addEventListener('change', (e)=> setBank(e.target.value));
+
+      // populate cards
+      const cardList = document.getElementById('abuCardList');
+      cardList.innerHTML = '';
+      cards.forEach(c=>{
+        const li = document.createElement('li');
+        li.className = 'p-3 border rounded flex items-center justify-between';
+        li.innerHTML = `
+          <div>
+            <div class="text-sm font-medium">${c.brand.toUpperCase()} • ${c.masked}</div>
+            <div class="text-xs text-slate-500">${c.name} • Exp ${c.exp}</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="btn btn-outline use-card" data-card-id="${c.id}">Use</button>
+          </div>
+        `;
+        cardList.appendChild(li);
+      });
+
+      // copy buttons
+      document.querySelectorAll('.copy-btn').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const target = document.getElementById(btn.dataset.copyTarget);
+          if (!target) return;
+          try{
+            await navigator.clipboard.writeText(target.textContent.trim());
+            btn.textContent = 'Copied';
+            setTimeout(()=> btn.textContent = 'Copy', 1400);
+          }catch(e){
+            console.warn('copy failed', e);
+          }
+        });
+      });
+
+      // use card action
+      document.querySelectorAll('.use-card').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          const cardId = b.dataset.cardId;
+          // store selected card and redirect to quick deposit flow
+          localStorage.setItem('abu_selected_card', cardId);
+          window.location.href = 'transfer.html';
+        });
+      });
+    }
+
     document.addEventListener('DOMContentLoaded', async ()=>{
-      if (window.populateDepositDetails) await populateDepositDetails();
-      showDepositMethod('bank');
+      await populateDepositDetails();
     });
   </script>
 </body>
