@@ -125,6 +125,8 @@
                         <input id="editAvatarFile" type="file" accept="image/*" class="text-sm" />
                         <input id="editAvatar" class="w-full border rounded px-3 py-2" placeholder="or paste image URL" />
                     </div>
+                    <div class="mt-1 text-xs text-slate-500" id="editAvatarFileName">No file chosen</div>
+                    </div>
                     <div id="editAvatarPreview" class="mt-2">
                         <img id="editAvatarImg" src="" alt="preview" class="w-20 h-20 rounded-full object-cover hidden" />
                     </div>
@@ -405,6 +407,7 @@
             if (av) av.value = u.avatar || '';
             const avFile = document.getElementById('editAvatarFile');
             if (avFile) avFile.value = '';
+            const avFileName = document.getElementById('editAvatarFileName'); if (avFileName) avFileName.textContent = 'No file chosen';
             const avImg = document.getElementById('editAvatarImg');
             if (avImg) {
                 if (u.avatar) { avImg.src = u.avatar; avImg.classList.remove('hidden'); }
@@ -486,7 +489,13 @@
                     const f = e.target.files && e.target.files[0];
                     const preview = document.getElementById('editAvatarImg');
                     const urlInput = document.getElementById('editAvatar');
-                    if (!f) { if (preview) { preview.src=''; preview.classList.add('hidden'); } return; }
+                    const fileNameEl = document.getElementById('editAvatarFileName');
+                    if (!f) {
+                        if (preview) { preview.src=''; preview.classList.add('hidden'); }
+                        if (fileNameEl) fileNameEl.textContent = 'No file chosen';
+                        return;
+                    }
+                    if (fileNameEl) fileNameEl.textContent = f.name;
                     try{
                         const data = await new Promise((res, rej)=>{
                             const r = new FileReader(); r.onload = ()=> res(r.result); r.onerror = rej; r.readAsDataURL(f);
