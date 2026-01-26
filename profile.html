@@ -337,11 +337,7 @@
                 if (phoneEl) phoneEl.textContent = user.phone || '';
                 const avatarEl = document.getElementById('profileAvatar');
                 if (user.avatar && avatarEl) avatarEl.src = user.avatar;
-                const balanceEl = document.getElementById('balance');
-                if (balanceEl) {
-                    if (user.balance !== undefined) balanceEl.textContent = formatCurrency(user.balance);
-                    else if (user.account && user.account.balance !== undefined) balanceEl.textContent = formatCurrency(user.account.balance);
-                }
+                // Balance calculation moved to enhanceProfile after accounts are loaded
                 window.__currentUser = user || {};
                 try{ enhanceProfile(window.__currentUser); }catch(e){}
             } catch (err) {
@@ -351,6 +347,22 @@
 
         // enhance profile rendering for redesigned layout
         const enhanceProfile = async (user)=>{
+            // Fetch accounts if not available in user object
+            let accounts = (user.accounts && user.accounts.length) ? user.accounts : [];
+            if (accounts.length === 0) {
+                try {
+                    accounts = await accountsAPI.getAll() || [];
+                } catch (err) {
+                    console.warn('Failed to fetch accounts for balance calculation', err);
+                    accounts = [];
+                }
+            }
+
+            // Calculate total balance from all accounts (same as dashboard)
+            const totalBalance = accounts.reduce((sum, acc) => sum + (parseFloat(acc.balance) || 0), 0);
+            const balanceEl = document.getElementById('balance');
+            if (balanceEl) balanceEl.textContent = formatCurrency(totalBalance);
+
             const acctNameEl = document.getElementById('accountName');
             if (acctNameEl) acctNameEl.textContent = ((user.first_name||'') + ' ' + (user.last_name||'')).trim() || '—';
             const contactEmail = document.getElementById('contactEmail'); if (contactEmail) contactEmail.textContent = user.email || '—';
@@ -361,7 +373,6 @@
             const la = document.getElementById('linkedAccountsList');
             if (la) {
                 la.innerHTML = '';
-                const accounts = (user.accounts && user.accounts.length) ? user.accounts : [];
                 if (accounts.length === 0) {
                     la.innerHTML = '<li class="p-3 border rounded">No linked accounts yet.</li>';
                 } else {
