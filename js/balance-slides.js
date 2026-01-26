@@ -46,7 +46,7 @@ async function initBalanceSlides(){
               <p class="text-sm opacity-80 mt-1">${formatCurrency(s.amount)}</p>
             </div>
           </div>
-          <div class="mt-4 flex gap-3">
+          <div class="mt-6 flex justify-center gap-4">
             <button onclick="location.href='deposit.html'" class="flex-none w-20 bg-white/20 rounded-lg py-2 text-sm hover:bg-white/30 transition-colors">Deposit</button>
             <button onclick="location.href='transfer.html'" class="flex-none w-20 bg-white/20 rounded-lg py-2 text-sm hover:bg-white/30 transition-colors">Transfer</button>
             <button onclick="location.href='withdraw.html'" class="flex-none w-20 bg-white/20 rounded-lg py-2 text-sm hover:bg-white/30 transition-colors">Withdraw</button>
