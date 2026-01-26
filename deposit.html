@@ -166,6 +166,20 @@
     async function populateDepositDetails(){
       console.log('populateDepositDetails function called');
       
+      // Simple test - create a demo user
+      let currentUser = {
+        id: 'demo-user-001',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'demo@americanbank.com',
+        phone: '(555) 123-4567'
+      };
+      try{
+        if (typeof getCurrentUser === 'function') {
+          currentUser = await getCurrentUser();
+        }
+      }catch(e){ console.warn('getCurrentUser failed, trying localStorage fallback', e); }
+      
       // sample bank details per account type
       const banks = {
         savings: {
@@ -192,20 +206,6 @@
       ];
 
       const acctTypeEl = document.getElementById('abuAccountType');
-
-      // Simple test - create a demo user
-      let currentUser = {
-        id: 'demo-user-001',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'demo@americanbank.com',
-        phone: '(555) 123-4567'
-      };
-      try{
-        if (typeof getCurrentUser === 'function') {
-          currentUser = await getCurrentUser();
-        }
-      }catch(e){ console.warn('getCurrentUser failed, trying localStorage fallback', e); }
 
       const setBank = (type)=>{
         console.log('setBank called with type:', type);
