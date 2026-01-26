@@ -47,8 +47,9 @@ async function initBalanceSlides(){
             </div>
           </div>
           <div class="mt-4 flex gap-3">
-            <button onclick="location.href='deposit.html'" class="flex-none w-24 bg-white/20 rounded-lg py-2 text-sm">Deposit</button>
-            <button onclick="location.href='transfer.html'" class="flex-1 bg-white/20 rounded-lg py-2 text-sm">Transfer</button>
+            <button onclick="location.href='deposit.html'" class="flex-none w-20 bg-white/20 rounded-lg py-2 text-sm hover:bg-white/30 transition-colors">Deposit</button>
+            <button onclick="location.href='transfer.html'" class="flex-none w-20 bg-white/20 rounded-lg py-2 text-sm hover:bg-white/30 transition-colors">Transfer</button>
+            <button onclick="location.href='withdraw.html'" class="flex-none w-20 bg-white/20 rounded-lg py-2 text-sm hover:bg-white/30 transition-colors">Withdraw</button>
           </div>
         </div>`;
       container.appendChild(el);
