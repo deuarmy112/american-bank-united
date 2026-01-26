@@ -15,51 +15,84 @@
     </script>
 </head>
 <body class="bg-slate-50">
-    <main class="max-w-md mx-auto bg-white min-h-screen pb-20">
-        <!-- Header -->
-        <div class="bg-gradient-to-r from-slate-800 to-slate-600 text-white p-4">
-            <div class="flex items-center justify-between">
-                <!-- back button removed site-wide -->
-                <h1 class="text-lg font-semibold">Profile</h1>
-                <div></div>
-            </div>
-        </div>
-
-        <!-- Profile Info -->
-        <div class="p-4">
-            <div class="flex items-center gap-4 mb-6">
-                <img id="profileAvatar" src="https://via.placeholder.com/60" class="w-16 h-16 rounded-full">
-                <div>
+    <main class="max-w-4xl mx-auto bg-white min-h-screen pb-20 px-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
+            <!-- Left: Profile summary -->
+            <aside class="md:col-span-1 bg-white rounded-lg shadow p-4">
+                <div class="flex flex-col items-center text-center">
+                    <img id="profileAvatar" src="https://via.placeholder.com/96" class="w-24 h-24 rounded-full mb-3 shadow" alt="avatar">
                     <h2 id="profileName" class="text-xl font-semibold">User</h2>
                     <p id="profileEmail" class="text-slate-600 text-sm">email@example.com</p>
                     <p id="profilePhone" class="text-slate-600 text-sm">+1234567890</p>
                 </div>
-            </div>
 
-            <!-- Balance -->
-            <div class="bg-gradient-to-r from-slate-100 to-slate-200 rounded-lg p-4 mb-6 opay-balance-gradient">
-                <div class="text-sm text-slate-600">Total Balance</div>
-                <div id="balance" class="text-2xl font-bold">$0.00</div>
-            </div>
-
-            <!-- Quick Actions -->
-            <section class="bg-white rounded-xl shadow p-4 mb-5">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-lg font-semibold">Quick Actions</h3>
-                    <button class="text-sm text-slate-500" onclick="openEditQuickActions()">Edit</button>
+                <div class="mt-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg p-4 text-center">
+                    <div class="text-sm text-slate-500">Total Balance</div>
+                    <div id="balance" class="text-2xl font-bold">$0.00</div>
                 </div>
-                <div id="quickActionsGrid" class="grid grid-cols-4 gap-3"></div>
+
+                <div class="mt-4 space-y-2">
+                    <button id="manageCardsBtn" class="w-full py-2 rounded border text-sm">Manage Cards</button>
+                    <button id="addFundsBtn" class="w-full py-2 rounded bg-indigo-600 text-white text-sm">Deposit</button>
+                    <button id="addFundsBtn" class="w-full py-2 rounded bg-indigo-600 text-white text-sm">Transfer</button>
+                    <button id="editProfileBtn" class="w-full py-2 rounded bg-slate-800 text-white text-sm">Edit Profile</button>
+                    <button id="logoutBtn" class="w-full py-2 rounded border border-rose-600 text-rose-600 text-sm">Logout</button>
+                </div>
+            </aside>
+
+            <!-- Right: Details and settings -->
+            <section class="md:col-span-2 space-y-6">
+                <div class="bg-white rounded-lg shadow p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-semibold">Contact & Account</h3>
+                        <button class="text-sm text-slate-500" onclick="openEditModal()">Edit</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-xs text-slate-500">Account Name</div>
+                            <div id="accountName" class="font-medium">—</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-500">Primary Email</div>
+                            <div class="flex items-center justify-between">
+                                <div id="contactEmail" class="font-medium">—</div>
+                                <button class="copy-btn text-xs text-indigo-600" data-copy-target="contactEmail">Copy</button>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-500">Phone</div>
+                            <div class="flex items-center justify-between">
+                                <div id="contactPhone" class="font-medium">—</div>
+                                <button class="copy-btn text-xs text-indigo-600" data-copy-target="contactPhone">Copy</button>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-500">Customer ID</div>
+                            <div id="customerId" class="font-medium">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-semibold">Linked Accounts</h3>
+                        <a href="accounts.html" class="text-sm text-indigo-600">Manage</a>
+                    </div>
+                    <ul id="linkedAccountsList" class="space-y-2 text-sm text-slate-700">
+                        <li class="p-3 border rounded">No linked accounts yet.</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-semibold">Recent Activity</h3>
+                        <a href="transactions.html" class="text-sm text-indigo-600">See all</a>
+                    </div>
+                    <ul id="recentTxList" class="space-y-3 text-sm">
+                        <li class="p-3 border rounded flex items-center justify-between"><div><div class="font-medium">No recent transactions</div><div class="text-xs text-slate-500">Your recent activity will appear here</div></div></li>
+                    </ul>
+                </div>
             </section>
-
-            <!-- Edit Profile Button -->
-            <button id="editProfileBtn" class="w-full bg-slate-800 text-white py-3 rounded-lg font-semibold mb-4">
-                Edit Profile
-            </button>
-
-            <!-- Logout -->
-            <button id="logoutBtn" class="w-full border border-red-500 text-red-500 py-3 rounded-lg font-semibold">
-                Logout
-            </button>
         </div>
     </main>
 
@@ -303,10 +336,54 @@
                     else if (user.account && user.account.balance !== undefined) balanceEl.textContent = formatCurrency(user.account.balance);
                 }
                 window.__currentUser = user || {};
+                try{ enhanceProfile(window.__currentUser); }catch(e){}
             } catch (err) {
                 console.error('Failed to load profile', err);
             }
         }
+
+        // enhance profile rendering for redesigned layout
+        const enhanceProfile = (user)=>{
+            const acctNameEl = document.getElementById('accountName');
+            if (acctNameEl) acctNameEl.textContent = ((user.first_name||'') + ' ' + (user.last_name||'')).trim() || '—';
+            const contactEmail = document.getElementById('contactEmail'); if (contactEmail) contactEmail.textContent = user.email || '—';
+            const contactPhone = document.getElementById('contactPhone'); if (contactPhone) contactPhone.textContent = user.phone || '';
+            const custEl = document.getElementById('customerId'); if (custEl) custEl.textContent = user.id || user.customer_id || '—';
+
+            // linked accounts
+            const la = document.getElementById('linkedAccountsList');
+            if (la) {
+                la.innerHTML = '';
+                const accounts = (user.accounts && user.accounts.length) ? user.accounts : [];
+                if (accounts.length === 0) {
+                    la.innerHTML = '<li class="p-3 border rounded">No linked accounts yet.</li>';
+                } else {
+                    accounts.forEach(a=>{
+                        const li = document.createElement('li');
+                        li.className = 'p-3 border rounded flex justify-between items-center';
+                        li.innerHTML = `<div><div class="font-medium">${a.name || a.bank || 'Account'}</div><div class="text-xs text-slate-500">${a.masked || a.number || ''}</div></div><div class="text-xs text-slate-500">${a.type||''}</div>`;
+                        la.appendChild(li);
+                    });
+                }
+            }
+
+            // recent transactions placeholder (if none)
+            const tx = document.getElementById('recentTxList');
+            if (tx) {
+                tx.innerHTML = '';
+                const items = (user.recent && user.recent.length) ? user.recent.slice(0,5) : [];
+                if (items.length === 0) {
+                    tx.innerHTML = '<li class="p-3 border rounded flex items-center justify-between"><div><div class="font-medium">No recent transactions</div><div class="text-xs text-slate-500">Your recent activity will appear here</div></div></li>';
+                } else {
+                    items.forEach(i=>{
+                        const li = document.createElement('li');
+                        li.className = 'p-3 border rounded flex items-center justify-between';
+                        li.innerHTML = `<div><div class="font-medium">${i.title || i.desc || 'Transaction'}</div><div class="text-xs text-slate-500">${formatDate(i.date||i.created_at||'')}</div></div><div class="text-sm font-medium">${formatCurrency(i.amount||0)}</div>`;
+                        tx.appendChild(li);
+                    });
+                }
+            }
+        };
 
         function openEditModal() {
             const u = window.__currentUser || {};
@@ -337,6 +414,13 @@
             renderQuickActions();
             loadProfile();
 
+            // after profile loaded, enhance layout
+            document.addEventListener('readystatechange', ()=>{
+                if (document.readyState === 'complete') {
+                    if (window.__currentUser) enhanceProfile(window.__currentUser);
+                }
+            });
+
             const editBtn = document.getElementById('editProfileBtn');
             if (editBtn) editBtn.addEventListener('click', openEditModal);
 
@@ -358,6 +442,8 @@
                     window.__currentUser = updated;
                     closeEditModal();
                     await loadProfile();
+                    // refresh enhanced fields
+                    if (window.__currentUser) enhanceProfile(window.__currentUser);
                 } catch (err) {
                     console.error('Profile update failed', err);
                     showToast(err.message || 'Update failed');
@@ -368,6 +454,18 @@
 
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) logoutBtn.addEventListener('click', () => { if (confirm('Logout?')) authAPI.logout(); });
+
+            // wire manage/add buttons and copy buttons
+            const manageCardsBtn = document.getElementById('manageCardsBtn'); if (manageCardsBtn) manageCardsBtn.addEventListener('click', ()=> location.href='cards.html');
+            const addFundsBtn = document.getElementById('addFundsBtn'); if (addFundsBtn) addFundsBtn.addEventListener('click', ()=> location.href='deposit.html');
+
+            document.querySelectorAll('.copy-btn').forEach(btn=>{
+                btn.addEventListener('click', async ()=>{
+                    const target = document.getElementById(btn.dataset.copyTarget);
+                    if (!target) return;
+                    try{ await navigator.clipboard.writeText(target.textContent.trim()); btn.textContent = 'Copied'; setTimeout(()=> btn.textContent = 'Copy',1400);}catch(e){}
+                });
+            });
 
             const saveQuickBtn = document.getElementById('saveQuickActionsBtn');
             if (saveQuickBtn) saveQuickBtn.addEventListener('click', () => { saveQuickConfig(getSelectedArray()); renderQuickActions(); closeEditQuickActions(); });
