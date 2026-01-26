@@ -148,6 +148,10 @@
                             <p class="text-xs text-green-700 mt-1">Card deposits are processed instantly and available for use immediately.</p>
                         </div>
                     </div>
+                </div>
+            </section>
+        </div>
+    </div>
     </main>
 
     <script src="js/bottom-nav.js?v=20260121.1"></script>
@@ -176,8 +180,8 @@
       };
 
       const cards = [
-        {id: 'c1', brand: 'visa', masked: '**** **** **** 4242', name: 'JOHN DOE', exp: '12/26'},
-        {id: 'c2', brand: 'mastercard', masked: '**** **** **** 1111', name: 'JANE DOE', exp: '09/25'}
+        {id: 'c1', brand: 'visa', masked: '**** **** **** 4242', name: currentUser ? ((currentUser.first_name || '') + ' ' + (currentUser.last_name || '')).trim() || 'JOHN DOE' : 'JOHN DOE', exp: '12/26'},
+        {id: 'c2', brand: 'mastercard', masked: '**** **** **** 1111', name: currentUser ? ((currentUser.first_name || '') + ' ' + (currentUser.last_name || '')).trim() || 'JANE DOE' : 'JANE DOE', exp: '09/25'}
       ];
 
       const acctTypeEl = document.getElementById('abuAccountType');
@@ -191,22 +195,52 @@
       }catch(e){ console.warn('getCurrentUser failed', e); }
 
       const setBank = (type)=>{
-        const data = banks[type] || banks.savings;
-        document.getElementById('abuAcctNumber').textContent = data.acctNumber;
+        if (!currentUser) {
+          // Fallback to sample data if no user is logged in
+          const data = banks[type] || banks.savings;
+          document.getElementById('abuAcctNumber').textContent = data.acctNumber;
+          document.getElementById('abuAcctName').textContent = data.acctName;
+          document.getElementById('abuSwift').textContent = data.swift;
+          document.getElementById('abuIban').textContent = data.iban;
+          document.getElementById('abuPhone').textContent = data.phone;
+          document.getElementById('abuEmail').textContent = data.email;
+          return;
+        }
 
-        // Account name should be the real name used at account creation when available
-        const acctName = currentUser ? ((currentUser.first_name || '') + ' ' + (currentUser.last_name || '')).trim() || data.acctName : data.acctName;
-        document.getElementById('abuAcctName').textContent = acctName;
+        // Generate unique banking details based on user ID
+        const userId = currentUser.id || currentUser.user_id || 'default';
+        const userIdHash = userId.toString().slice(-4).padStart(4, '0');
+        
+        // Generate account number based on user ID and account type
+        const accountTypeCode = type === 'savings' ? '10' : '20';
+        const accountNumber = `${accountTypeCode}${userIdHash}0001`;
+        
+        // Generate SWIFT code: ABUU + US + user-specific code
+        const swiftCode = `ABUUUS${userIdHash.slice(-2)}`;
+        
+        // Generate IBAN: US + check digits + bank code + account number
+        const ibanBase = `US00ABUU${accountNumber}`;
+        const iban = ibanBase + userIdHash.slice(-2); // Simple mock IBAN generation
 
-        document.getElementById('abuSwift').textContent = data.swift;
-        document.getElementById('abuIban').textContent = data.iban;
+        // Set account number
+        document.getElementById('abuAcctNumber').textContent = accountNumber;
 
-        // Phone: leave empty if user has not added a phone number
-        const phoneValue = currentUser ? (currentUser.phone || currentUser.phone_number || '') : data.phone || '';
+        // Account name: Always use real user name
+        const fullName = ((currentUser.first_name || '') + ' ' + (currentUser.last_name || '')).trim();
+        document.getElementById('abuAcctName').textContent = fullName || 'User Account';
+
+        // SWIFT: Auto-generated unique code
+        document.getElementById('abuSwift').textContent = swiftCode;
+
+        // IBAN: Auto-generated unique code
+        document.getElementById('abuIban').textContent = iban;
+
+        // Phone: Use real user phone if available, otherwise leave empty
+        const phoneValue = currentUser.phone || currentUser.phone_number || '';
         document.getElementById('abuPhone').textContent = phoneValue;
 
-        // Email should be the email used at account creation when available
-        const emailValue = currentUser ? (currentUser.email || currentUser.email_address || data.email) : data.email;
+        // Email: Always use real user email
+        const emailValue = currentUser.email || currentUser.email_address || '';
         document.getElementById('abuEmail').textContent = emailValue;
       };
 
