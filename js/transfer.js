@@ -147,11 +147,11 @@ function loadRecentTransfers() {
     const container = document.getElementById('recentTransfers');
     
     transactionsAPI.getAll().then(transactions => {
-        // Filter to recent transfers (last 5)
-        const recentTransfers = transactions.filter(txn => txn.type === 'transfer').slice(0, 5);
-        renderRecentTransactions(recentTransfers, container);
+        // Filter for all transfers, not just recent
+        const allTransfers = transactions.filter(txn => txn.type === 'transfer');
+        renderRecentTransactions(allTransfers, container);
     }).catch(error => {
-        console.error('Error loading recent transfers:', error);
-        container.innerHTML = '<p class="text-center text-slate-500 py-4">Unable to load recent transfers</p>';
+        console.error('Error loading transfers:', error);
+        container.innerHTML = '<p class="text-center text-slate-500 py-4">Unable to load transfers</p>';
     });
 }
