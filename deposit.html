@@ -218,8 +218,8 @@
         const accountTypeCode = type === 'savings' ? '10' : '20';
         const accountNumber = `${accountTypeCode}${userIdHash}0001`;
         
-        // Generate SWIFT code: ABUU + US + user-specific code
-        const swiftCode = `ABUUUS${userIdHash.slice(-2)}`;
+        // Generate SWIFT code: ABUU + US + account type + user-specific code
+        const swiftCode = `ABUUUS${accountTypeCode}${userIdHash.slice(-1)}`;
         
         // Generate IBAN: US + check digits + bank code + account number
         const ibanBase = `US00ABUU${accountNumber}`;
