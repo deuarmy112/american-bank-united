@@ -180,8 +180,8 @@
       };
 
       const cards = [
-        {id: 'c1', brand: 'visa', masked: '**** **** **** 4242', name: currentUser ? ((currentUser.first_name || '') + ' ' + (currentUser.last_name || '')).trim() || 'JOHN DOE' : 'JOHN DOE', exp: '12/26'},
-        {id: 'c2', brand: 'mastercard', masked: '**** **** **** 1111', name: currentUser ? ((currentUser.first_name || '') + ' ' + (currentUser.last_name || '')).trim() || 'JANE DOE' : 'JANE DOE', exp: '09/25'}
+        {id: 'c1', brand: 'visa', masked: '**** **** **** 4242', name: currentUser ? ((currentUser.firstName || currentUser.first_name || '') + ' ' + (currentUser.lastName || currentUser.last_name || '')).trim() || 'JOHN DOE' : 'JOHN DOE', exp: '12/26'},
+        {id: 'c2', brand: 'mastercard', masked: '**** **** **** 1111', name: currentUser ? ((currentUser.firstName || currentUser.first_name || '') + ' ' + (currentUser.lastName || currentUser.last_name || '')).trim() || 'JANE DOE' : 'JANE DOE', exp: '09/25'}
       ];
 
       const acctTypeEl = document.getElementById('abuAccountType');
@@ -192,7 +192,20 @@
         if (typeof getCurrentUser === 'function') {
           currentUser = await getCurrentUser();
         }
-      }catch(e){ console.warn('getCurrentUser failed', e); }
+      }catch(e){ console.warn('getCurrentUser failed, trying localStorage fallback', e); }
+
+      // Fallback to localStorage if API call failed
+      if (!currentUser) {
+        try {
+          const storedEmail = localStorage.getItem('userEmail');
+          if (storedEmail) {
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            currentUser = users.find(u => u.email === storedEmail);
+          }
+        } catch(e) {
+          console.warn('localStorage fallback failed', e);
+        }
+      }
 
       const setBank = (type)=>{
         if (!currentUser) {
@@ -225,8 +238,10 @@
         // Set account number
         document.getElementById('abuAcctNumber').textContent = accountNumber;
 
-        // Account name: Always use real user name
-        const fullName = ((currentUser.first_name || '') + ' ' + (currentUser.last_name || '')).trim();
+        // Account name: Always use real user name (handle both API and localStorage formats)
+        const firstName = currentUser.firstName || currentUser.first_name || '';
+        const lastName = currentUser.lastName || currentUser.last_name || '';
+        const fullName = (firstName + ' ' + lastName).trim();
         document.getElementById('abuAcctName').textContent = fullName || 'User Account';
 
         // SWIFT: Auto-generated unique code
