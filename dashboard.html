@@ -99,6 +99,12 @@
                     document.addEventListener('DOMContentLoaded', render);
                 })();
             </script>
+            <script>
+                // Initialize user name display
+                document.addEventListener('DOMContentLoaded', async function() {
+                    await displayUserName();
+                });
+            </script>
 
             <!-- Recent transactions: 5-item scrollable list + See more button -->
             <div class="mb-4">
