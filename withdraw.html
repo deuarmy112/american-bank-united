@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdraw - American Bank United</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/opay.css">
+    <script>
+        if (!localStorage.getItem('authToken')) {
+            window.location.href = 'index.html';
+        }
+    </script>
+</head>
+<body class="bg-slate-50">
+    <main class="max-w-4xl mx-auto bg-white min-h-screen pb-20 px-4">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-red-600 to-red-800 text-white rounded-lg p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold mb-2">Withdraw Funds</h1>
+                    <p class="text-red-100">Withdraw money from your accounts</p>
+                </div>
+                <div class="hidden md:block">
+                    <i class="fas fa-money-bill-wave text-4xl text-red-200"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Container -->
+        <div id="alert" class="mb-6" style="display: none;"></div>
+
+        <!-- Withdrawal Form -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <form id="withdrawForm" class="space-y-6">
+                <div>
+                    <label for="fromAccount" class="block text-sm font-medium text-slate-700 mb-2">
+                        <i class="fas fa-university mr-1"></i> From Account
+                    </label>
+                    <select id="fromAccount" name="fromAccount" required class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="">Select account</option>
+                    </select>
+                    <div id="accountBalance" class="text-sm text-slate-500 mt-1"></div>
+                </div>
+
+                <div>
+                    <label for="amount" class="block text-sm font-medium text-slate-700 mb-2">
+                        <i class="fas fa-dollar-sign mr-1"></i> Amount
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2 text-slate-500">$</span>
+                        <input type="number" id="amount" name="amount" step="0.01" min="0" required
+                               class="w-full border border-slate-300 rounded-lg pl-8 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                               placeholder="0.00">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="description" class="block text-sm font-medium text-slate-700 mb-2">
+                        <i class="fas fa-comment mr-1"></i> Description (Optional)
+                    </label>
+                    <input type="text" id="description" name="description"
+                           class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                           placeholder="What is this withdrawal for?">
+                </div>
+
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-exclamation-triangle text-red-500 mt-0.5 mr-3"></i>
+                        <div>
+                            <h3 class="text-sm font-medium text-red-800">Withdrawal Notice</h3>
+                            <p class="text-sm text-red-700 mt-1">
+                                Withdrawals may take 1-3 business days to process. A processing fee may apply.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors">
+                    <i class="fas fa-money-bill-wave mr-2"></i> Withdraw Funds
+                </button>
+            </form>
+        </div>
+
+        <!-- Recent Withdrawals -->
+        <div class="bg-white rounded-lg shadow p-6 mt-6">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-history text-slate-600 mr-2"></i>
+                Recent Withdrawals
+            </h2>
+            <div id="recentWithdrawals" class="space-y-4">
+                <!-- Recent withdrawals will be loaded here -->
+            </div>
+        </div>
+    </main>
+
+    <script src="js/api.js?v=20260121.1"></script>
+    <script src="js/utils.js?v=20260121.1"></script>
+    <script src="js/auth.js?v=20260121.1"></script>
+    <script src="js/accounts-api.js?v=20260121.1"></script>
+    <script src="js/bottom-nav.js?v=20260121.1"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!requireAuth()) return;
+
+            loadAccounts();
+            loadRecentWithdrawals();
+
+            const withdrawForm = document.getElementById('withdrawForm');
+            if (withdrawForm) {
+                withdrawForm.addEventListener('submit', handleWithdraw);
+            }
+        });
+
+        async function loadAccounts() {
+            try {
+                const accounts = await accountsAPI.getAll();
+                const select = document.getElementById('fromAccount');
+                const balanceDiv = document.getElementById('accountBalance');
+
+                select.innerHTML = '<option value="">Select account</option>';
+
+                accounts.forEach(account => {
+                    select.innerHTML += `
+                        <option value="${account.id}">
+                            ${capitalize(account.account_type)} •••• ${account.account_number.slice(-4)} - ${formatCurrency(account.balance)}
+                        </option>
+                    `;
+                });
+
+                // Update balance when account changes
+                select.addEventListener('change', function() {
+                    const selectedAccount = accounts.find(acc => acc.id === this.value);
+                    if (selectedAccount) {
+                        balanceDiv.textContent = `Available balance: ${formatCurrency(selectedAccount.balance)}`;
+                    } else {
+                        balanceDiv.textContent = '';
+                    }
+                });
+
+            } catch (error) {
+                console.error('Failed to load accounts:', error);
+                showAlert('Failed to load accounts', 'error');
+            }
+        }
+
+        async function handleWithdraw(e) {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const fromAccount = formData.get('fromAccount');
+            const amount = parseFloat(formData.get('amount'));
+            const description = formData.get('description') || 'Withdrawal';
+
+            if (!fromAccount || !amount || amount <= 0) {
+                showAlert('Please fill in all required fields with valid values', 'error');
+                return;
+            }
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+
+            try {
+                // Create withdrawal transaction
+                const withdrawalData = {
+                    type: 'withdrawal',
+                    amount: amount,
+                    description: description,
+                    fromAccountId: fromAccount,
+                    createdAt: new Date().toISOString()
+                };
+
+                const result = await transactionsAPI.create(withdrawalData);
+
+                showAlert(`Successfully withdrew ${formatCurrency(amount)} from your account!`, 'success');
+                e.target.reset();
+
+                // Reload accounts and recent withdrawals
+                await loadAccounts();
+                await loadRecentWithdrawals();
+
+            } catch (error) {
+                console.error('Withdrawal failed:', error);
+                showAlert(error.message || 'Withdrawal failed. Please try again.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+
+        async function loadRecentWithdrawals() {
+            try {
+                const transactions = await transactionsAPI.getAll();
+                const withdrawals = transactions
+                    .filter(txn => txn.type === 'withdrawal')
+                    .sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at))
+                    .slice(0, 5);
+
+                const container = document.getElementById('recentWithdrawals');
+
+                if (withdrawals.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 text-slate-500">
+                            <i class="fas fa-money-bill-wave text-4xl mb-4 text-slate-300"></i>
+                            <p>No recent withdrawals</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = withdrawals.map(txn => `
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-arrow-up text-red-600"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-slate-900">${txn.description || 'Withdrawal'}</div>
+                                <div class="text-sm text-slate-500">${formatDate(txn.createdAt || txn.created_at)}</div>
+                            </div>
+                        </div>
+                        <div class="text-lg font-semibold text-red-600">-${formatCurrency(txn.amount)}</div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Failed to load recent withdrawals:', error);
+                document.getElementById('recentWithdrawals').innerHTML = `
+                    <div class="text-center py-4 text-slate-500">
+                        <p>Unable to load recent withdrawals</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

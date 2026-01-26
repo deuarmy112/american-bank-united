@@ -32,11 +32,14 @@
                 </div>
 
                 <div class="mt-4 space-y-2">
-                    <button id="manageCardsBtn" class="w-full py-2 rounded border text-sm">Manage Cards</button>
-                    <button id="addFundsBtn" class="w-full py-2 rounded bg-indigo-600 text-white text-sm">Deposit</button>
-                    <button id="addFundsBtn" class="w-full py-2 rounded bg-indigo-600 text-white text-sm">Transfer</button>
-                    <button id="editProfileBtn" class="w-full py-2 rounded bg-slate-800 text-white text-sm">Edit Profile</button>
-                    <button id="logoutBtn" class="w-full py-2 rounded border border-rose-600 text-rose-600 text-sm">Logout</button>
+                    <button id="manageCardsBtn" class="w-full py-2 rounded border text-sm hover:bg-slate-50 transition-colors">Manage Cards</button>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button id="depositBtn" class="py-2 rounded bg-green-600 text-white text-sm hover:bg-green-700 transition-colors">Deposit</button>
+                        <button id="transferBtn" class="py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors">Transfer</button>
+                        <button id="withdrawBtn" class="py-2 rounded bg-red-600 text-white text-sm hover:bg-red-700 transition-colors">Withdraw</button>
+                    </div>
+                    <button id="editProfileBtn" class="w-full py-2 rounded bg-slate-800 text-white text-sm hover:bg-slate-900 transition-colors">Edit Profile</button>
+                    <button id="logoutBtn" class="w-full py-2 rounded border border-rose-600 text-rose-600 text-sm hover:bg-rose-50 transition-colors">Logout</button>
                 </div>
             </aside>
 
@@ -540,7 +543,9 @@
 
             // wire manage/add buttons and copy buttons
             const manageCardsBtn = document.getElementById('manageCardsBtn'); if (manageCardsBtn) manageCardsBtn.addEventListener('click', ()=> location.href='cards.html');
-            const addFundsBtn = document.getElementById('addFundsBtn'); if (addFundsBtn) addFundsBtn.addEventListener('click', ()=> location.href='deposit.html');
+            const depositBtn = document.getElementById('depositBtn'); if (depositBtn) depositBtn.addEventListener('click', ()=> location.href='deposit.html');
+            const transferBtn = document.getElementById('transferBtn'); if (transferBtn) transferBtn.addEventListener('click', ()=> location.href='transfer.html');
+            const withdrawBtn = document.getElementById('withdrawBtn'); if (withdrawBtn) withdrawBtn.addEventListener('click', ()=> location.href='withdraw.html');
 
             document.querySelectorAll('.copy-btn').forEach(btn=>{
                 btn.addEventListener('click', async ()=>{
