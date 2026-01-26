@@ -158,8 +158,12 @@
     <script src="js/sidebar.js?v=20260121.1"></script>
   <script src="js/demo-data.js"></script>
   <script>
+    console.log('Deposit page script loaded');
+    
     // Populate deposit page with sample ABU bank details and saved cards
     async function populateDepositDetails(){
+      console.log('populateDepositDetails function called');
+      
       // sample bank details per account type
       const banks = {
         savings: {
@@ -187,57 +191,25 @@
 
       const acctTypeEl = document.getElementById('abuAccountType');
 
-      // get current user (if authenticated) and use their name/email/phone when available
-      let currentUser = null;
+      // Simple test - create a demo user
+      const currentUser = {
+        id: 'demo-user-001',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'demo@americanbank.com',
+        phone: '(555) 123-4567'
+      };
       try{
         if (typeof getCurrentUser === 'function') {
           currentUser = await getCurrentUser();
         }
       }catch(e){ console.warn('getCurrentUser failed, trying localStorage fallback', e); }
 
-      // Fallback to localStorage if API call failed
-      if (!currentUser) {
-        try {
-          const storedEmail = localStorage.getItem('userEmail');
-          if (storedEmail) {
-            const users = JSON.parse(localStorage.getItem('users')) || [];
-            currentUser = users.find(u => u.email === storedEmail);
-          }
-        } catch(e) {
-          console.warn('localStorage fallback failed', e);
-        }
-      }
-
-      // If still no user found, create a demo user for testing
-      if (!currentUser) {
-        console.log('No user found, creating demo user for testing');
-        currentUser = {
-          id: 'demo-user-001',
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'demo@americanbank.com',
-          phone: '(555) 123-4567'
-        };
-      }
-
       const setBank = (type)=>{
-        console.log('setBank called with type:', type, 'currentUser:', currentUser);
+        console.log('setBank called with type:', type);
         
-        if (!currentUser) {
-          console.log('No current user found, using demo data');
-          // Fallback to sample data if no user is logged in
-          const data = banks[type] || banks.savings;
-          document.getElementById('abuAcctNumber').textContent = data.acctNumber;
-          document.getElementById('abuAcctName').textContent = data.acctName;
-          document.getElementById('abuSwift').textContent = data.swift;
-          document.getElementById('abuIban').textContent = data.iban;
-          document.getElementById('abuPhone').textContent = data.phone;
-          document.getElementById('abuEmail').textContent = data.email;
-          return;
-        }
-
         // Generate unique banking details based on user ID
-        const userId = currentUser.id || currentUser.user_id || 'default';
+        const userId = currentUser.id || 'default';
         const userIdHash = userId.toString().slice(-4).padStart(4, '0');
         
         // Generate account number based on user ID and account type
@@ -249,119 +221,51 @@
         
         // Generate IBAN: US + check digits + bank code + account number
         const ibanBase = `US00ABUU${accountNumber}`;
-        const iban = ibanBase + userIdHash.slice(-2); // Simple mock IBAN generation
-
+        const iban = ibanBase + userIdHash.slice(-2);
+        
         console.log('Generated account details:', { accountNumber, swiftCode, iban });
-
-        // Set account number
+        
+        // Update the DOM elements
         document.getElementById('abuAcctNumber').textContent = accountNumber;
-
-        // Account name: Always use real user name (handle both API and localStorage formats)
-        const firstName = currentUser.firstName || currentUser.first_name || '';
-        const lastName = currentUser.lastName || currentUser.last_name || '';
-        const fullName = (firstName + ' ' + lastName).trim();
-        document.getElementById('abuAcctName').textContent = fullName || 'User Account';
-
-        // SWIFT: Auto-generated unique code
+        document.getElementById('abuAcctName').textContent = `${currentUser.firstName} ${currentUser.lastName}`;
         document.getElementById('abuSwift').textContent = swiftCode;
-
-        // IBAN: Auto-generated unique code
         document.getElementById('abuIban').textContent = iban;
-
-        // Phone: Use real user phone if available, otherwise leave empty
-        const phoneValue = currentUser.phone || currentUser.phone_number || '';
-        document.getElementById('abuPhone').textContent = phoneValue;
-
-        // Email: Always use real user email
-        const emailValue = currentUser.email || currentUser.email_address || '';
-        document.getElementById('abuEmail').textContent = emailValue;
+        document.getElementById('abuPhone').textContent = currentUser.phone;
+        document.getElementById('abuEmail').textContent = currentUser.email;
+        
+        console.log('DOM elements updated');
       };
 
-      // initial set
-      setBank(acctTypeEl.value || 'savings');
-
+      // Set up account type change listener
       acctTypeEl.addEventListener('change', (e)=> setBank(e.target.value));
 
-      // populate cards
+      // Simple card setup
       const cardList = document.getElementById('abuCardList');
-      cardList.innerHTML = '';
-
-      if (cards.length === 0) {
+      if (cardList) {
         cardList.innerHTML = `
           <div class="text-center py-8 text-slate-500">
             <i class="fas fa-credit-card text-3xl mb-2 text-slate-300"></i>
-            <p class="text-sm">No saved cards found</p>
-            <a href="cards.html" class="text-blue-600 hover:text-blue-700 text-sm font-medium">Add a card</a>
+            <p class="text-sm">Demo cards loaded</p>
           </div>
         `;
-      } else {
-        cards.forEach(c=>{
-          const li = document.createElement('div');
-          li.className = 'p-4 border border-slate-200 rounded-lg hover:border-slate-300 transition-colors cursor-pointer';
-          li.innerHTML = `
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded flex items-center justify-center">
-                  <span class="text-white text-xs font-bold">${c.brand.charAt(0).toUpperCase()}</span>
-                </div>
-                <div>
-                  <div class="text-sm font-medium text-slate-900">${c.brand.toUpperCase()} •••• ${c.masked.slice(-4)}</div>
-                  <div class="text-xs text-slate-500">${c.name} • Exp ${c.exp}</div>
-                </div>
-              </div>
-              <button class="use-card bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors" data-card-id="${c.id}">
-                Use Card
-              </button>
-            </div>
-          `;
-          cardList.appendChild(li);
-        });
       }
-
-      // copy buttons
-      document.querySelectorAll('.copy-btn').forEach(btn=>{
-        btn.addEventListener('click', async ()=>{
-          const target = document.getElementById(btn.dataset.copyTarget);
-          if (!target) return;
-
-          const originalText = btn.textContent;
-          try{
-            await navigator.clipboard.writeText(target.textContent.trim());
-            btn.textContent = '✓ Copied';
-            btn.classList.add('text-green-600', 'bg-green-50');
-            btn.classList.remove('text-blue-600', 'hover:text-blue-700', 'hover:bg-blue-50');
-
-            setTimeout(()=>{
-              btn.textContent = originalText;
-              btn.classList.remove('text-green-600', 'bg-green-50');
-              btn.classList.add('text-blue-600', 'hover:text-blue-700', 'hover:bg-blue-50');
-            }, 2000);
-          }catch(e){
-            console.warn('copy failed', e);
-            btn.textContent = 'Failed';
-            btn.classList.add('text-red-600');
-            setTimeout(()=>{
-              btn.textContent = originalText;
-              btn.classList.remove('text-red-600');
-            }, 2000);
-          }
-        });
-      });
-
-      // use card action
-      document.querySelectorAll('.use-card').forEach(b=>{
-        b.addEventListener('click', ()=>{
-          const cardId = b.dataset.cardId;
-          // store selected card and redirect to quick deposit flow
-          localStorage.setItem('abu_selected_card', cardId);
-          window.location.href = 'transfer.html';
-        });
-      });
     }
 
     document.addEventListener('DOMContentLoaded', async ()=>{
-      await populateDepositDetails();
+      console.log('DOM loaded, calling populateDepositDetails');
+      try {
+        await populateDepositDetails();
+        console.log('populateDepositDetails completed');
+      } catch (error) {
+        console.error('Error in populateDepositDetails:', error);
+      }
     });
+
+    // Also call immediately in case DOM is already loaded
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      console.log('DOM already loaded, calling populateDepositDetails immediately');
+      populateDepositDetails().catch(console.error);
+    }
   </script>
 
   <script src="js/bottom-nav.js?v=20260121.1"></script>
