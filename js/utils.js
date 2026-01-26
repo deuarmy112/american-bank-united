@@ -94,3 +94,47 @@ function showToast(message, timeout = 3500) {
     toast.style.opacity = '1';
     setTimeout(() => { toast.style.opacity = '0'; }, timeout);
 }
+
+// Render recent transactions in a container
+function renderRecentTransactions(transactions, containerEl) {
+    if (!containerEl) return;
+
+    if (!transactions || transactions.length === 0) {
+        containerEl.innerHTML = '<p class="text-center text-slate-500 py-4">No transactions yet</p>';
+        return;
+    }
+
+    containerEl.innerHTML = transactions.slice(0, 5).map(txn => {
+        const isCredit = txn.type === 'deposit' || txn.type === 'credit';
+        const amountClass = isCredit ? 'text-green-600' : 'text-red-600';
+        const amountPrefix = isCredit ? '+' : '-';
+
+        return `
+            <div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-b-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                        <i class="fas ${getTransactionIcon(txn.type)} text-slate-600"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium">${txn.description || capitalize(txn.type)}</div>
+                        <div class="text-xs text-slate-500">${formatDate(txn.createdAt)}</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm font-medium ${amountClass}">${amountPrefix}${formatCurrency(txn.amount)}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Helper function for transaction icons
+function getTransactionIcon(type) {
+    switch (type) {
+        case 'transfer': return 'fa-exchange-alt';
+        case 'deposit': return 'fa-arrow-down';
+        case 'withdrawal': return 'fa-arrow-up';
+        case 'payment': return 'fa-credit-card';
+        default: return 'fa-circle';
+    }
+}

@@ -17,23 +17,32 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function loadTransactionsPage() {
-    const user = getCurrentUser();
-    allTransactions = getUserTransactions(user.id);
-    filteredTransactions = [...allTransactions];
-    
-    // Load accounts in filter dropdown
-    loadAccountsFilter();
-    
-    // Display transactions
-    displayTransactions();
-    
-    // Calculate summary
-    calculateSummary();
+    Promise.all([
+        transactionsAPI.getAll(),
+        accountsAPI.getAll()
+    ]).then(([transactions, accounts]) => {
+        allTransactions = transactions;
+        filteredTransactions = [...allTransactions];
+        
+        // Store accounts for later use
+        window.userAccounts = accounts;
+        
+        // Load accounts in filter dropdown
+        loadAccountsFilter();
+        
+        // Display transactions
+        displayTransactions();
+        
+        // Calculate summary
+        calculateSummary();
+    }).catch(error => {
+        console.error('Error loading data:', error);
+        document.getElementById('transactionsList').innerHTML = '<p class="text-center text-slate-500 py-4">Unable to load transactions</p>';
+    });
 }
 
 function loadAccountsFilter() {
-    const user = getCurrentUser();
-    const accounts = getUserAccounts(user.id);
+    const accounts = window.userAccounts || [];
     const filterSelect = document.getElementById('filterAccount');
     
     filterSelect.innerHTML = '<option value="">All Accounts</option>';
@@ -94,9 +103,8 @@ function displayTransactions() {
         return;
     }
     
-    const user = getCurrentUser();
-    const userAccounts = getUserAccounts(user.id);
-    const accountIds = userAccounts.map(acc => acc.id);
+    const accounts = window.userAccounts || [];
+    const accountIds = accounts.map(acc => acc.id);
     
     container.innerHTML = filteredTransactions.map(txn => {
         // Determine if this is a credit or debit
@@ -106,8 +114,8 @@ function displayTransactions() {
         // Get account info
         let accountInfo = '';
         if (txn.type === 'transfer') {
-            const fromAcc = getAccountById(txn.fromAccountId);
-            const toAcc = getAccountById(txn.toAccountId);
+            const fromAcc = accounts.find(acc => acc.id === txn.fromAccountId);
+            const toAcc = accounts.find(acc => acc.id === txn.toAccountId);
             if (isCredit) {
                 accountInfo = `From: ${fromAcc ? capitalize(fromAcc.accountType) + ' (' + fromAcc.accountNumber + ')' : 'External'}`;
             } else {
@@ -115,7 +123,7 @@ function displayTransactions() {
             }
         } else {
             const accId = txn.fromAccountId || txn.toAccountId;
-            const acc = getAccountById(accId);
+            const acc = accounts.find(acc => acc.id === accId);
             accountInfo = acc ? `${capitalize(acc.accountType)} (${acc.accountNumber})` : '';
         }
         
@@ -137,9 +145,8 @@ function displayTransactions() {
 }
 
 function calculateSummary() {
-    const user = getCurrentUser();
-    const userAccounts = getUserAccounts(user.id);
-    const accountIds = userAccounts.map(acc => acc.id);
+    const accounts = window.userAccounts || [];
+    const accountIds = accounts.map(acc => acc.id);
     
     let totalIncome = 0;
     let totalExpenses = 0;
@@ -158,7 +165,6 @@ function calculateSummary() {
     const netChange = totalIncome - totalExpenses;
     
     document.getElementById('totalIncome').textContent = formatCurrency(totalIncome);
-    document.getElementById('totalExpenses').textContent = formatCurrency(totalExpenses);
     
     const netChangeElement = document.getElementById('netChange');
     netChangeElement.textContent = formatCurrency(Math.abs(netChange));

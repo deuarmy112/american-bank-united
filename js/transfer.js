@@ -144,33 +144,14 @@ function handleTransfer(e) {
 }
 
 function loadRecentTransfers() {
-    const user = getCurrentUser();
-    const transactions = getUserTransactions(user.id);
-    const transfers = transactions.filter(txn => txn.type === 'transfer').slice(0, 5);
-    
     const container = document.getElementById('recentTransfers');
     
-    if (transfers.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: #666;">No transfers yet</p>';
-        return;
-    }
-    
-    const userAccounts = getUserAccounts(user.id);
-    const accountIds = userAccounts.map(acc => acc.id);
-    
-    container.innerHTML = transfers.map(txn => {
-        const isCredit = accountIds.includes(txn.toAccountId);
-        const fromAcc = getAccountById(txn.fromAccountId);
-        const toAcc = getAccountById(txn.toAccountId);
-        
-        return `
-            <div class="transaction-item ${isCredit ? 'credit' : 'debit'}" style="padding: 15px; margin-bottom: 10px;">
-                <div class="transaction-details">
-                    <div class="transaction-type">${formatCurrency(txn.amount)}</div>
-                    <div class="transaction-description">${txn.description}</div>
-                    <div class="transaction-date">${formatDate(txn.createdAt)}</div>
-                </div>
-            </div>
-        `;
-    }).join('');
+    transactionsAPI.getAll().then(transactions => {
+        // Filter to recent transfers (last 5)
+        const recentTransfers = transactions.filter(txn => txn.type === 'transfer').slice(0, 5);
+        renderRecentTransactions(recentTransfers, container);
+    }).catch(error => {
+        console.error('Error loading recent transfers:', error);
+        container.innerHTML = '<p class="text-center text-slate-500 py-4">Unable to load recent transfers</p>';
+    });
 }

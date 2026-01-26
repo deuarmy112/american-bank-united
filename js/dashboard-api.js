@@ -132,16 +132,22 @@ function startAccountsCarousel() {
 }
 
 function loadRecentTransactions(transactions) {
-    const transactionsList = document.getElementById('recentTransactions');
-    if (!transactionsList) return;
-    
+    // Use the shared renderer to put transactions into the '#recentTransactions' element
+    const el = document.getElementById('recentTransactions');
+    if (!el) return;
+    renderRecentTransactions(transactions, el);
+}
+
+// Reusable renderer for recent transactions into any container element.
+function renderRecentTransactions(transactions, containerEl) {
+    if (!containerEl) return;
+    // If no transactions, leave the container empty (per requirement)
     if (!transactions || transactions.length === 0) {
-        transactionsList.innerHTML = '<p class="no-data">No recent transactions</p>';
+        containerEl.innerHTML = '';
         return;
     }
-    
-    transactionsList.innerHTML = '';
-    
+
+    containerEl.innerHTML = '';
     transactions.forEach(txn => {
         const item = document.createElement('div');
         item.className = 'bg-white rounded-lg p-3 shadow flex items-center justify-between';
@@ -167,6 +173,6 @@ function loadRecentTransactions(transactions) {
             <div class="text-sm font-semibold ${amountColor}">${amountSign}${formatCurrency(txn.amount)}</div>
         `;
 
-        transactionsList.appendChild(item);
+        containerEl.appendChild(item);
     });
 }

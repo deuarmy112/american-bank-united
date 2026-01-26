@@ -350,7 +350,7 @@
         }
 
         // enhance profile rendering for redesigned layout
-        const enhanceProfile = (user)=>{
+        const enhanceProfile = async (user)=>{
             const acctNameEl = document.getElementById('accountName');
             if (acctNameEl) acctNameEl.textContent = ((user.first_name||'') + ' ' + (user.last_name||'')).trim() || '—';
             const contactEmail = document.getElementById('contactEmail'); if (contactEmail) contactEmail.textContent = user.email || '—';
@@ -374,22 +374,25 @@
                 }
             }
 
-            // recent transactions placeholder (if none)
-            const tx = document.getElementById('recentTxList');
-            if (tx) {
-                tx.innerHTML = '';
-                const items = (user.recent && user.recent.length) ? user.recent.slice(0,5) : [];
-                if (items.length === 0) {
-                    tx.innerHTML = '<li class="p-3 border rounded flex items-center justify-between"><div><div class="font-medium">No recent transactions</div><div class="text-xs text-slate-500">Your recent activity will appear here</div></div></li>';
-                } else {
-                    items.forEach(i=>{
-                        const li = document.createElement('li');
-                        li.className = 'p-3 border rounded flex items-center justify-between';
-                        li.innerHTML = `<div><div class="font-medium">${i.title || i.desc || 'Transaction'}</div><div class="text-xs text-slate-500">${formatDate(i.date||i.created_at||'')}</div></div><div class="text-sm font-medium">${formatCurrency(i.amount||0)}</div>`;
-                        tx.appendChild(li);
-                    });
+            // fetch real transactions and render into the profile recent list
+            try{
+                const transactions = await transactionsAPI.getAll();
+                const recent = (transactions && transactions.length) ? transactions.slice(0,5) : [];
+                const txEl = document.getElementById('recentTxList');
+                if (txEl) {
+                    // use shared renderer from dashboard-api.js if available
+                    if (typeof renderRecentTransactions === 'function') renderRecentTransactions(recent, txEl);
+                    else {
+                        txEl.innerHTML = '';
+                        recent.forEach(i=>{
+                            const li = document.createElement('li');
+                            li.className = 'p-3 border rounded flex items-center justify-between';
+                            li.innerHTML = `<div><div class="font-medium">${i.title || i.description || 'Transaction'}</div><div class="text-xs text-slate-500">${formatDate(i.date||i.created_at||'')}</div></div><div class="text-sm font-medium">${formatCurrency(i.amount||0)}</div>`;
+                            txEl.appendChild(li);
+                        });
+                    }
                 }
-            }
+            }catch(e){ console.warn('failed to load recent transactions', e); }
         };
 
         function openEditModal() {
