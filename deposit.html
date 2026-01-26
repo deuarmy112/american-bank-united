@@ -17,7 +17,8 @@
   <header class="opay-header">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center gap-3">
-        <h1 class="text-lg font-semibold">Funds depositing details</h1>
+        <h1 class="text-lg font-semibold">User account details</h1>
+      </div>
     </div>
   </header>
 
@@ -146,14 +147,33 @@
       ];
 
       const acctTypeEl = document.getElementById('abuAccountType');
+
+      // get current user (if authenticated) and use their name/email/phone when available
+      let currentUser = null;
+      try{
+        if (typeof getCurrentUser === 'function') {
+          currentUser = await getCurrentUser();
+        }
+      }catch(e){ console.warn('getCurrentUser failed', e); }
+
       const setBank = (type)=>{
         const data = banks[type] || banks.savings;
         document.getElementById('abuAcctNumber').textContent = data.acctNumber;
-        document.getElementById('abuAcctName').textContent = data.acctName;
+
+        // Account name should be the real name used at account creation when available
+        const acctName = currentUser ? ((currentUser.first_name || '') + ' ' + (currentUser.last_name || '')).trim() || data.acctName : data.acctName;
+        document.getElementById('abuAcctName').textContent = acctName;
+
         document.getElementById('abuSwift').textContent = data.swift;
         document.getElementById('abuIban').textContent = data.iban;
-        document.getElementById('abuPhone').textContent = data.phone;
-        document.getElementById('abuEmail').textContent = data.email;
+
+        // Phone: leave empty if user has not added a phone number
+        const phoneValue = currentUser ? (currentUser.phone || currentUser.phone_number || '') : data.phone || '';
+        document.getElementById('abuPhone').textContent = phoneValue;
+
+        // Email should be the email used at account creation when available
+        const emailValue = currentUser ? (currentUser.email || currentUser.email_address || data.email) : data.email;
+        document.getElementById('abuEmail').textContent = emailValue;
       };
 
       // initial set
