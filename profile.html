@@ -120,8 +120,14 @@
                     <input id="editPhone" class="w-full border rounded px-3 py-2" />
                 </div>
                 <div>
-                    <label class="text-xs text-slate-600">Avatar URL</label>
-                    <input id="editAvatar" class="w-full border rounded px-3 py-2" placeholder="https://..." />
+                    <label class="text-xs text-slate-600">Avatar</label>
+                    <div class="flex items-center gap-3">
+                        <input id="editAvatarFile" type="file" accept="image/*" class="text-sm" />
+                        <input id="editAvatar" class="w-full border rounded px-3 py-2" placeholder="or paste image URL" />
+                    </div>
+                    <div id="editAvatarPreview" class="mt-2">
+                        <img id="editAvatarImg" src="" alt="preview" class="w-20 h-20 rounded-full object-cover hidden" />
+                    </div>
                 </div>
                 <div class="flex justify-end gap-2">
                     <button type="button" class="border px-3 py-2 rounded" onclick="closeEditModal()">Cancel</button>
@@ -397,6 +403,13 @@
             if (ph) ph.value = u.phone || '';
             const av = document.getElementById('editAvatar');
             if (av) av.value = u.avatar || '';
+            const avFile = document.getElementById('editAvatarFile');
+            if (avFile) avFile.value = '';
+            const avImg = document.getElementById('editAvatarImg');
+            if (avImg) {
+                if (u.avatar) { avImg.src = u.avatar; avImg.classList.remove('hidden'); }
+                else { avImg.src = ''; avImg.classList.add('hidden'); }
+            }
             const m = document.getElementById('editProfileModal');
             if (!m) return;
             m.classList.remove('hidden');
@@ -434,6 +447,20 @@
                     phone: (document.getElementById('editPhone')?.value || '').trim(),
                     avatar: (document.getElementById('editAvatar')?.value || '').trim(),
                 };
+                // If a file was selected, prefer that image (as data URL)
+                try{
+                    const fileInput = document.getElementById('editAvatarFile');
+                    if (fileInput && fileInput.files && fileInput.files[0]){
+                        const f = fileInput.files[0];
+                        const reader = await new Promise((res, rej)=>{
+                            const r = new FileReader();
+                            r.onload = ()=> res(r.result);
+                            r.onerror = rej;
+                            r.readAsDataURL(f);
+                        });
+                        payload.avatar = reader;
+                    }
+                }catch(err){ console.warn('avatar file read failed', err); }
                 const btn = e.target.querySelector('button[type=submit]');
                 if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
                 try {
@@ -451,6 +478,24 @@
                     if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
                 }
             });
+
+            // handle avatar file selection to preview and set value
+            const avatarFileInput = document.getElementById('editAvatarFile');
+            if (avatarFileInput) {
+                avatarFileInput.addEventListener('change', async (e)=>{
+                    const f = e.target.files && e.target.files[0];
+                    const preview = document.getElementById('editAvatarImg');
+                    const urlInput = document.getElementById('editAvatar');
+                    if (!f) { if (preview) { preview.src=''; preview.classList.add('hidden'); } return; }
+                    try{
+                        const data = await new Promise((res, rej)=>{
+                            const r = new FileReader(); r.onload = ()=> res(r.result); r.onerror = rej; r.readAsDataURL(f);
+                        });
+                        if (preview) { preview.src = data; preview.classList.remove('hidden'); }
+                        if (urlInput) urlInput.value = data;
+                    }catch(err){ console.warn('preview failed', err); }
+                });
+            }
 
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn) logoutBtn.addEventListener('click', () => { if (confirm('Logout?')) authAPI.logout(); });
