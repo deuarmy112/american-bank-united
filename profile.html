@@ -177,6 +177,7 @@
             { id: 'intl', label: 'Intl Transfer', icon: 'fas fa-globe', color: 'text-sky-500', href: 'transfer.html?type=international' },
             { id: 'history', label: 'History', icon: 'fas fa-history', color: 'text-slate-700', href: 'transactions.html' },
             { id: 'deposit', label: 'Deposit', icon: 'fas fa-money-bill-wave', color: 'text-green-600', href: 'deposit.html' },
+            { id: 'withdraw', label: 'Withdraw', icon: 'fas fa-money-bill-wave', color: 'text-red-600', href: 'withdraw.html' },
             { id: 'billpay', label: 'Bill Pay', icon: 'fas fa-file-invoice-dollar', color: 'text-yellow-600', href: 'bills.html' },
             { id: 'cards', label: 'Cards', icon: 'fas fa-credit-card', color: 'text-indigo-500', href: 'cards.html' },
             { id: 'qr', label: 'QR Pay', icon: 'fas fa-qrcode', color: 'text-slate-700', href: 'qr.html' },
@@ -185,7 +186,7 @@
 
         const QUICK_CONFIG_KEY = 'abu_quick_actions';
 
-        function defaultQuickConfig() { return ['billpay', 'cards', 'qr', 'edit']; }
+        function defaultQuickConfig() { return ['deposit', 'withdraw', 'send', 'edit']; }
         function loadQuickConfig() {
             try {
                 const raw = localStorage.getItem(QUICK_CONFIG_KEY);
