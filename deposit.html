@@ -49,7 +49,7 @@
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-slate-700 mb-2">Account Type</label>
                     <select id="abuAccountType" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                        <option value="savings">Savings Account</option>
+                        <option value="savings" selected>Savings Account</option>
                         <option value="current">Current Account</option>
                     </select>
                 </div>
@@ -241,8 +241,8 @@
       // Set up account type change listener
       acctTypeEl.addEventListener('change', (e)=> setBank(e.target.value));
 
-      // Initialize with default account type (savings)
-      setBank('savings');
+      // Initialize with current account type selection
+      setBank(acctTypeEl.value);
 
       // Simple card setup
       const cardList = document.getElementById('abuCardList');
