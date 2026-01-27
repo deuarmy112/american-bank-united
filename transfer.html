@@ -3,123 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transfer - American Bank United</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/opay.css">
     <script>
         if (!localStorage.getItem('authToken')) {
             window.location.href = 'index.html';
         }
     </script>
-    <title>Transfer - Opay</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/opay.css">
-    <style>body{background:#f8fafc}</style>
-    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <style>
+        body { background: #f8fafc; font-family: Inter, system-ui, -apple-system, sans-serif; }
+    </style>
 </head>
-<body>
-        <header class="opay-header fixed top-0 left-0 right-0 z-20">
-            <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <a href="dashboard.html" class="opay-brand"><div style="margin-left:.5rem"><div class="opay-name">Transfer</div><div class="opay-sub">Send money fast</div></div></a>
+<body class="bg-slate-50">
+    <main class="max-w-4xl mx-auto bg-white min-h-screen pb-20 px-4">
+        <div class="pt-6">
+            <!-- Page Header -->
+            <div class="mb-6">
+                <div class="flex items-center gap-3 mb-2">
+                    <button onclick="history.back()" class="p-2 rounded-full hover:bg-slate-100 transition-colors">
+                        <i class="fas fa-arrow-left text-slate-600"></i>
+                    </button>
+                    <h1 class="text-2xl font-bold text-slate-900">Send Money</h1>
                 </div>
+                <p class="text-slate-600 ml-11">Transfer funds between accounts or to other banks</p>
             </div>
-        </header>
 
-        <main class="pt-20 pb-24 max-w-2xl mx-auto px-4">
-                        <div class="transfer-layout">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Transfer Form -->
+                <section class="lg:col-span-2 bg-white rounded-lg shadow-lg p-6 border border-slate-200">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-exchange-alt text-purple-600"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-slate-900">Transfer Details</h2>
+                            <p class="text-xs text-slate-500">Send money securely</p>
+                        </div>
+                    </div>
+
+                    <div id="alert" class="mb-4"></div>
+
+                    <form id="transferForm" class="space-y-4">
+                        <!-- Transfer Type -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-3">Transfer Type</label>
+                            <div class="flex gap-3 flex-wrap">
+                                <label class="flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                                    <input type="radio" name="transferType" value="internal" checked class="w-4 h-4">
+                                    <span class="text-sm font-medium text-slate-700">Between My Accounts</span>
+                                </label>
+                                <label class="flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                                    <input type="radio" name="transferType" value="external" class="w-4 h-4">
+                                    <span class="text-sm font-medium text-slate-700">Other Bank</span>
+                                </label>
+                                <label class="flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                                    <input type="radio" name="transferType" value="international" class="w-4 h-4">
+                                    <span class="text-sm font-medium text-slate-700">International</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- From Account -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">From Account</label>
+                            <select id="fromAccount" name="fromAccount" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors">
+                                <option value="">Select source account</option>
+                            </select>
+                            <div id="fromAccountBalance" class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Available balance: <strong>$0.00</strong></span>
+                            </div>
+                        </div>
+                        <!-- External Transfer Fields -->
+                        <div id="externalFields" class="hidden space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <h3 class="text-sm font-medium text-blue-900">Recipient Details</h3>
+                            <input id="extRecipientName" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="Recipient name" />
+                            <input id="extAccountNumber" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="Account number, Swift or IBAN" />
+                            <input id="extBankName" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="Bank name" />
+                            <input id="extEmail" type="email" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="Recipient email" />
+                            <input id="extContact" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="Phone (optional)" />
+                        </div>
+
+                        <!-- Amount -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Amount</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2.5 text-slate-500 font-medium">$</span>
+                                <input id="amount" name="amount" type="number" min="0.01" step="0.01" required class="w-full pl-7 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="0.00" />
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Description (Optional)</label>
+                            <input id="description" name="description" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="E.g., Payment for services" />
+                        </div>
+
+                        <!-- Save as Beneficiary -->
+                        <label class="flex items-center gap-2 text-sm text-slate-700">
+                            <input id="saveAsBeneficiary" type="checkbox" class="w-4 h-4 rounded border-slate-300">
+                            <span>Save recipient as beneficiary for future transfers</span>
+                        </label>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                            <i class="fas fa-paper-plane"></i>
+                            Continue Transfer
+                        </button>
+                    </form>
+
+                    <!-- Info Box -->
+                    <div class="mt-6 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-lightbulb text-slate-600 mt-0.5"></i>
                             <div>
-                                <p class="text-sm text-slate-600 mb-4">Move money between your accounts instantly</p>
-                                <p id="transferHint" class="text-sm text-slate-500 mb-4 hidden"></p>
-
-                                <div id="alert" class="hidden"></div>
-
-                                <form id="transferForm" class="space-y-3 opay-card p-4">
-                <div class="flex gap-2 items-center">
-                    <label class="inline-flex items-center"><input type="radio" name="transferType" value="internal" checked class="mr-2"> Internal</label>
-                    <label class="inline-flex items-center"><input type="radio" name="transferType" value="external" class="mr-2"> Other Bank</label>
-                    <label class="inline-flex items-center"><input type="radio" name="transferType" value="international" class="mr-2"> International</label>
-                </div>
-                <div>
-                    <label class="text-sm text-slate-600">From</label>
-                    <select id="fromAccount" name="fromAccount" required class="w-full rounded-md border px-3 py-2 text-sm">
-                        <option value="">Select source account</option>
-                    </select>
-                    <div id="fromAccountBalance" class="text-xs text-slate-500 mt-1"></div>
-                </div>
-
-                <div>
-                    <label class="text-sm text-slate-600">To</label>
-                    <select id="toAccount" name="toAccount" required class="w-full rounded-md border px-3 py-2 text-sm">
-                        <option value="">Select destination account</option>
-                    </select>
-                    <div id="externalFields" class="mt-2 hidden">
-                        <input id="extRecipientName" type="text" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Recipient name">
-                        <input id="extAccountNumber" type="text" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Account number or IBAN">
-                        <input id="extBankName" type="text" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Bank name">
-                        <input id="extEmail" type="email" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Recipient email" />
-                        <input id="extContact" type="text" class="w-full rounded-md border px-3 py-2 text-sm mb-2" placeholder="Phone (optional)">
-                    </div>
-                    <div id="toBalance" class="text-xs text-slate-500 mt-1"></div>
-                </div>
-
-                <div>
-                    <label class="text-sm text-slate-600">Amount</label>
-                    <input id="amount" name="amount" type="number" min="0.01" step="0.01" required class="w-full rounded-md border px-3 py-2 text-sm" placeholder="0.00">
-                </div>
-
-                <div>
-                    <label class="text-sm text-slate-600">Description</label>
-                    <input id="description" name="description" type="text" class="w-full rounded-md border px-3 py-2 text-sm" placeholder="Optional">
-                </div>
-
-                <div class="mt-2">
-                    <label class="inline-flex items-center"><input id="saveAsBeneficiary" type="checkbox" class="mr-2"> Save as beneficiary</label>
-                </div>
-
-                <div>
-                    <button type="submit" class="w-full opay-btn">Transfer</button>
-                </div>
-            </form>
-              </div>
-              <aside class="mt-4">
-                <div class="opay-card p-4">
-                    <h3 class="text-sm font-medium">Recent Transfers</h3>
-                    <div id="recentTransfers" class="mt-2 space-y-2">
-                        <!-- recent items -->
-                    </div>
-                </div>
-              </aside>
-            </div>
-
-            <!-- Transfer confirmation modal -->
-            <div id="transferConfirmBackdrop" class="transfer-confirm-backdrop" aria-hidden="true">
-                <div class="transfer-confirm">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="muted">Confirm Transfer</div>
-                            <div id="confirmAmount" class="confirm-amount">$0.00</div>
-                            <div id="confirmRecipient" class="confirm-meta muted">To: —</div>
-                        </div>
-                        <div>
-                            <button id="cancelConfirmBtn" class="border px-3 py-2 rounded-md">Cancel</button>
+                                <h4 class="text-sm font-medium text-slate-900">Transfer Tips</h4>
+                                <ul class="text-xs text-slate-600 mt-2 space-y-1 list-disc list-inside">
+                                    <li>Transfers between your accounts are instant</li>
+                                    <li>Other bank transfers may take 1-2 business days</li>
+                                    <li>International transfers may take 3-5 business days</li>
+                                    <li>Save beneficiaries to make future transfers easier</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
-                    <div class="confirm-note text-sm text-slate-600 mt-3">This action may be irreversible. Please confirm you want to proceed.</div>
-                    <div class="btns">
-                        <button id="confirmTransferBtn" class="opay-btn">Confirm Transfer</button>
-                        <button id="editTransferBtn" class="border px-3 py-2 rounded-md">Edit</button>
+                </section>
+
+                <!-- Sidebar: Recent Transfers -->
+                <aside class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow-lg p-6 border border-slate-200">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-history text-indigo-600"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-slate-900">Recent Transfers</h3>
+                        </div>
+                        <div id="recentTransfers" class="space-y-2 max-h-96 overflow-y-auto">
+                            <div class="text-center py-8 text-slate-500">
+                                <i class="fas fa-inbox text-3xl text-slate-300 mb-2"></i>
+                                <p class="text-sm">No transfers yet</p>
+                            </div>
+                        </div>
                     </div>
+                </aside>
+            </div>
+        </div>
+    </main>
+
+    <!-- Transfer Confirmation Modal -->
+    <div id="transferConfirmBackdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-2xl p-6 max-w-md w-full mx-4">
+            <div class="flex items-start justify-between mb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Confirm Transfer</h2>
+                    <p class="text-xs text-slate-500 mt-1">Review details before confirming</p>
+                </div>
+                <button onclick="document.getElementById('transferConfirmBackdrop').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-slate-600">Amount</span>
+                    <span id="confirmAmount" class="text-xl font-bold text-slate-900">$0.00</span>
+                </div>
+                <div class="border-t border-slate-200"></div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-slate-600">From</span>
+                    <span id="confirmFrom" class="text-sm font-medium text-slate-900">—</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-slate-600">To</span>
+                    <span id="confirmRecipient" class="text-sm font-medium text-slate-900">—</span>
                 </div>
             </div>
-        </main>
 
-        <!-- bottom nav removed to consolidate profile's bottom nav as app-wide control -->
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-6">
+                <p class="text-xs text-amber-800">
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    This action may be irreversible. Please confirm you want to proceed.
+                </p>
+            </div>
 
+            <div class="flex gap-3">
+                <button id="editTransferBtn" class="flex-1 border border-slate-300 text-slate-700 font-medium py-2 px-4 rounded-lg hover:bg-slate-50 transition-colors">
+                    Edit
+                </button>
+                <button id="confirmTransferBtn" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                    <i class="fas fa-check"></i>
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/bottom-nav.js?v=20260121.1"></script>
+    <script src="js/sidebar.js?v=20260121.1"></script>
+    <script src="js/demo-data.js"></script>
+    <script src="js/api.js?v=20260121.2"></script>
+    <script src="js/auth.js?v=20260121.2"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/accounts.js?v=20260121.2"></script>
     <script src="js/utils.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/auth.js"></script>
     <script src="js/transactions-api.js"></script>
     <script src="js/transfer-api.js"></script>
     <script src="js/transfer.js"></script>
-    <script src="js/bottom-nav.js"></script>
 </body>
 </html>
