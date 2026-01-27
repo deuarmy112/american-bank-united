@@ -159,6 +159,7 @@
   <script src="js/demo-data.js"></script>
   <script src="js/api.js?v=20260121.2"></script>
   <script src="js/auth.js?v=20260121.2"></script>
+  <script src="js/accounts.js?v=20260121.2"></script>
   <script>
     console.log('Deposit page script loaded');
     
@@ -166,8 +167,9 @@
     async function populateDepositDetails(){
       console.log('populateDepositDetails function called');
       
-      // Fetch real user data
+      // Fetch real user data and accounts
       let currentUser = null;
+      let userAccounts = [];
       try{
         if (typeof getCurrentUser === 'function') {
           currentUser = await getCurrentUser();
@@ -186,8 +188,13 @@
             };
           }
         }
+        
+        // Fetch user accounts
+        if (typeof accountsAPI !== 'undefined' && accountsAPI.getAll) {
+          userAccounts = await accountsAPI.getAll() || [];
+        }
       }catch(e){ 
-        console.warn('Failed to get user data:', e);
+        console.warn('Failed to get user data or accounts:', e);
         // Create fallback user data
         currentUser = {
           id: 'fallback-user',
@@ -196,6 +203,7 @@
           email: 'user@abu.com',
           phone: '+1 (555) 123-4567'
         };
+        userAccounts = [];
       }
       
       // sample bank details per account type
@@ -228,21 +236,40 @@
       const setBank = (type)=>{
         console.log('setBank called with type:', type);
         
-        // Generate account number based on user email/name + account type
-        const userIdentifier = (currentUser.email || currentUser.firstName || 'USER').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
-        const accountTypeCode = type === 'savings' ? '104' : '204';
-        const accountNumber = `${userIdentifier}${accountTypeCode}1234`.slice(0, 10).padEnd(10, '0');
+        // Find the account that matches the selected type
+        const accountTypeMap = {
+          'savings': 'savings',
+          'current': 'current'
+        };
+        
+        const selectedAccountType = accountTypeMap[type] || type;
+        const matchingAccount = userAccounts.find(account => 
+          account.accountType?.toLowerCase() === selectedAccountType.toLowerCase() ||
+          account.type?.toLowerCase() === selectedAccountType.toLowerCase()
+        );
+        
+        // Use actual account number if available, otherwise generate one
+        let accountNumber;
+        if (matchingAccount && matchingAccount.accountNumber) {
+          accountNumber = matchingAccount.accountNumber;
+        } else {
+          // Fallback: generate account number based on user email/name + account type
+          const userIdentifier = (currentUser.email || currentUser.firstName || 'USER').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+          const accountTypeCode = type === 'savings' ? '104' : '204';
+          accountNumber = `${userIdentifier}${accountTypeCode}1234`.slice(0, 10).padEnd(10, '0');
+        }
         
         // Generate SWIFT code: ABUU + US + branch code based on account type
         const branchCode = type === 'savings' ? '104' : '204';
         const swiftCode = `ABUUUS${branchCode}`;
         
-        // Generate IBAN: US + check digits + sort code + 10-digit account number
+        // Generate IBAN: US + check digits + sort code + account number
         const checkDigits = '74';
         const sortCode = 'HOXQ';
-        const ibanAccountNumber = accountNumber;
+        const ibanAccountNumber = accountNumber.replace(/[^0-9]/g, '').slice(0, 10).padStart(10, '0');
         const iban = `US${checkDigits}${sortCode}${ibanAccountNumber}`.toUpperCase();
         
+        console.log('Using account:', matchingAccount ? 'Real account' : 'Generated fallback');
         console.log('Generated account details:', { accountNumber, swiftCode, iban });
         
         // Update the DOM elements
