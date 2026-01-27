@@ -161,222 +161,247 @@
 
     <script src="js/bottom-nav.js?v=20260121.1"></script>
     <script src="js/sidebar.js?v=20260121.1"></script>
-  <script src="js/demo-data.js"></script>
-  <script src="js/api.js?v=20260121.2"></script>
-  <script src="js/auth.js?v=20260121.2"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/accounts.js?v=20260121.2"></script>
+    <script src="js/demo-data.js"></script>
+    <script src="js/api.js?v=20260121.2"></script>
+    <script src="js/auth.js?v=20260121.2"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/accounts.js?v=20260121.2"></script>
+    <script>
       // Fetch real user data and accounts
       let currentUser = null;
       let userAccounts = [];
-      try{
-        if (typeof getCurrentUser === 'function') {
-          currentUser = await getCurrentUser();
-        }
-        if (!currentUser) {
-          // Try to get from localStorage as fallback
-          const token = localStorage.getItem('authToken');
-          if (token) {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            currentUser = {
-              id: payload.userId || payload.id,
-              firstName: payload.firstName || payload.first_name || 'User',
-              lastName: payload.lastName || payload.last_name || '',
-              email: payload.email || 'user@abu.com',
-              phone: payload.phone || '+1 (555) 123-4567'
-            };
-          }
-        }
-        
-        // Fetch user accounts
-        if (typeof accountsAPI !== 'undefined' && accountsAPI.getAll) {
-          userAccounts = await accountsAPI.getAll() || [];
-        }
-      }catch(e){ 
-        console.warn('Failed to get user data or accounts:', e);
-        // Create fallback user data
-        currentUser = {
-          id: 'fallback-user',
-          firstName: 'User',
-          lastName: '',
-          email: 'user@abu.com',
-          phone: '+1 (555) 123-4567'
-        };
-        userAccounts = [];
-      }
       
-      // sample bank details per account type
-      const banks = {
-        savings: {
-          acctNumber: '1234567890',
-          acctName: 'American Bank United - Client Trust',
-          swift: 'ABUUS33',
-          iban: 'GB29ABU01234567890123',
-          phone: '+1 800 555 0100',
-          email: 'support@abu-bank.com'
-        },
-        current: {
-          acctNumber: '0987654321',
-          acctName: 'American Bank United - Current',
-          swift: 'ABUUS44',
-          iban: 'GB29ABU98765432109876',
-          phone: '+1 800 555 0199',
-          email: 'treasury@abu-bank.com'
-        }
-      };
-
-      const cards = [
-        {id: 'c1', brand: 'visa', masked: '**** **** **** 4242', name: currentUser ? ((currentUser.firstName || currentUser.first_name || '') + ' ' + (currentUser.lastName || currentUser.last_name || '')).trim() || 'JOHN DOE' : 'JOHN DOE', exp: '12/26'},
-        {id: 'c2', brand: 'mastercard', masked: '**** **** **** 1111', name: currentUser ? ((currentUser.firstName || currentUser.first_name || '') + ' ' + (currentUser.lastName || currentUser.last_name || '')).trim() || 'JANE DOE' : 'JANE DOE', exp: '09/25'}
-      ];
-
-      const acctTypeEl = document.getElementById('abuAccountType');
-
-      const setBank = async (type)=>{
-        console.log('setBank called with type:', type);
-        
-        // Refresh user accounts data to get latest approved accounts
+      async function populateDepositDetails() {
         try {
-          userAccounts = await accountsAPI.getAll() || [];
-          console.log('Refreshed user accounts:', userAccounts.length, 'accounts found');
-        } catch (error) {
-          console.error('Failed to refresh accounts:', error);
+          if (typeof getCurrentUser === 'function') {
+            currentUser = await getCurrentUser();
+          }
+          if (!currentUser) {
+            // Try to get from localStorage as fallback
+            const token = localStorage.getItem('authToken');
+            if (token) {
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              currentUser = {
+                id: payload.userId || payload.id,
+                firstName: payload.firstName || payload.first_name || 'User',
+                lastName: payload.lastName || payload.last_name || '',
+                email: payload.email || 'user@abu.com',
+                phone: payload.phone || '+1 (555) 123-4567'
+              };
+            }
+          }
+          
+          // Fetch user accounts
+          if (typeof accountsAPI !== 'undefined' && accountsAPI.getAll) {
+            userAccounts = await accountsAPI.getAll() || [];
+          }
+        } catch (e) { 
+          console.warn('Failed to get user data or accounts:', e);
+          // Create fallback user data
+          currentUser = {
+            id: 'fallback-user',
+            firstName: 'User',
+            lastName: '',
+            email: 'user@abu.com',
+            phone: '+1 (555) 123-4567'
+          };
           userAccounts = [];
         }
         
-        // Find the account that matches the selected type
-        const accountTypeMap = {
-          'savings': 'savings',
-          'current': 'current',
-          'business': 'business'
+        // sample bank details per account type
+        const banks = {
+          savings: {
+            acctNumber: '1234567890',
+            acctName: 'American Bank United - Client Trust',
+            swift: 'ABUUS33',
+            iban: 'GB29ABU01234567890123',
+            phone: '+1 800 555 0100',
+            email: 'support@abu-bank.com'
+          },
+          current: {
+            acctNumber: '0987654321',
+            acctName: 'American Bank United - Current',
+            swift: 'ABUUS44',
+            iban: 'GB29ABU98765432109876',
+            phone: '+1 800 555 0199',
+            email: 'treasury@abu-bank.com'
+          }
         };
-        
-        const selectedAccountType = accountTypeMap[type] || type;
-        const matchingAccount = userAccounts.find(account => 
-          account.account_type?.toLowerCase() === selectedAccountType.toLowerCase() ||
-          account.type?.toLowerCase() === selectedAccountType.toLowerCase()
-        );
-        
-        // Check if user has any accounts at all
-        const hasAnyAccounts = userAccounts && userAccounts.length > 0;
-        
-        if (!hasAnyAccounts) {
-          // User has no accounts - hide account details and show message
-          document.getElementById('abuAcctNumber').textContent = 'No account available';
-          document.getElementById('abuAcctName').textContent = 'Please add an account first';
-          document.getElementById('abuSwift').textContent = 'N/A';
-          document.getElementById('abuIban').textContent = 'N/A';
+
+        const cards = [
+          {id: 'c1', brand: 'visa', masked: '**** **** **** 4242', name: currentUser ? ((currentUser.firstName || currentUser.first_name || '') + ' ' + (currentUser.lastName || currentUser.last_name || '')).trim() || 'JOHN DOE' : 'JOHN DOE', exp: '12/26'},
+          {id: 'c2', brand: 'mastercard', masked: '**** **** **** 1111', name: currentUser ? ((currentUser.firstName || currentUser.first_name || '') + ' ' + (currentUser.lastName || currentUser.last_name || '')).trim() || 'JANE DOE' : 'JANE DOE', exp: '09/25'}
+        ];
+
+        const acctTypeEl = document.getElementById('abuAccountType');
+
+        const setBank = async (type) => {
+          console.log('setBank called with type:', type);
+          
+          // Refresh user accounts data to get latest approved accounts
+          try {
+            userAccounts = await accountsAPI.getAll() || [];
+            console.log('Refreshed user accounts:', userAccounts.length, 'accounts found');
+          } catch (error) {
+            console.error('Failed to refresh accounts:', error);
+            userAccounts = [];
+          }
+          
+          // Find the account that matches the selected type
+          const accountTypeMap = {
+            'savings': 'savings',
+            'current': 'current',
+            'business': 'business'
+          };
+          
+          const selectedAccountType = accountTypeMap[type] || type;
+          const matchingAccount = userAccounts.find(account => 
+            account.account_type?.toLowerCase() === selectedAccountType.toLowerCase() ||
+            account.type?.toLowerCase() === selectedAccountType.toLowerCase()
+          );
+          
+          // Check if user has any accounts at all
+          const hasAnyAccounts = userAccounts && userAccounts.length > 0;
+          
+          if (!hasAnyAccounts) {
+            // User has no accounts - hide account details and show message
+            document.getElementById('abuAcctNumber').textContent = 'No account available';
+            document.getElementById('abuAcctName').textContent = 'Please add an account first';
+            document.getElementById('abuSwift').textContent = 'N/A';
+            document.getElementById('abuIban').textContent = 'N/A';
+            document.getElementById('abuPhone').textContent = currentUser.phone || '+1 (555) 123-4567';
+            document.getElementById('abuEmail').textContent = currentUser.email || 'user@abu.com';
+            
+            // Disable copy buttons
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+              btn.style.opacity = '0.5';
+              btn.style.pointerEvents = 'none';
+            });
+            
+            console.log('User has no accounts - showing placeholder message');
+            return;
+          }
+          
+          // User has accounts - proceed with normal logic
+          // Use actual account number if available, otherwise generate one
+          let accountNumber;
+          if (matchingAccount && matchingAccount.account_number) {
+            accountNumber = matchingAccount.account_number;
+            console.log('Using real account number:', accountNumber, 'Balance:', matchingAccount.balance);
+          } else {
+            // Fallback: generate account number based on user email/name + account type
+            const userIdentifier = (currentUser.email || currentUser.firstName || 'USER').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+            const accountTypeCode = type === 'savings' ? '104' : type === 'business' ? '304' : '204';
+            accountNumber = `${userIdentifier}${accountTypeCode}1234`.slice(0, 10).padEnd(10, '0');
+            console.log('Using generated fallback account number:', accountNumber);
+          }
+          
+          // Generate SWIFT code: ABUU + US + branch code based on account type
+          const branchCode = type === 'savings' ? '104' : type === 'business' ? '304' : '204';
+          const swiftCode = `ABUUUS${branchCode}`;
+          
+          // Generate IBAN: US + check digits + sort code + account number
+          const checkDigits = '74';
+          const sortCode = 'HOXQ';
+          const ibanAccountNumber = accountNumber.replace(/[^0-9]/g, '').slice(0, 10).padStart(10, '0');
+          const iban = `US${checkDigits}${sortCode}${ibanAccountNumber}`.toUpperCase();
+          
+          console.log('Using account:', matchingAccount ? 'Real account' : 'Generated fallback');
+          console.log('Generated account details:', { accountNumber, swiftCode, iban });
+          
+          // Update the DOM elements
+          document.getElementById('abuAcctNumber').textContent = accountNumber;
+          document.getElementById('abuAcctName').textContent = `${currentUser.firstName || 'User'} ${currentUser.lastName || ''}`.trim();
+          document.getElementById('abuSwift').textContent = swiftCode;
+          document.getElementById('abuIban').textContent = iban;
           document.getElementById('abuPhone').textContent = currentUser.phone || '+1 (555) 123-4567';
           document.getElementById('abuEmail').textContent = currentUser.email || 'user@abu.com';
           
-          // Disable copy buttons
+          // Re-enable copy buttons
           document.querySelectorAll('.copy-btn').forEach(btn => {
-            btn.style.opacity = '0.5';
-            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
           });
           
-          console.log('User has no accounts - showing placeholder message');
-          return;
-        }
+          console.log('DOM elements updated');
+        };
+
+        // Set up account type change listener
+        acctTypeEl.addEventListener('change', (e) => setBank(e.target.value));
+
+        // Check if user has accounts and update UI accordingly
+        const hasAnyAccounts = userAccounts && userAccounts.length > 0;
+        const noAccountsMessage = document.getElementById('noAccountsMessage');
         
-        // User has accounts - proceed with normal logic
-        // Use actual account number if available, otherwise generate one
-        let accountNumber;
-        if (matchingAccount && matchingAccount.account_number) {
-          accountNumber = matchingAccount.account_number;
-          console.log('Using real account number:', accountNumber, 'Balance:', matchingAccount.balance);
+        if (!hasAnyAccounts) {
+          // User has no accounts - disable dropdown and show message
+          acctTypeEl.disabled = true;
+          acctTypeEl.style.opacity = '0.5';
+          if (noAccountsMessage) {
+            noAccountsMessage.classList.remove('hidden');
+          }
         } else {
-          // Fallback: generate account number based on user email/name + account type
-          const userIdentifier = (currentUser.email || currentUser.firstName || 'USER').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
-          const accountTypeCode = type === 'savings' ? '104' : type === 'business' ? '304' : '204';
-          accountNumber = `${userIdentifier}${accountTypeCode}1234`.slice(0, 10).padEnd(10, '0');
-          console.log('Using generated fallback account number:', accountNumber);
+          // User has accounts - enable dropdown and hide message
+          acctTypeEl.disabled = false;
+          acctTypeEl.style.opacity = '1';
+          if (noAccountsMessage) {
+            noAccountsMessage.classList.add('hidden');
+          }
         }
-        
-        // Generate SWIFT code: ABUU + US + branch code based on account type
-        const branchCode = type === 'savings' ? '104' : type === 'business' ? '304' : '204';
-        const swiftCode = `ABUUUS${branchCode}`;
-        
-        // Generate IBAN: US + check digits + sort code + account number
-        const checkDigits = '74';
-        const sortCode = 'HOXQ';
-        const ibanAccountNumber = accountNumber.replace(/[^0-9]/g, '').slice(0, 10).padStart(10, '0');
-        const iban = `US${checkDigits}${sortCode}${ibanAccountNumber}`.toUpperCase();
-        
-        console.log('Using account:', matchingAccount ? 'Real account' : 'Generated fallback');
-        console.log('Generated account details:', { accountNumber, swiftCode, iban });
-        
-        // Update the DOM elements
-        document.getElementById('abuAcctNumber').textContent = accountNumber;
-        document.getElementById('abuAcctName').textContent = `${currentUser.firstName || 'User'} ${currentUser.lastName || ''}`.trim();
-        document.getElementById('abuSwift').textContent = swiftCode;
-        document.getElementById('abuIban').textContent = iban;
-        document.getElementById('abuPhone').textContent = currentUser.phone || '+1 (555) 123-4567';
-        document.getElementById('abuEmail').textContent = currentUser.email || 'user@abu.com';
-        
-        // Re-enable copy buttons
+
+        // Initialize with current account type selection
+        setBank(acctTypeEl.value);
+
+        // Simple card setup
+        const cardList = document.getElementById('abuCardList');
+        if (cardList) {
+          cardList.innerHTML = `
+            <div class="text-center py-8 text-slate-500">
+              <i class="fas fa-credit-card text-3xl mb-2 text-slate-300"></i>
+              <p class="text-sm">Demo cards loaded</p>
+            </div>
+          `;
+        }
+
+        // Add copy button functionality
         document.querySelectorAll('.copy-btn').forEach(btn => {
-          btn.style.opacity = '1';
-          btn.style.pointerEvents = 'auto';
+          btn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('data-copy-target');
+            const targetElement = document.getElementById(targetId);
+            if (targetElement) {
+              const text = targetElement.textContent;
+              try {
+                await navigator.clipboard.writeText(text);
+                // Show feedback
+                const originalText = this.textContent;
+                this.textContent = 'Copied!';
+                setTimeout(() => {
+                  this.textContent = originalText;
+                }, 2000);
+              } catch (err) {
+                console.error('Failed to copy:', err);
+              }
+            }
+          });
         });
-        
-        console.log('DOM elements updated');
-      };
+      }
 
-      // Set up account type change listener
-      acctTypeEl.addEventListener('change', (e)=> setBank(e.target.value));
-
-      // Check if user has accounts and update UI accordingly
-      const hasAnyAccounts = userAccounts && userAccounts.length > 0;
-      const noAccountsMessage = document.getElementById('noAccountsMessage');
-      
-      if (!hasAnyAccounts) {
-        // User has no accounts - disable dropdown and show message
-        acctTypeEl.disabled = true;
-        acctTypeEl.style.opacity = '0.5';
-        if (noAccountsMessage) {
-          noAccountsMessage.classList.remove('hidden');
+      document.addEventListener('DOMContentLoaded', async () => {
+        console.log('DOM loaded, calling populateDepositDetails');
+        try {
+          await populateDepositDetails();
+          console.log('populateDepositDetails completed');
+        } catch (error) {
+          console.error('Error in populateDepositDetails:', error);
         }
-      } else {
-        // User has accounts - enable dropdown and hide message
-        acctTypeEl.disabled = false;
-        acctTypeEl.style.opacity = '1';
-        if (noAccountsMessage) {
-          noAccountsMessage.classList.add('hidden');
-        }
+      });
+
+      // Also call immediately in case DOM is already loaded
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        console.log('DOM already loaded, calling populateDepositDetails immediately');
+        populateDepositDetails().catch(console.error);
       }
-
-      // Initialize with current account type selection
-      setBank(acctTypeEl.value);
-
-      // Simple card setup
-      const cardList = document.getElementById('abuCardList');
-      if (cardList) {
-        cardList.innerHTML = `
-          <div class="text-center py-8 text-slate-500">
-            <i class="fas fa-credit-card text-3xl mb-2 text-slate-300"></i>
-            <p class="text-sm">Demo cards loaded</p>
-          </div>
-        `;
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', async ()=>{
-      console.log('DOM loaded, calling populateDepositDetails');
-      try {
-        await populateDepositDetails();
-        console.log('populateDepositDetails completed');
-      } catch (error) {
-        console.error('Error in populateDepositDetails:', error);
-      }
-    });
-
-    // Also call immediately in case DOM is already loaded
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-      console.log('DOM already loaded, calling populateDepositDetails immediately');
-      populateDepositDetails().catch(console.error);
-    }
-  </script>
-
+    </script>
 </body>
 </html>
