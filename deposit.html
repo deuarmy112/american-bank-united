@@ -238,8 +238,17 @@
 
       const acctTypeEl = document.getElementById('abuAccountType');
 
-      const setBank = (type)=>{
+      const setBank = async (type)=>{
         console.log('setBank called with type:', type);
+        
+        // Refresh user accounts data to get latest approved accounts
+        try {
+          userAccounts = await accountsAPI.getAll() || [];
+          console.log('Refreshed user accounts:', userAccounts.length, 'accounts found');
+        } catch (error) {
+          console.error('Failed to refresh accounts:', error);
+          userAccounts = [];
+        }
         
         // Find the account that matches the selected type
         const accountTypeMap = {
@@ -281,11 +290,13 @@
         let accountNumber;
         if (matchingAccount && matchingAccount.account_number) {
           accountNumber = matchingAccount.account_number;
+          console.log('Using real account number:', accountNumber, 'Balance:', matchingAccount.balance);
         } else {
           // Fallback: generate account number based on user email/name + account type
           const userIdentifier = (currentUser.email || currentUser.firstName || 'USER').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
           const accountTypeCode = type === 'savings' ? '104' : type === 'business' ? '304' : '204';
           accountNumber = `${userIdentifier}${accountTypeCode}1234`.slice(0, 10).padEnd(10, '0');
+          console.log('Using generated fallback account number:', accountNumber);
         }
         
         // Generate SWIFT code: ABUU + US + branch code based on account type
