@@ -214,16 +214,18 @@
         const userId = currentUser.id || 'default';
         const userIdHash = userId.toString().slice(-4).padStart(4, '0');
         
-        // Generate account number based on user ID and account type
-        const accountTypeCode = type === 'savings' ? '10' : '20';
-        const accountNumber = `${accountTypeCode}${userIdHash}0001`;
+        // Generate account number: 10-digit integer based on account type
+        const accountNumber = type === 'savings' ? '1045123456' : '2045123456';
         
-        // Generate SWIFT code: ABUU + US + account type + user-specific code
-        const swiftCode = `ABUUUS${accountTypeCode}${userIdHash.slice(-1)}`;
+        // Generate SWIFT code: ABUU + US + branch code based on account type
+        const branchCode = type === 'savings' ? '104' : '204';
+        const swiftCode = `ABUUUS${branchCode}`;
         
-        // Generate IBAN: US + check digits + bank code + account number
-        const ibanBase = `US00ABUU${accountNumber}`;
-        const iban = ibanBase + userIdHash.slice(-2);
+        // Generate IBAN: US + check digits + sort code + 10-digit account number
+        const checkDigits = '74';
+        const sortCode = 'HOXQ';
+        const ibanAccountNumber = type === 'savings' ? '1045123456' : '2045123456';
+        const iban = `US${checkDigits}${sortCode}${ibanAccountNumber}`.toUpperCase();
         
         console.log('Generated account details:', { accountNumber, swiftCode, iban });
         
