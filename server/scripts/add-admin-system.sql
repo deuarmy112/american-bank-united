@@ -62,7 +62,7 @@ CREATE INDEX IF NOT EXISTS idx_transaction_reviews_status ON transaction_reviews
 -- Password hash for "Admin@123" using bcrypt with 10 rounds
 INSERT INTO users (id, first_name, last_name, email, password_hash, role, status, created_at)
 VALUES (
-    'admin-' || gen_random_uuid()::text,
+    'admin-system-admin',
     'System',
     'Administrator',
     'admin@americanbankunited.com',
