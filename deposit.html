@@ -260,7 +260,7 @@
         }
         
         // Generate SWIFT code: ABUU + US + branch code based on account type
-        const branchCode = type === 'savings' ? '104' : '204';
+        const branchCode = type === 'savings' ? '104' : type === 'business' ? '304' : '204';
         const swiftCode = `ABUUUS${branchCode}`;
         
         // Generate IBAN: US + check digits + sort code + account number
