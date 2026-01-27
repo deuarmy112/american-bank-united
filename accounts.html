@@ -3,95 +3,436 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accounts - American Bank United</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/opay.css">
     <script>
         if (!localStorage.getItem('authToken')) {
             window.location.href = 'index.html';
         }
     </script>
-    <title>Accounts - Opay</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/opay.css">
-    <style>body{background:#f8fafc}</style>
+    <style>
+        body { background: #f8fafc; font-family: Inter, system-ui, -apple-system, sans-serif; }
+        .account-card { transition: all 0.3s ease; }
+        .account-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); }
+        .account-badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+        .badge-checking { background: #dbeafe; color: #1e40af; }
+        .badge-savings { background: #dcfce7; color: #166534; }
+        .badge-business { background: #fce7f3; color: #831843; }
+        .modal-overlay { backdrop-filter: blur(4px); }
+    </style>
 </head>
-<body class="opay-ui">
-        <header class="opay-header fixed top-0 left-0 right-0 z-20">
-            <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <a href="dashboard.html" class="opay-brand"><div style="margin-left:.5rem"><div class="opay-name">Accounts</div><div class="opay-sub">Manage your accounts</div></div></a>
+<body class="bg-slate-50">
+    <main class="max-w-6xl mx-auto bg-white min-h-screen pb-20 px-4">
+        <div class="pt-6">
+            <!-- Page Header -->
+            <div class="mb-8">
+                <div class="flex items-center gap-3 mb-2">
+                    <button onclick="history.back()" class="p-2 rounded-full hover:bg-slate-100 transition-colors">
+                        <i class="fas fa-arrow-left text-slate-600"></i>
+                    </button>
+                    <h1 class="text-2xl font-bold text-slate-900">My Accounts</h1>
                 </div>
-                <div>
-                    <button onclick="showCreateAccountModal()" class="inline-flex items-center gap-2 bg-slate-100 text-sm text-slate-700 px-3 py-2 rounded-md">
-                        <i class="fas fa-plus"></i> New
+                <p class="text-slate-600 ml-11">View and manage all your bank accounts</p>
+            </div>
+
+            <!-- Alert -->
+            <div id="alert" class="mb-6"></div>
+
+            <!-- Summary Card -->
+            <div class="bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg shadow-lg p-6 mb-8 text-white">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-purple-200 text-sm mb-2">Total Available Balance</p>
+                        <h2 id="accountsTotalBalance" class="text-4xl font-bold">$0.00</h2>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-wallet text-xl"></i>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 mt-6 pt-6 border-t border-purple-400">
+                    <button onclick="showCreateAccountModal()" class="flex-1 bg-white text-purple-600 font-medium py-2 px-4 rounded-lg hover:bg-purple-50 transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-plus-circle"></i>
+                        Open New Account
+                    </button>
+                    <button onclick="location.href='deposit.html'" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-arrow-down"></i>
+                        Deposit
+                    </button>
+                    <button onclick="location.href='transfer.html'" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-arrow-right"></i>
+                        Transfer
                     </button>
                 </div>
             </div>
-        </header>
 
-        <main class="pt-20 pb-24 max-w-2xl mx-auto px-4">
-            <div id="alert" class="hidden"></div>
+            <!-- Accounts Grid -->
+            <div class="mb-8">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-credit-card text-blue-600"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-slate-900">Your Accounts</h2>
+                </div>
 
-            <div class="mb-4">
-                <div class="opay-card p-4 mb-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="text-sm text-slate-500">Total available balance</div>
-                            <div id="accountsTotalBalance" class="text-2xl font-bold mt-1">$0.00</div>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="location.href='transfer.html'" class="px-3 py-2 bg-white/10 text-white rounded">Transfer</button>
-                            <button onclick="location.href='deposit.html'" class="px-3 py-2 bg-white/10 text-white rounded">Deposit</button>
-                        </div>
+                <div id="accountsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="text-center py-12 col-span-full text-slate-500">
+                        <i class="fas fa-inbox text-4xl text-slate-300 mb-3"></i>
+                        <p class="text-lg">No accounts yet</p>
+                        <p class="text-sm mb-4">Create your first account to get started</p>
+                        <button onclick="showCreateAccountModal()" class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                            <i class="fas fa-plus"></i>
+                            Create Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create Account Modal -->
+    <div id="createAccountModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal-overlay">
+        <div class="bg-white rounded-lg shadow-2xl p-6 max-w-md w-full mx-4">
+            <div class="flex items-start justify-between mb-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900">Open New Account</h2>
+                    <p class="text-xs text-slate-500 mt-1">Choose the account type that fits your needs</p>
+                </div>
+                <button onclick="closeCreateAccountModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <form id="createAccountForm" class="space-y-4">
+                <!-- Account Type Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-3">Account Type</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-3 p-3 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50">
+                            <input type="radio" id="checking" name="accountType" value="checking" required class="w-4 h-4">
+                            <div class="flex-1">
+                                <div class="font-medium text-slate-900">Checking Account</div>
+                                <div class="text-xs text-slate-500">For everyday transactions</div>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50">
+                            <input type="radio" id="savings" name="accountType" value="savings" required class="w-4 h-4">
+                            <div class="flex-1">
+                                <div class="font-medium text-slate-900">Savings Account</div>
+                                <div class="text-xs text-slate-500">Earn interest on your balance</div>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50">
+                            <input type="radio" id="business" name="accountType" value="business" required class="w-4 h-4">
+                            <div class="flex-1">
+                                <div class="font-medium text-slate-900">Business Account</div>
+                                <div class="text-xs text-slate-500">For business operations</div>
+                            </div>
+                        </label>
                     </div>
                 </div>
 
-                <div id="accountsList" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <!-- Accounts will be loaded here as cards -->
-                </div>
-            </div>
-        </main>
-
-        <!-- bottom nav removed to consolidate profile's bottom nav as app-wide control -->
-
-    <!-- Create Account Modal -->
-    <div id="createAccountModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40">
-        <div class="bg-white rounded-lg w-11/12 max-w-md p-4">
-            <div class="flex items-center justify-between mb-2">
-                <h3 class="text-lg font-semibold">Create New Account</h3>
-                <button class="text-slate-500" onclick="closeCreateAccountModal()">Close</button>
-            </div>
-            <form id="createAccountForm">
-                <label class="text-xs text-slate-500">Account Type</label>
-                <select id="accountType" name="accountType" required class="w-full rounded-md border px-3 py-2 mb-2">
-                    <option value="">Select account type</option>
-                    <option value="checking">Checking Account</option>
-                    <option value="savings">Savings Account</option>
-                    <option value="business">Business Account</option>
-                </select>
-
-                <label class="text-xs text-slate-500">Nickname (optional)</label>
-                <input id="accountNickname" type="text" class="w-full rounded-md border px-3 py-2 mb-2" placeholder="My Savings">
-
-                <label class="text-xs text-slate-500">Initial Deposit (Optional)</label>
-                <input type="number" id="initialDeposit" name="initialDeposit" min="0" step="0.01" placeholder="0.00" class="w-full rounded-md border px-3 py-2 mb-3">
-
-                <div class="mb-3">
-                    <h4 class="text-sm font-medium">Account Benefits</h4>
-                    <p class="text-xs text-slate-500">Different account types offer varying benefits such as higher interest, overdraft protection, and business features.</p>
+                <!-- Account Nickname -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Account Nickname (Optional)</label>
+                    <input id="accountNickname" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="E.g., My Savings, Business Account" />
                 </div>
 
-                <div class="flex gap-2">
-                    <button type="button" onclick="closeCreateAccountModal()" class="flex-1 border py-2 rounded-md">Cancel</button>
-                    <button type="submit" class="flex-1 opay-btn">Create Account</button>
+                <!-- Initial Deposit -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Initial Deposit (Optional)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-slate-500 font-medium">$</span>
+                        <input id="initialDeposit" type="number" min="0" step="0.01" class="w-full pl-7 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="0.00" />
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">You can deposit funds later</p>
+                </div>
+
+                <!-- Account Benefits Info -->
+                <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 class="text-sm font-medium text-blue-900 mb-2">Account Benefits</h4>
+                    <ul id="benefitsList" class="text-xs text-blue-700 space-y-1 list-disc list-inside">
+                        <li>Select an account type to see benefits</li>
+                    </ul>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeCreateAccountModal()" class="flex-1 border border-slate-300 text-slate-700 font-medium py-2 px-4 rounded-lg hover:bg-slate-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-check"></i>
+                        Create Account
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <script src="js/utils.js?v=20260121.1"></script>
-    <script src="js/api.js?v=20260121.1"></script>
-    <script src="js/auth.js?v=20260121.1"></script>
-    <script src="js/accounts-api.js?v=20260121.1"></script>
     <script src="js/bottom-nav.js?v=20260121.1"></script>
+    <script src="js/sidebar.js?v=20260121.1"></script>
+    <script src="js/demo-data.js"></script>
+    <script src="js/api.js?v=20260121.2"></script>
+    <script src="js/auth.js?v=20260121.2"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/accounts.js?v=20260121.2"></script>
+
+    <script>
+        let currentUser = null;
+        let userAccounts = [];
+
+        // Account benefits by type
+        const accountBenefits = {
+            'checking': [
+                'No monthly maintenance fees',
+                'Unlimited transactions',
+                'Debit card access',
+                'Online bill pay',
+                'Mobile banking app'
+            ],
+            'savings': [
+                '0.5% annual interest rate',
+                'No minimum balance required',
+                'Automatic savings plans',
+                'FDIC insured',
+                'Easy transfers to checking'
+            ],
+            'business': [
+                'Business tools and resources',
+                'Higher transaction limits',
+                'Multiple user access',
+                'Accounting software integration',
+                'Dedicated business support'
+            ]
+        };
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializePage();
+        });
+
+        async function initializePage() {
+            try {
+                if (typeof getCurrentUser === 'function') {
+                    currentUser = await getCurrentUser();
+                }
+                if (!currentUser) {
+                    const token = localStorage.getItem('authToken');
+                    if (token) {
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        currentUser = {
+                            id: payload.userId || payload.id,
+                            firstName: payload.firstName || payload.first_name || 'User',
+                            lastName: payload.lastName || payload.last_name || '',
+                            email: payload.email || 'user@abu.com'
+                        };
+                    }
+                }
+
+                if (typeof accountsAPI !== 'undefined' && accountsAPI.getAll) {
+                    userAccounts = await accountsAPI.getAll() || [];
+                }
+
+                displayAccounts();
+                setupEventListeners();
+            } catch (e) {
+                console.error('Initialization error:', e);
+            }
+        }
+
+        function displayAccounts() {
+            const accountsList = document.getElementById('accountsList');
+
+            if (!userAccounts || userAccounts.length === 0) {
+                accountsList.innerHTML = `
+                    <div class="text-center py-12 col-span-full text-slate-500">
+                        <i class="fas fa-inbox text-4xl text-slate-300 mb-3"></i>
+                        <p class="text-lg">No accounts yet</p>
+                        <p class="text-sm mb-4">Create your first account to get started</p>
+                        <button onclick="showCreateAccountModal()" class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                            <i class="fas fa-plus"></i>
+                            Create Account
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Calculate total balance
+            const total = userAccounts.reduce((sum, acc) => sum + (parseFloat(acc.balance) || 0), 0);
+            document.getElementById('accountsTotalBalance').textContent = `$${total.toFixed(2)}`;
+
+            // Display accounts
+            accountsList.innerHTML = userAccounts.map(account => {
+                const accountType = (account.account_type || account.type || 'checking').toLowerCase();
+                const badgeClass = {
+                    'checking': 'badge-checking',
+                    'savings': 'badge-savings',
+                    'business': 'badge-business'
+                }[accountType] || 'badge-checking';
+
+                const accountNumber = account.account_number || 'XXXX';
+                const balance = parseFloat(account.balance || 0);
+                const createdDate = account.created_at ? new Date(account.created_at).toLocaleDateString() : new Date().toLocaleDateString();
+
+                return `
+                    <div class="account-card bg-white rounded-lg shadow-md p-6 border border-slate-200">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <h3 class="text-lg font-semibold text-slate-900">${account.account_nickname || (accountType.charAt(0).toUpperCase() + accountType.slice(1) + ' Account')}</h3>
+                                    <span class="account-badge ${badgeClass}">${accountType}</span>
+                                </div>
+                                <p class="text-sm text-slate-600">****${accountNumber.slice(-4)}</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center ${
+                                accountType === 'savings' ? 'bg-green-100' : 
+                                accountType === 'business' ? 'bg-pink-100' : 
+                                'bg-blue-100'
+                            }">
+                                <i class="fas ${
+                                    accountType === 'savings' ? 'fa-piggy-bank text-green-600' : 
+                                    accountType === 'business' ? 'fa-briefcase text-pink-600' : 
+                                    'fa-credit-card text-blue-600'
+                                }"></i>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 pb-4 border-b border-slate-200">
+                            <p class="text-xs text-slate-500 mb-1">Available Balance</p>
+                            <p class="text-2xl font-bold text-slate-900">$${balance.toFixed(2)}</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 mb-4 text-sm">
+                            <div>
+                                <p class="text-xs text-slate-500">Account Number</p>
+                                <p class="font-mono text-slate-900">****${accountNumber.slice(-4)}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-slate-500">Opened</p>
+                                <p class="text-slate-900">${createdDate}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button onclick="location.href='transfer.html'" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 px-3 rounded-lg transition-colors text-sm flex items-center justify-center gap-1">
+                                <i class="fas fa-arrow-right"></i>
+                                Send
+                            </button>
+                            <button onclick="location.href='deposit.html'" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 px-3 rounded-lg transition-colors text-sm flex items-center justify-center gap-1">
+                                <i class="fas fa-arrow-down"></i>
+                                Receive
+                            </button>
+                            <button onclick="viewAccountDetails('${account.id}')" class="flex-1 bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium py-2 px-3 rounded-lg transition-colors text-sm flex items-center justify-center gap-1">
+                                <i class="fas fa-eye"></i>
+                                Details
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setupEventListeners() {
+            const form = document.getElementById('createAccountForm');
+            form.addEventListener('submit', handleCreateAccount);
+
+            // Update benefits when account type changes
+            document.querySelectorAll('input[name="accountType"]').forEach(radio => {
+                radio.addEventListener('change', updateAccountBenefits);
+            });
+        }
+
+        function updateAccountBenefits() {
+            const selectedType = document.querySelector('input[name="accountType"]:checked').value;
+            const benefitsList = document.getElementById('benefitsList');
+            const benefits = accountBenefits[selectedType] || [];
+
+            benefitsList.innerHTML = benefits.map(benefit => `<li>${benefit}</li>`).join('');
+        }
+
+        async function handleCreateAccount(e) {
+            e.preventDefault();
+
+            const accountType = document.querySelector('input[name="accountType"]:checked').value;
+            const nickname = document.getElementById('accountNickname').value.trim();
+            const initialDeposit = parseFloat(document.getElementById('initialDeposit').value) || 0;
+
+            if (!accountType) {
+                showAlert('Please select an account type', 'error');
+                return;
+            }
+
+            try {
+                if (typeof accountsAPI !== 'undefined' && accountsAPI.create) {
+                    const result = await accountsAPI.create({
+                        account_type: accountType,
+                        account_nickname: nickname,
+                        initial_deposit: initialDeposit
+                    });
+
+                    showAlert('Account created successfully! Pending admin approval.', 'success');
+                    closeCreateAccountModal();
+                    document.getElementById('createAccountForm').reset();
+
+                    // Refresh accounts list
+                    userAccounts = await accountsAPI.getAll() || [];
+                    displayAccounts();
+                } else {
+                    showAlert('Account service unavailable', 'error');
+                }
+            } catch (error) {
+                console.error('Create account error:', error);
+                showAlert('Failed to create account: ' + (error.message || 'Unknown error'), 'error');
+            }
+        }
+
+        function showCreateAccountModal() {
+            document.getElementById('createAccountModal').classList.remove('hidden');
+        }
+
+        function closeCreateAccountModal() {
+            document.getElementById('createAccountModal').classList.add('hidden');
+            document.getElementById('createAccountForm').reset();
+            document.getElementById('benefitsList').innerHTML = '<li>Select an account type to see benefits</li>';
+        }
+
+        function viewAccountDetails(accountId) {
+            const account = userAccounts.find(a => a.id === accountId);
+            if (!account) return;
+
+            // For now, navigate to transactions page for this account
+            // In a full implementation, this could show a detailed modal
+            window.location.href = `transactions.html?account=${accountId}`;
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alert');
+            const className = type === 'error' ? 'bg-red-50 border border-red-200 text-red-800' : 'bg-green-50 border border-green-200 text-green-800';
+            const icon = type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle';
+
+            alertDiv.innerHTML = `
+                <div class="${className} p-4 rounded-lg flex items-center gap-3">
+                    <i class="fas ${icon}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+
+            setTimeout(() => {
+                alertDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('createAccountModal').addEventListener('click', (e) => {
+            if (e.target.id === 'createAccountModal') {
+                closeCreateAccountModal();
+            }
+        });
+    </script>
 </body>
 </html>
