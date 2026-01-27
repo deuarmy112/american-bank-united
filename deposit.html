@@ -49,9 +49,14 @@
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-slate-700 mb-2">Account Type</label>
                     <select id="abuAccountType" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                        <option value="savings" selected>Savings Account</option>
-                        <option value="current">Current Account</option>
+                        <option value="current" selected>Current Account</option>
+                        <option value="business">Business Account</option>
+                        <option value="savings">Savings Account</option>
                     </select>
+                    <div id="noAccountsMessage" class="mt-2 text-sm text-amber-600 hidden">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        No accounts available. Please add an account first to see banking details.
+                    </div>
                 </div>
 
                 <div class="space-y-4">
@@ -239,7 +244,8 @@
         // Find the account that matches the selected type
         const accountTypeMap = {
           'savings': 'savings',
-          'current': 'current'
+          'current': 'current',
+          'business': 'business'
         };
         
         const selectedAccountType = accountTypeMap[type] || type;
@@ -248,6 +254,29 @@
           account.type?.toLowerCase() === selectedAccountType.toLowerCase()
         );
         
+        // Check if user has any accounts at all
+        const hasAnyAccounts = userAccounts && userAccounts.length > 0;
+        
+        if (!hasAnyAccounts) {
+          // User has no accounts - hide account details and show message
+          document.getElementById('abuAcctNumber').textContent = 'No account available';
+          document.getElementById('abuAcctName').textContent = 'Please add an account first';
+          document.getElementById('abuSwift').textContent = 'N/A';
+          document.getElementById('abuIban').textContent = 'N/A';
+          document.getElementById('abuPhone').textContent = currentUser.phone || '+1 (555) 123-4567';
+          document.getElementById('abuEmail').textContent = currentUser.email || 'user@abu.com';
+          
+          // Disable copy buttons
+          document.querySelectorAll('.copy-btn').forEach(btn => {
+            btn.style.opacity = '0.5';
+            btn.style.pointerEvents = 'none';
+          });
+          
+          console.log('User has no accounts - showing placeholder message');
+          return;
+        }
+        
+        // User has accounts - proceed with normal logic
         // Use actual account number if available, otherwise generate one
         let accountNumber;
         if (matchingAccount && matchingAccount.accountNumber) {
@@ -255,7 +284,7 @@
         } else {
           // Fallback: generate account number based on user email/name + account type
           const userIdentifier = (currentUser.email || currentUser.firstName || 'USER').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
-          const accountTypeCode = type === 'savings' ? '104' : '204';
+          const accountTypeCode = type === 'savings' ? '104' : type === 'business' ? '304' : '204';
           accountNumber = `${userIdentifier}${accountTypeCode}1234`.slice(0, 10).padEnd(10, '0');
         }
         
@@ -280,11 +309,37 @@
         document.getElementById('abuPhone').textContent = currentUser.phone || '+1 (555) 123-4567';
         document.getElementById('abuEmail').textContent = currentUser.email || 'user@abu.com';
         
+        // Re-enable copy buttons
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+          btn.style.opacity = '1';
+          btn.style.pointerEvents = 'auto';
+        });
+        
         console.log('DOM elements updated');
       };
 
       // Set up account type change listener
       acctTypeEl.addEventListener('change', (e)=> setBank(e.target.value));
+
+      // Check if user has accounts and update UI accordingly
+      const hasAnyAccounts = userAccounts && userAccounts.length > 0;
+      const noAccountsMessage = document.getElementById('noAccountsMessage');
+      
+      if (!hasAnyAccounts) {
+        // User has no accounts - disable dropdown and show message
+        acctTypeEl.disabled = true;
+        acctTypeEl.style.opacity = '0.5';
+        if (noAccountsMessage) {
+          noAccountsMessage.classList.remove('hidden');
+        }
+      } else {
+        // User has accounts - enable dropdown and hide message
+        acctTypeEl.disabled = false;
+        acctTypeEl.style.opacity = '1';
+        if (noAccountsMessage) {
+          noAccountsMessage.classList.add('hidden');
+        }
+      }
 
       // Initialize with current account type selection
       setBank(acctTypeEl.value);
