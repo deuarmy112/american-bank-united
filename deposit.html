@@ -166,19 +166,37 @@
     async function populateDepositDetails(){
       console.log('populateDepositDetails function called');
       
-      // Simple test - create a demo user
-      let currentUser = {
-        id: 'demo-user-001',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'demo@americanbank.com',
-        phone: '(555) 123-4567'
-      };
+      // Fetch real user data
+      let currentUser = null;
       try{
         if (typeof getCurrentUser === 'function') {
           currentUser = await getCurrentUser();
         }
-      }catch(e){ console.warn('getCurrentUser failed, trying localStorage fallback', e); }
+        if (!currentUser) {
+          // Try to get from localStorage as fallback
+          const token = localStorage.getItem('authToken');
+          if (token) {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            currentUser = {
+              id: payload.userId || payload.id,
+              firstName: payload.firstName || payload.first_name || 'User',
+              lastName: payload.lastName || payload.last_name || '',
+              email: payload.email || 'user@abu.com',
+              phone: payload.phone || '+1 (555) 123-4567'
+            };
+          }
+        }
+      }catch(e){ 
+        console.warn('Failed to get user data:', e);
+        // Create fallback user data
+        currentUser = {
+          id: 'fallback-user',
+          firstName: 'User',
+          lastName: '',
+          email: 'user@abu.com',
+          phone: '+1 (555) 123-4567'
+        };
+      }
       
       // sample bank details per account type
       const banks = {
@@ -210,12 +228,10 @@
       const setBank = (type)=>{
         console.log('setBank called with type:', type);
         
-        // Generate unique banking details based on user ID
-        const userId = currentUser.id || 'default';
-        const userIdHash = userId.toString().slice(-4).padStart(4, '0');
-        
-        // Generate account number: 10-digit integer based on account type
-        const accountNumber = type === 'savings' ? '1045123456' : '2045123456';
+        // Generate account number based on user email/name + account type
+        const userIdentifier = (currentUser.email || currentUser.firstName || 'USER').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+        const accountTypeCode = type === 'savings' ? '104' : '204';
+        const accountNumber = `${userIdentifier}${accountTypeCode}1234`.slice(0, 10).padEnd(10, '0');
         
         // Generate SWIFT code: ABUU + US + branch code based on account type
         const branchCode = type === 'savings' ? '104' : '204';
@@ -224,18 +240,18 @@
         // Generate IBAN: US + check digits + sort code + 10-digit account number
         const checkDigits = '74';
         const sortCode = 'HOXQ';
-        const ibanAccountNumber = type === 'savings' ? '1045123456' : '2045123456';
+        const ibanAccountNumber = accountNumber;
         const iban = `US${checkDigits}${sortCode}${ibanAccountNumber}`.toUpperCase();
         
         console.log('Generated account details:', { accountNumber, swiftCode, iban });
         
         // Update the DOM elements
         document.getElementById('abuAcctNumber').textContent = accountNumber;
-        document.getElementById('abuAcctName').textContent = `${currentUser.firstName} ${currentUser.lastName}`;
+        document.getElementById('abuAcctName').textContent = `${currentUser.firstName || 'User'} ${currentUser.lastName || ''}`.trim();
         document.getElementById('abuSwift').textContent = swiftCode;
         document.getElementById('abuIban').textContent = iban;
-        document.getElementById('abuPhone').textContent = currentUser.phone;
-        document.getElementById('abuEmail').textContent = currentUser.email;
+        document.getElementById('abuPhone').textContent = currentUser.phone || '+1 (555) 123-4567';
+        document.getElementById('abuEmail').textContent = currentUser.email || 'user@abu.com';
         
         console.log('DOM elements updated');
       };
