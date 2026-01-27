@@ -15,6 +15,10 @@
     </script>
     <style>
         body { background: #f8fafc; font-family: Inter, system-ui, -apple-system, sans-serif; }
+        .transfer-type-btn { transition: all 0.3s ease; }
+        .transfer-type-btn.active { background-color: #9333ea; color: white; }
+        .hidden-section { display: none; }
+        .print-receipt { max-width: 500px; margin: 20px auto; }
     </style>
 </head>
 <body class="bg-slate-50">
@@ -28,7 +32,7 @@
                     </button>
                     <h1 class="text-2xl font-bold text-slate-900">Send Money</h1>
                 </div>
-                <p class="text-slate-600 ml-11">Transfer funds between accounts or to other banks</p>
+                <p class="text-slate-600 ml-11">Transfer funds securely and instantly</p>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -46,90 +50,192 @@
 
                     <div id="alert" class="mb-4"></div>
 
-                    <form id="transferForm" class="space-y-4">
-                        <!-- Transfer Type -->
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-3">Transfer Type</label>
-                            <div class="flex gap-3 flex-wrap">
-                                <label class="flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
-                                    <input type="radio" name="transferType" value="internal" checked class="w-4 h-4">
-                                    <span class="text-sm font-medium text-slate-700">Between My Accounts</span>
-                                </label>
-                                <label class="flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
-                                    <input type="radio" name="transferType" value="external" class="w-4 h-4">
-                                    <span class="text-sm font-medium text-slate-700">Other Bank</span>
-                                </label>
-                                <label class="flex items-center gap-2 px-3 py-2 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
-                                    <input type="radio" name="transferType" value="international" class="w-4 h-4">
-                                    <span class="text-sm font-medium text-slate-700">International</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- From Account -->
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">From Account</label>
-                            <select id="fromAccount" name="fromAccount" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors">
-                                <option value="">Select source account</option>
-                            </select>
-                            <div id="fromAccountBalance" class="text-xs text-slate-500 mt-2 flex items-center gap-1">
-                                <i class="fas fa-info-circle"></i>
-                                <span>Available balance: <strong>$0.00</strong></span>
-                            </div>
-                        </div>
-                        <!-- External Transfer Fields -->
-                        <div id="externalFields" class="hidden space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                            <h3 class="text-sm font-medium text-blue-900">Recipient Details</h3>
-                            <input id="extRecipientName" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="Recipient name" />
-                            <input id="extAccountNumber" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="Account number, Swift or IBAN" />
-                            <input id="extBankName" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="Bank name" />
-                            <input id="extEmail" type="email" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="Recipient email" />
-                            <input id="extContact" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="Phone (optional)" />
-                        </div>
-
-                        <!-- Amount -->
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Amount</label>
-                            <div class="relative">
-                                <span class="absolute left-3 top-2.5 text-slate-500 font-medium">$</span>
-                                <input id="amount" name="amount" type="number" min="0.01" step="0.01" required class="w-full pl-7 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="0.00" />
-                            </div>
-                        </div>
-
-                        <!-- Description -->
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Description (Optional)</label>
-                            <input id="description" name="description" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="E.g., Payment for services" />
-                        </div>
-
-                        <!-- Save as Beneficiary -->
-                        <label class="flex items-center gap-2 text-sm text-slate-700">
-                            <input id="saveAsBeneficiary" type="checkbox" class="w-4 h-4 rounded border-slate-300">
-                            <span>Save recipient as beneficiary for future transfers</span>
-                        </label>
-
-                        <!-- Submit Button -->
-                        <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
-                            <i class="fas fa-paper-plane"></i>
-                            Continue Transfer
-                        </button>
-                    </form>
-
-                    <!-- Info Box -->
-                    <div class="mt-6 p-4 bg-slate-50 border border-slate-200 rounded-lg">
-                        <div class="flex items-start gap-3">
-                            <i class="fas fa-lightbulb text-slate-600 mt-0.5"></i>
-                            <div>
-                                <h4 class="text-sm font-medium text-slate-900">Transfer Tips</h4>
-                                <ul class="text-xs text-slate-600 mt-2 space-y-1 list-disc list-inside">
-                                    <li>Transfers between your accounts are instant</li>
-                                    <li>Other bank transfers may take 1-2 business days</li>
-                                    <li>International transfers may take 3-5 business days</li>
-                                    <li>Save beneficiaries to make future transfers easier</li>
-                                </ul>
-                            </div>
+                    <!-- Transfer Type Selection -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-slate-700 mb-3">Transfer Type</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button" onclick="switchTransferType('internal')" class="transfer-type-btn active bg-purple-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                                <i class="fas fa-building mr-1"></i>
+                                To ABU Accounts
+                            </button>
+                            <button type="button" onclick="switchTransferType('external')" class="transfer-type-btn border border-slate-300 text-slate-700 font-medium py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors text-sm">
+                                <i class="fas fa-bank mr-1"></i>
+                                Other Banks
+                            </button>
+                            <button type="button" onclick="switchTransferType('international')" class="transfer-type-btn border border-slate-300 text-slate-700 font-medium py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors text-sm">
+                                <i class="fas fa-globe mr-1"></i>
+                                International
+                            </button>
                         </div>
                     </div>
+
+                    <form id="transferForm" class="space-y-4">
+                        <!-- INTERNAL TRANSFER -->
+                        <div id="internalTransfer" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Send To (My Other Accounts)</label>
+                                <select id="internalToAccount" name="internalToAccount" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors">
+                                    <option value="">Select receiving account</option>
+                                </select>
+                                <div id="internalToBalance" class="text-xs text-slate-500 mt-2"></div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Send From</label>
+                                <select id="internalFromAccount" name="internalFromAccount" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors">
+                                    <option value="">Select sending account</option>
+                                </select>
+                                <div id="internalFromBalance" class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>Available balance: <strong>$0.00</strong></span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Amount</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2.5 text-slate-500 font-medium">$</span>
+                                    <input id="internalAmount" type="number" min="0.01" step="0.01" class="w-full pl-7 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="0.00" />
+                                </div>
+                            </div>
+
+                            <button type="button" onclick="handleInternalTransfer()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                                <i class="fas fa-paper-plane"></i>
+                                Transfer Now
+                            </button>
+                        </div>
+
+                        <!-- EXTERNAL TRANSFER (Other Banks) -->
+                        <div id="externalTransfer" class="hidden-section space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Send From</label>
+                                <select id="externalFromAccount" name="externalFromAccount" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors">
+                                    <option value="">Select sending account</option>
+                                </select>
+                                <div id="externalFromBalance" class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>Available balance: <strong>$0.00</strong></span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Account Number or IBAN</label>
+                                <input id="extAccountNumber" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Enter account number or IBAN" />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Account Holder Name</label>
+                                <input id="extAccountName" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Enter recipient's full name" />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">SWIFT Code</label>
+                                <input id="extSwiftCode" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="E.g., ABUUS768" />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Description (Optional)</label>
+                                <input id="extDescription" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="E.g., Payment for services" />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Amount</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2.5 text-slate-500 font-medium">$</span>
+                                    <input id="extAmount" type="number" min="0.01" step="0.01" class="w-full pl-7 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="0.00" />
+                                </div>
+                            </div>
+
+                            <button type="button" onclick="handleExternalTransfer()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                                <i class="fas fa-paper-plane"></i>
+                                Transfer Now
+                            </button>
+                        </div>
+
+                        <!-- INTERNATIONAL TRANSFER -->
+                        <div id="internationalTransfer" class="hidden-section space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Send From</label>
+                                <select id="intlFromAccount" name="intlFromAccount" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors">
+                                    <option value="">Select sending account</option>
+                                </select>
+                                <div id="intlFromBalance" class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>Available balance: <strong>$0.00</strong></span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Account Number or IBAN</label>
+                                <input id="intlAccountNumber" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Enter account number or IBAN" />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Bank Name</label>
+                                <input id="intlBankName" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Enter bank name" />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Account Holder Name</label>
+                                <input id="intlAccountName" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Recipient's full name" />
+                                <p class="text-xs text-slate-500 mt-1">Will auto-fill if valid account details are found</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Destination Country</label>
+                                <div class="relative">
+                                    <input id="intlCountrySearch" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Search country..." />
+                                    <select id="intlCountry" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors mt-2">
+                                        <option value="">Select destination country</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">SWIFT Code or Postal Code</label>
+                                <input id="intlSwiftCode" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="E.g., ABUUS768 or postal code" />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Recipient Email</label>
+                                <input id="intlEmail" type="email" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Recipient will receive email notification" />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Recipient Phone Number</label>
+                                <input id="intlPhone" type="tel" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Recipient will receive SMS notification" />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Description (Optional)</label>
+                                <input id="intlDescription" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="What is this transfer for?" />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Amount (USD)</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2.5 text-slate-500 font-medium">$</span>
+                                    <input id="intlAmountUSD" type="number" min="0.01" step="0.01" class="w-full pl-7 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="0.00" oninput="calculateConvertedAmount()" />
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">5% conversion fee applies</p>
+                            </div>
+
+                            <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-blue-900">Amount to be Received</span>
+                                    <span id="intlReceivedAmount" class="text-sm font-bold text-blue-900">-- --</span>
+                                </div>
+                                <div class="text-xs text-blue-700 mt-1">
+                                    <span id="intlCurrencyDisplay">Currency: --</span>
+                                </div>
+                            </div>
+
+                            <button type="button" onclick="handleInternationalTransfer()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                                <i class="fas fa-paper-plane"></i>
+                                Transfer Now
+                            </button>
+                        </div>
+                    </form>
                 </section>
 
                 <!-- Sidebar: Recent Transfers -->
@@ -153,49 +259,36 @@
         </div>
     </main>
 
-    <!-- Transfer Confirmation Modal -->
-    <div id="transferConfirmBackdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-2xl p-6 max-w-md w-full mx-4">
-            <div class="flex items-start justify-between mb-4">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-900">Confirm Transfer</h2>
-                    <p class="text-xs text-slate-500 mt-1">Review details before confirming</p>
+    <!-- Success Modal with Receipt -->
+    <div id="successModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-2xl p-6 max-w-md w-full mx-4 max-h-96 overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-check text-green-600 text-lg"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Transfer Successful!</h2>
+                        <p class="text-xs text-slate-500">Your transfer has been processed</p>
+                    </div>
                 </div>
-                <button onclick="document.getElementById('transferConfirmBackdrop').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                <button onclick="closeSuccessModal()" class="text-slate-400 hover:text-slate-600">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
 
-            <div class="space-y-3 mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-slate-600">Amount</span>
-                    <span id="confirmAmount" class="text-xl font-bold text-slate-900">$0.00</span>
-                </div>
-                <div class="border-t border-slate-200"></div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-slate-600">From</span>
-                    <span id="confirmFrom" class="text-sm font-medium text-slate-900">—</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-slate-600">To</span>
-                    <span id="confirmRecipient" class="text-sm font-medium text-slate-900">—</span>
-                </div>
-            </div>
-
-            <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-6">
-                <p class="text-xs text-amber-800">
-                    <i class="fas fa-exclamation-circle mr-1"></i>
-                    This action may be irreversible. Please confirm you want to proceed.
-                </p>
+            <!-- Receipt Details -->
+            <div id="receiptContent" class="space-y-3 mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200 text-sm">
+                <!-- Populated dynamically -->
             </div>
 
             <div class="flex gap-3">
-                <button id="editTransferBtn" class="flex-1 border border-slate-300 text-slate-700 font-medium py-2 px-4 rounded-lg hover:bg-slate-50 transition-colors">
-                    Edit
+                <button onclick="printReceipt()" class="flex-1 border border-slate-300 text-slate-700 font-medium py-2 px-4 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                    <i class="fas fa-print"></i>
+                    Print Receipt
                 </button>
-                <button id="confirmTransferBtn" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
-                    <i class="fas fa-check"></i>
-                    Confirm
+                <button onclick="closeSuccessModal()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                    Done
                 </button>
             </div>
         </div>
@@ -211,6 +304,579 @@
     <script src="js/utils.js"></script>
     <script src="js/transactions-api.js"></script>
     <script src="js/transfer-api.js"></script>
-    <script src="js/transfer.js"></script>
+
+    <script>
+        // Country currency mapping
+        const countryCurrencies = {
+            'United States': { code: 'USD', symbol: '$', rate: 1.0 },
+            'United Kingdom': { code: 'GBP', symbol: '£', rate: 0.79 },
+            'Eurozone': { code: 'EUR', symbol: '€', rate: 0.92 },
+            'Canada': { code: 'CAD', symbol: 'C$', rate: 1.35 },
+            'Australia': { code: 'AUD', symbol: 'A$', rate: 1.52 },
+            'Japan': { code: 'JPY', symbol: '¥', rate: 149.5 },
+            'India': { code: 'INR', symbol: '₹', rate: 83.2 },
+            'Mexico': { code: 'MXN', symbol: '$', rate: 17.05 },
+            'Brazil': { code: 'BRL', symbol: 'R$', rate: 4.97 },
+            'South Africa': { code: 'ZAR', symbol: 'R', rate: 18.5 },
+            'Nigeria': { code: 'NGN', symbol: '₦', rate: 1233.5 },
+            'Kenya': { code: 'KES', symbol: 'Sh', rate: 155.2 },
+            'UAE': { code: 'AED', symbol: 'د.إ', rate: 3.67 },
+            'Saudi Arabia': { code: 'SAR', symbol: '﷼', rate: 3.75 },
+            'Singapore': { code: 'SGD', symbol: 'S$', rate: 1.33 },
+            'Hong Kong': { code: 'HKD', symbol: 'HK$', rate: 7.81 },
+            'China': { code: 'CNY', symbol: '¥', rate: 7.24 },
+            'Switzerland': { code: 'CHF', symbol: 'Fr', rate: 0.88 },
+            'Sweden': { code: 'SEK', symbol: 'kr', rate: 10.65 },
+            'Norway': { code: 'NOK', symbol: 'kr', rate: 10.52 }
+        };
+
+        let currentUser = null;
+        let userAccounts = [];
+        let currentTransferType = 'internal';
+        let lastTransferReceipt = null;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializePage();
+        });
+
+        async function initializePage() {
+            try {
+                if (typeof getCurrentUser === 'function') {
+                    currentUser = await getCurrentUser();
+                }
+                if (!currentUser) {
+                    const token = localStorage.getItem('authToken');
+                    if (token) {
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        currentUser = {
+                            id: payload.userId || payload.id,
+                            firstName: payload.firstName || payload.first_name || 'User',
+                            lastName: payload.lastName || payload.last_name || '',
+                            email: payload.email || 'user@abu.com',
+                            phone: payload.phone || '+1 (555) 123-4567'
+                        };
+                    }
+                }
+
+                if (typeof accountsAPI !== 'undefined' && accountsAPI.getAll) {
+                    userAccounts = await accountsAPI.getAll() || [];
+                }
+
+                populateAccountDropdowns();
+                populateCountries();
+                setupEventListeners();
+            } catch (e) {
+                console.error('Initialization error:', e);
+            }
+        }
+
+        function populateAccountDropdowns() {
+            if (!userAccounts || userAccounts.length === 0) {
+                showAlert('No accounts found. Please create an account first.', 'error');
+                return;
+            }
+
+            const accountOptions = userAccounts.map(acc => `
+                <option value="${acc.id}" data-balance="${acc.balance}">
+                    ${(acc.account_type || acc.type || 'Account').toUpperCase()} • ****${(acc.account_number || '0000').slice(-4)} - $${parseFloat(acc.balance || 0).toFixed(2)}
+                </option>
+            `).join('');
+
+            // Internal transfers
+            document.getElementById('internalToAccount').innerHTML = '<option value="">Select receiving account</option>' + accountOptions;
+            document.getElementById('internalFromAccount').innerHTML = '<option value="">Select sending account</option>' + accountOptions;
+
+            // External transfers
+            document.getElementById('externalFromAccount').innerHTML = '<option value="">Select sending account</option>' + accountOptions;
+
+            // International transfers
+            document.getElementById('intlFromAccount').innerHTML = '<option value="">Select sending account</option>' + accountOptions;
+
+            // Add balance display listeners
+            ['internalFromAccount', 'externalFromAccount', 'intlFromAccount'].forEach(id => {
+                document.getElementById(id).addEventListener('change', updateBalanceDisplay);
+            });
+
+            ['internalToAccount'].forEach(id => {
+                document.getElementById(id).addEventListener('change', updateToBalanceDisplay);
+            });
+        }
+
+        function populateCountries() {
+            const countrySelect = document.getElementById('intlCountry');
+            const countries = Object.keys(countryCurrencies).sort();
+            const options = countries.map(country => `<option value="${country}">${country}</option>`).join('');
+            countrySelect.innerHTML = '<option value="">Select destination country</option>' + options;
+
+            // Search functionality
+            const searchInput = document.getElementById('intlCountrySearch');
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const options = countrySelect.querySelectorAll('option');
+                options.forEach(opt => {
+                    if (opt.value === '') return;
+                    opt.style.display = opt.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
+                });
+            });
+
+            countrySelect.addEventListener('change', updateCurrencyDisplay);
+        }
+
+        function setupEventListeners() {
+            // Balance display updates
+            document.getElementById('internalFromAccount').addEventListener('change', updateBalanceDisplay);
+            document.getElementById('externalFromAccount').addEventListener('change', updateBalanceDisplay);
+            document.getElementById('intlFromAccount').addEventListener('change', updateBalanceDisplay);
+            document.getElementById('internalToAccount').addEventListener('change', updateToBalanceDisplay);
+        }
+
+        function updateBalanceDisplay(e) {
+            const select = e.target;
+            const balanceDisplay = select.closest('div').parentElement.querySelector('[id$="Balance"]');
+            if (!balanceDisplay) return;
+
+            const selectedOption = select.selectedOptions[0];
+            const balance = selectedOption.getAttribute('data-balance');
+
+            if (balance !== null) {
+                balanceDisplay.textContent = `Available balance: $${parseFloat(balance).toFixed(2)}`;
+            }
+        }
+
+        function updateToBalanceDisplay(e) {
+            const select = e.target;
+            const balanceDisplay = document.getElementById('internalToBalance');
+            if (!balanceDisplay) return;
+
+            const selectedOption = select.selectedOptions[0];
+            const balance = selectedOption.getAttribute('data-balance');
+
+            if (balance !== null) {
+                balanceDisplay.textContent = `Current balance: $${parseFloat(balance).toFixed(2)}`;
+            }
+        }
+
+        function updateCurrencyDisplay() {
+            const country = document.getElementById('intlCountry').value;
+            const currencyDisplay = document.getElementById('intlCurrencyDisplay');
+
+            if (country && countryCurrencies[country]) {
+                const currency = countryCurrencies[country];
+                currencyDisplay.textContent = `Currency: ${currency.code} (${currency.symbol})`;
+            } else {
+                currencyDisplay.textContent = 'Currency: --';
+            }
+
+            calculateConvertedAmount();
+        }
+
+        function calculateConvertedAmount() {
+            const amount = parseFloat(document.getElementById('intlAmountUSD').value) || 0;
+            const country = document.getElementById('intlCountry').value;
+            const receivedDisplay = document.getElementById('intlReceivedAmount');
+
+            if (!country || !amount) {
+                receivedDisplay.textContent = '-- --';
+                return;
+            }
+
+            const currency = countryCurrencies[country];
+            const fee = amount * 0.05; // 5% conversion fee
+            const netAmount = amount - fee;
+            const convertedAmount = netAmount * currency.rate;
+
+            receivedDisplay.textContent = `${currency.symbol}${convertedAmount.toFixed(2)} ${currency.code}`;
+        }
+
+        function switchTransferType(type) {
+            currentTransferType = type;
+
+            // Hide all sections
+            document.getElementById('internalTransfer').classList.add('hidden-section');
+            document.getElementById('externalTransfer').classList.add('hidden-section');
+            document.getElementById('internationalTransfer').classList.add('hidden-section');
+
+            // Update buttons
+            document.querySelectorAll('.transfer-type-btn').forEach(btn => btn.classList.remove('active', 'bg-purple-600', 'text-white'));
+            document.querySelectorAll('.transfer-type-btn').forEach(btn => btn.classList.add('border', 'border-slate-300', 'text-slate-700'));
+
+            // Show selected section and highlight button
+            if (type === 'internal') {
+                document.getElementById('internalTransfer').classList.remove('hidden-section');
+                document.querySelectorAll('.transfer-type-btn')[0].classList.add('active', 'bg-purple-600', 'text-white');
+                document.querySelectorAll('.transfer-type-btn')[0].classList.remove('border', 'border-slate-300', 'text-slate-700');
+            } else if (type === 'external') {
+                document.getElementById('externalTransfer').classList.remove('hidden-section');
+                document.querySelectorAll('.transfer-type-btn')[1].classList.add('active', 'bg-purple-600', 'text-white');
+                document.querySelectorAll('.transfer-type-btn')[1].classList.remove('border', 'border-slate-300', 'text-slate-700');
+            } else if (type === 'international') {
+                document.getElementById('internationalTransfer').classList.remove('hidden-section');
+                document.querySelectorAll('.transfer-type-btn')[2].classList.add('active', 'bg-purple-600', 'text-white');
+                document.querySelectorAll('.transfer-type-btn')[2].classList.remove('border', 'border-slate-300', 'text-slate-700');
+            }
+        }
+
+        function handleInternalTransfer() {
+            const toAccount = document.getElementById('internalToAccount').value;
+            const fromAccount = document.getElementById('internalFromAccount').value;
+            const amount = parseFloat(document.getElementById('internalAmount').value) || 0;
+
+            if (!toAccount || !fromAccount) {
+                showAlert('Please select both accounts', 'error');
+                return;
+            }
+
+            if (toAccount === fromAccount) {
+                showAlert('Cannot transfer to the same account', 'error');
+                return;
+            }
+
+            if (amount <= 0) {
+                showAlert('Please enter a valid amount', 'error');
+                return;
+            }
+
+            const from = userAccounts.find(a => a.id === fromAccount);
+            const to = userAccounts.find(a => a.id === toAccount);
+
+            if (from.balance < amount) {
+                showAlert('Insufficient funds', 'error');
+                return;
+            }
+
+            // Create receipt
+            lastTransferReceipt = {
+                type: 'Internal Transfer',
+                date: new Date().toLocaleString(),
+                from: `${(from.account_type || 'Account').toUpperCase()} - ****${(from.account_number || '0000').slice(-4)}`,
+                to: `${(to.account_type || 'Account').toUpperCase()} - ****${(to.account_number || '0000').slice(-4)}`,
+                amount: amount,
+                currency: 'USD',
+                fee: 0,
+                total: amount
+            };
+
+            showSuccessModal();
+            document.getElementById('internalAmount').value = '';
+        }
+
+        function handleExternalTransfer() {
+            const fromAccount = document.getElementById('externalFromAccount').value;
+            const accountNumber = document.getElementById('extAccountNumber').value.trim();
+            const accountName = document.getElementById('extAccountName').value.trim();
+            const swiftCode = document.getElementById('extSwiftCode').value.trim();
+            const amount = parseFloat(document.getElementById('extAmount').value) || 0;
+            const description = document.getElementById('extDescription').value.trim();
+
+            if (!fromAccount || !accountNumber || !accountName || !swiftCode) {
+                showAlert('Please fill all required fields', 'error');
+                return;
+            }
+
+            if (amount <= 0) {
+                showAlert('Please enter a valid amount', 'error');
+                return;
+            }
+
+            const from = userAccounts.find(a => a.id === fromAccount);
+            if (from.balance < amount) {
+                showAlert('Insufficient funds', 'error');
+                return;
+            }
+
+            lastTransferReceipt = {
+                type: 'External Transfer',
+                date: new Date().toLocaleString(),
+                from: `${(from.account_type || 'Account').toUpperCase()} - ****${(from.account_number || '0000').slice(-4)}`,
+                to: `${accountName} (${accountNumber})`,
+                swift: swiftCode,
+                amount: amount,
+                currency: 'USD',
+                fee: 0,
+                description: description,
+                total: amount
+            };
+
+            showSuccessModal();
+            document.getElementById('extAmount').value = '';
+            document.getElementById('extAccountNumber').value = '';
+            document.getElementById('extAccountName').value = '';
+            document.getElementById('extSwiftCode').value = '';
+            document.getElementById('extDescription').value = '';
+        }
+
+        function handleInternationalTransfer() {
+            const fromAccount = document.getElementById('intlFromAccount').value;
+            const accountNumber = document.getElementById('intlAccountNumber').value.trim();
+            const bankName = document.getElementById('intlBankName').value.trim();
+            const accountName = document.getElementById('intlAccountName').value.trim();
+            const country = document.getElementById('intlCountry').value;
+            const swiftCode = document.getElementById('intlSwiftCode').value.trim();
+            const email = document.getElementById('intlEmail').value.trim();
+            const phone = document.getElementById('intlPhone').value.trim();
+            const description = document.getElementById('intlDescription').value.trim();
+            const amount = parseFloat(document.getElementById('intlAmountUSD').value) || 0;
+
+            if (!fromAccount || !accountNumber || !bankName || !accountName || !country || !swiftCode) {
+                showAlert('Please fill all required fields', 'error');
+                return;
+            }
+
+            if (amount <= 0) {
+                showAlert('Please enter a valid amount', 'error');
+                return;
+            }
+
+            const from = userAccounts.find(a => a.id === fromAccount);
+            if (from.balance < amount) {
+                showAlert('Insufficient funds', 'error');
+                return;
+            }
+
+            const currency = countryCurrencies[country];
+            const fee = amount * 0.05;
+            const netAmount = amount - fee;
+            const convertedAmount = netAmount * currency.rate;
+
+            lastTransferReceipt = {
+                type: 'International Transfer',
+                date: new Date().toLocaleString(),
+                from: `${(from.account_type || 'Account').toUpperCase()} - ****${(from.account_number || '0000').slice(-4)}`,
+                to: `${accountName}`,
+                bank: bankName,
+                country: country,
+                accountNumber: accountNumber,
+                swift: swiftCode,
+                email: email,
+                phone: phone,
+                amountSent: amount,
+                fee: fee.toFixed(2),
+                currency: currency.code,
+                currencySymbol: currency.symbol,
+                convertedAmount: convertedAmount.toFixed(2),
+                description: description
+            };
+
+            showSuccessModal();
+            document.getElementById('intlAmountUSD').value = '';
+            document.getElementById('intlAccountNumber').value = '';
+            document.getElementById('intlBankName').value = '';
+            document.getElementById('intlAccountName').value = '';
+            document.getElementById('intlCountry').value = '';
+            document.getElementById('intlSwiftCode').value = '';
+            document.getElementById('intlEmail').value = '';
+            document.getElementById('intlPhone').value = '';
+            document.getElementById('intlDescription').value = '';
+        }
+
+        function showSuccessModal() {
+            const modal = document.getElementById('successModal');
+            const receiptContent = document.getElementById('receiptContent');
+            
+            let receiptHTML = '';
+
+            if (lastTransferReceipt.type === 'Internal Transfer') {
+                receiptHTML = `
+                    <div class="flex justify-between"><span>From:</span><strong>${lastTransferReceipt.from}</strong></div>
+                    <div class="border-t border-slate-300"></div>
+                    <div class="flex justify-between"><span>To:</span><strong>${lastTransferReceipt.to}</strong></div>
+                    <div class="border-t border-slate-300"></div>
+                    <div class="flex justify-between"><span>Amount:</span><strong>$${lastTransferReceipt.amount.toFixed(2)}</strong></div>
+                    <div class="border-t border-slate-300"></div>
+                    <div class="flex justify-between"><span>Date:</span><span>${lastTransferReceipt.date}</span></div>
+                `;
+            } else if (lastTransferReceipt.type === 'External Transfer') {
+                receiptHTML = `
+                    <div class="flex justify-between"><span>From:</span><strong>${lastTransferReceipt.from}</strong></div>
+                    <div class="border-t border-slate-300"></div>
+                    <div class="flex justify-between"><span>To:</span><strong>${lastTransferReceipt.to}</strong></div>
+                    <div class="border-t border-slate-300"></div>
+                    <div class="flex justify-between"><span>SWIFT Code:</span><strong>${lastTransferReceipt.swift}</strong></div>
+                    <div class="border-t border-slate-300"></div>
+                    <div class="flex justify-between"><span>Amount:</span><strong>$${lastTransferReceipt.amount.toFixed(2)}</strong></div>
+                    ${lastTransferReceipt.description ? `<div class="border-t border-slate-300"></div><div class="flex justify-between"><span>Description:</span><span>${lastTransferReceipt.description}</span></div>` : ''}
+                    <div class="border-t border-slate-300"></div>
+                    <div class="flex justify-between"><span>Date:</span><span>${lastTransferReceipt.date}</span></div>
+                `;
+            } else if (lastTransferReceipt.type === 'International Transfer') {
+                receiptHTML = `
+                    <div class="flex justify-between"><span>From:</span><strong>${lastTransferReceipt.from}</strong></div>
+                    <div class="border-t border-slate-300"></div>
+                    <div class="flex justify-between"><span>To:</span><strong>${lastTransferReceipt.to}</strong></div>
+                    <div class="border-t border-slate-300"></div>
+                    <div class="flex justify-between"><span>Bank:</span><span>${lastTransferReceipt.bank}</span></div>
+                    <div class="border-t border-slate-300"></div>
+                    <div class="flex justify-between"><span>Country:</span><span>${lastTransferReceipt.country}</span></div>
+                    <div class="border-t border-slate-300"></div>
+                    <div class="flex justify-between"><span>Amount Sent:</span><strong>$${lastTransferReceipt.amountSent.toFixed(2)}</strong></div>
+                    <div class="border-t border-slate-300"></div>
+                    <div class="flex justify-between"><span>Conversion Fee (5%):</span><strong>$${lastTransferReceipt.fee}</strong></div>
+                    <div class="border-t border-slate-300"></div>
+                    <div class="flex justify-between"><span>Amount Received:</span><strong>${lastTransferReceipt.currencySymbol}${lastTransferReceipt.convertedAmount} ${lastTransferReceipt.currency}</strong></div>
+                    ${lastTransferReceipt.email ? `<div class="border-t border-slate-300"></div><div class="flex justify-between"><span>Email:</span><span>${lastTransferReceipt.email}</span></div>` : ''}
+                    ${lastTransferReceipt.phone ? `<div class="border-t border-slate-300"></div><div class="flex justify-between"><span>Phone:</span><span>${lastTransferReceipt.phone}</span></div>` : ''}
+                    ${lastTransferReceipt.description ? `<div class="border-t border-slate-300"></div><div class="flex justify-between"><span>Description:</span><span>${lastTransferReceipt.description}</span></div>` : ''}
+                    <div class="border-t border-slate-300"></div>
+                    <div class="flex justify-between"><span>Date:</span><span>${lastTransferReceipt.date}</span></div>
+                `;
+            }
+
+            receiptContent.innerHTML = receiptHTML;
+            modal.classList.remove('hidden');
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.add('hidden');
+        }
+
+        function printReceipt() {
+            if (!lastTransferReceipt) return;
+
+            const printWindow = window.open('', '', 'height=600,width=800');
+            let receiptContent = `
+                <html>
+                <head>
+                    <title>Transfer Receipt - American Bank United</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        .receipt-header { text-align: center; margin-bottom: 20px; }
+                        .receipt-header h1 { margin: 0; color: #1e293b; }
+                        .receipt-header p { color: #64748b; margin: 5px 0; }
+                        .receipt-divider { border-top: 2px solid #e2e8f0; margin: 15px 0; }
+                        .receipt-item { display: flex; justify-content: space-between; margin: 10px 0; }
+                        .receipt-label { color: #475569; }
+                        .receipt-value { font-weight: bold; color: #1e293b; }
+                        .receipt-footer { text-align: center; margin-top: 20px; color: #94a3b8; font-size: 12px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="receipt-header">
+                        <h1>Transfer Receipt</h1>
+                        <p>American Bank United</p>
+                    </div>
+                    <div class="receipt-divider"></div>
+            `;
+
+            if (lastTransferReceipt.type === 'Internal Transfer') {
+                receiptContent += `
+                    <div class="receipt-item">
+                        <span class="receipt-label">From:</span>
+                        <span class="receipt-value">${lastTransferReceipt.from}</span>
+                    </div>
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-item">
+                        <span class="receipt-label">To:</span>
+                        <span class="receipt-value">${lastTransferReceipt.to}</span>
+                    </div>
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-item">
+                        <span class="receipt-label">Amount:</span>
+                        <span class="receipt-value">$${lastTransferReceipt.amount.toFixed(2)}</span>
+                    </div>
+                `;
+            } else if (lastTransferReceipt.type === 'External Transfer') {
+                receiptContent += `
+                    <div class="receipt-item">
+                        <span class="receipt-label">From:</span>
+                        <span class="receipt-value">${lastTransferReceipt.from}</span>
+                    </div>
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-item">
+                        <span class="receipt-label">To:</span>
+                        <span class="receipt-value">${lastTransferReceipt.to}</span>
+                    </div>
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-item">
+                        <span class="receipt-label">SWIFT Code:</span>
+                        <span class="receipt-value">${lastTransferReceipt.swift}</span>
+                    </div>
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-item">
+                        <span class="receipt-label">Amount:</span>
+                        <span class="receipt-value">$${lastTransferReceipt.amount.toFixed(2)}</span>
+                    </div>
+                    ${lastTransferReceipt.description ? `<div class="receipt-divider"></div><div class="receipt-item"><span class="receipt-label">Description:</span><span>${lastTransferReceipt.description}</span></div>` : ''}
+                `;
+            } else if (lastTransferReceipt.type === 'International Transfer') {
+                receiptContent += `
+                    <div class="receipt-item">
+                        <span class="receipt-label">From:</span>
+                        <span class="receipt-value">${lastTransferReceipt.from}</span>
+                    </div>
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-item">
+                        <span class="receipt-label">To:</span>
+                        <span class="receipt-value">${lastTransferReceipt.to}</span>
+                    </div>
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-item">
+                        <span class="receipt-label">Bank:</span>
+                        <span>${lastTransferReceipt.bank}</span>
+                    </div>
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-item">
+                        <span class="receipt-label">Country:</span>
+                        <span>${lastTransferReceipt.country}</span>
+                    </div>
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-item">
+                        <span class="receipt-label">Amount Sent:</span>
+                        <span class="receipt-value">$${lastTransferReceipt.amountSent.toFixed(2)}</span>
+                    </div>
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-item">
+                        <span class="receipt-label">Conversion Fee (5%):</span>
+                        <span class="receipt-value">$${lastTransferReceipt.fee}</span>
+                    </div>
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-item">
+                        <span class="receipt-label">Amount Received:</span>
+                        <span class="receipt-value">${lastTransferReceipt.currencySymbol}${lastTransferReceipt.convertedAmount} ${lastTransferReceipt.currency}</span>
+                    </div>
+                    ${lastTransferReceipt.email ? `<div class="receipt-divider"></div><div class="receipt-item"><span class="receipt-label">Email:</span><span>${lastTransferReceipt.email}</span></div>` : ''}
+                    ${lastTransferReceipt.phone ? `<div class="receipt-divider"></div><div class="receipt-item"><span class="receipt-label">Phone:</span><span>${lastTransferReceipt.phone}</span></div>` : ''}
+                    ${lastTransferReceipt.description ? `<div class="receipt-divider"></div><div class="receipt-item"><span class="receipt-label">Description:</span><span>${lastTransferReceipt.description}</span></div>` : ''}
+                `;
+            }
+
+            receiptContent += `
+                    <div class="receipt-divider"></div>
+                    <div class="receipt-item">
+                        <span class="receipt-label">Date:</span>
+                        <span>${lastTransferReceipt.date}</span>
+                    </div>
+                    <div class="receipt-footer">
+                        <p>Thank you for using American Bank United</p>
+                        <p>Keep this receipt for your records</p>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            printWindow.document.write(receiptContent);
+            printWindow.document.close();
+            setTimeout(() => {
+                printWindow.print();
+            }, 250);
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alert');
+            const className = type === 'error' ? 'bg-red-50 border border-red-200 text-red-800' : 'bg-green-50 border border-green-200 text-green-800';
+            const icon = type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle';
+            
+            alertDiv.innerHTML = `
+                <div class="${className} p-3 rounded-lg flex items-center gap-2">
+                    <i class="fas ${icon}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                alertDiv.innerHTML = '';
+            }, 4000);
+        }
+    </script>
 </body>
 </html>
