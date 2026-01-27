@@ -244,13 +244,13 @@
         // Find the account that matches the selected type
         const accountTypeMap = {
           'savings': 'savings',
-          'current': 'current',
+          'current': 'checking',
           'business': 'business'
         };
         
         const selectedAccountType = accountTypeMap[type] || type;
         const matchingAccount = userAccounts.find(account => 
-          account.accountType?.toLowerCase() === selectedAccountType.toLowerCase() ||
+          account.account_type?.toLowerCase() === selectedAccountType.toLowerCase() ||
           account.type?.toLowerCase() === selectedAccountType.toLowerCase()
         );
         
@@ -279,8 +279,8 @@
         // User has accounts - proceed with normal logic
         // Use actual account number if available, otherwise generate one
         let accountNumber;
-        if (matchingAccount && matchingAccount.accountNumber) {
-          accountNumber = matchingAccount.accountNumber;
+        if (matchingAccount && matchingAccount.account_number) {
+          accountNumber = matchingAccount.account_number;
         } else {
           // Fallback: generate account number based on user email/name + account type
           const userIdentifier = (currentUser.email || currentUser.firstName || 'USER').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);

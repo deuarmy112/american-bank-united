@@ -17,9 +17,12 @@ const poolConfig = process.env.DATABASE_URL ? {
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'american_bank_united',
     port: process.env.DB_PORT || 5432,
+    ssl: false, // Explicitly disable SSL for local development
     max: 10,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000
+    connectionTimeoutMillis: 2000,
+    // Add additional options to ensure no SSL
+    connectionString: undefined // Force individual params
 };
 
 const pool = new Pool(poolConfig);

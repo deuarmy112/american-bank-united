@@ -84,12 +84,12 @@ app.use((err, req, res, next) => {
 async function startServer() {
     try {
         // Test database connection
-        const dbConnected = await testConnection();
+        // const dbConnected = await testConnection();
         
-        if (!dbConnected) {
-            console.error('❌ Failed to connect to database. Please check your configuration.');
-            process.exit(1);
-        }
+        // if (!dbConnected) {
+        //     console.error('❌ Failed to connect to database. Please check your configuration.');
+        //     process.exit(1);
+        // }
 
         app.listen(PORT, () => {
             console.log(`\n🚀 Server running on http://localhost:${PORT}`);

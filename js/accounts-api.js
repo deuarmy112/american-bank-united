@@ -123,7 +123,15 @@ document.getElementById('createAccountForm')?.addEventListener('submit', async f
         submitBtn.textContent = 'Creating...';
         submitBtn.disabled = true;
 
-        const payload = { accountType, initialDeposit };
+        // Map frontend account types to server account types
+        const accountTypeMap = {
+            'current': 'checking',
+            'savings': 'savings',
+            'business': 'business'
+        };
+        const serverAccountType = accountTypeMap[accountType] || accountType;
+
+        const payload = { accountType: serverAccountType, initialDeposit };
         if (nickname) payload.nickname = nickname;
 
         const response = await accountsAPI.create(payload);

@@ -69,12 +69,12 @@ function loadDashboardAccounts(accounts) {
     accountsList.innerHTML = accounts.map(account => `
         <div class="account-card" onclick="window.location.href='accounts.html'">
             <div class="account-header">
-                <h3>${capitalize(account.accountType)} Account</h3>
+                <h3>${capitalize(account.account_type)} Account</h3>
                 <span class="account-status">${account.status}</span>
             </div>
-            <div class="account-number">Account: ${account.accountNumber}</div>
+            <div class="account-number">Account: ${account.account_number}</div>
             <div class="account-balance">${formatCurrency(account.balance)}</div>
-            ${account.interestRate > 0 ? `<div class="account-info">Interest Rate: ${account.interestRate}%</div>` : ''}
+            ${account.interest_rate > 0 ? `<div class="account-info">Interest Rate: ${account.interest_rate}%</div>` : ''}
         </div>
     `).join('');
 }
