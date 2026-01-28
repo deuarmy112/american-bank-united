@@ -44,21 +44,21 @@
             <!-- Summary Card -->
             <div class="rounded-lg p-6 mb-8">
                 <div class="flex items-start justify-between">
-                    <div>
                         <p class="text-slate-500 text-sm mb-2">Total Available Balance</p>
                         <h2 id="accountsTotalBalance" class="text-4xl font-bold text-slate-900">$0.00</h2>
                     </div>
+                </div>
+            
+            <!-- Accounts Grid -->
+            <div class="mb-8">
+                <div class="flex items-start justify-between">
+                    <h2 class="text-xl font-semibold text-slate-900">Your Accounts</h2>
                     <button onclick="showCreateAccountModal()" class="w-12 h-12 rounded-full flex items-center justify-center">
                         <i class="fas fa-plus text-2xl text-slate-400"></i>
                     </button>
                 </div>
             </div>
-            
-            <!-- Accounts Grid -->
-            <div class="mb-8">
-                <div class="flex items-center gap-3 mb-6">
-                    <h2 class="text-xl font-semibold text-slate-900">Your Accounts</h2>
-                </div>
+
 
                 <div id="accountsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div class="text-center py-12 col-span-full text-slate-500">
