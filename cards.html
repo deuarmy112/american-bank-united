@@ -13,130 +13,207 @@
             window.location.href = 'index.html';
         }
     </script>
+    <style>
+        body { background: #f8fafc; font-family: Inter, system-ui, -apple-system, sans-serif; }
+        .card-item { transition: all 0.3s ease; }
+        .card-item:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12); }
+        .card-preview {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 24px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .card-preview.debit { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-preview.credit { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .card-preview.virtual { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .card-chip {
+            width: 50px;
+            height: 40px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .card-number { letter-spacing: 2px; font-size: 18px; font-weight: 600; }
+        .card-holder { font-size: 12px; text-transform: uppercase; opacity: 0.8; letter-spacing: 1px; }
+        .card-expiry { font-size: 12px; opacity: 0.8; }
+        .feature-box {
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        .feature-box:hover { border-color: #667eea; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1); }
+        .modal-overlay { backdrop-filter: blur(4px); }
+    </style>
 </head>
 <body class="bg-slate-50">
     <main class="max-w-6xl mx-auto bg-white min-h-screen pb-20 px-4">
-        <!-- Header -->
-        <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white rounded-lg p-6 mb-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold mb-2">My Cards</h1>
-                    <p class="text-indigo-100">Manage your payment cards and view transactions</p>
-                </div>
-                <div class="flex gap-3">
-                    <button onclick="showRequestCardModal()" class="bg-white text-indigo-600 px-4 py-2 rounded-lg font-medium hover:bg-indigo-50 transition-colors">
-                        <i class="fas fa-plus mr-2"></i>Request Card
+        <div class="pt-6">
+            <!-- Page Header -->
+            <div class="mb-8">
+                <div class="flex items-center gap-3 mb-2">
+                    <button onclick="history.back()" class="p-2 rounded-full hover:bg-slate-100 transition-colors">
+                        <i class="fas fa-arrow-left text-slate-600"></i>
                     </button>
-                    <button onclick="generateVirtualCardForUser()" class="bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-400 transition-colors">
-                        <i class="fas fa-magic mr-2"></i>Virtual Card
-                    </button>
+                    <h1 class="text-2xl font-bold text-slate-900">My Cards</h1>
+                </div>
+                <p class="text-slate-600 ml-11">Manage your payment cards and transactions</p>
+            </div>
+
+            <!-- Alert -->
+            <div id="alert" class="mb-6"></div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3 mb-8">
+                <button onclick="showRequestCardModal()" class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                    <i class="fas fa-plus"></i>
+                    Request Card
+                </button>
+                <button onclick="generateVirtualCardForUser()" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                    <i class="fas fa-wand-magic-sparkles"></i>
+                    Virtual Card
+                </button>
+            </div>
+
+            <!-- Cards Grid -->
+            <div class="mb-12">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-credit-card text-purple-600"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-slate-900">Your Cards</h2>
+                </div>
+
+                <div id="cardsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="text-center py-12 col-span-full text-slate-500">
+                        <i class="fas fa-inbox text-4xl text-slate-300 mb-3"></i>
+                        <p class="text-lg">No cards yet</p>
+                        <p class="text-sm mb-4">Request a card to get started</p>
+                        <button onclick="showRequestCardModal()" class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                            <i class="fas fa-plus"></i>
+                            Request Card
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Alert Container -->
-        <div id="alert" class="mb-6" style="display: none;"></div>
+            <!-- Card Features -->
+            <div class="mb-12">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-star text-blue-600"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-slate-900">Card Features</h2>
+                </div>
 
-        <!-- Cards Grid -->
-        <div class="mb-8">
-            <h2 class="text-xl font-semibold mb-4">Your Cards</h2>
-            <div id="cardsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Cards will be loaded here -->
-            </div>
-        </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="feature-box">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                            <i class="fas fa-shield-alt text-green-600 text-xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-slate-900 mb-2">Secure Transactions</h3>
+                        <p class="text-sm text-slate-600">Advanced fraud protection and real-time alerts for peace of mind</p>
+                    </div>
 
-        <!-- Card Features -->
-        <div class="bg-white rounded-lg shadow p-6 mb-8">
-            <h2 class="text-xl font-semibold mb-6 flex items-center">
-                <i class="fas fa-star text-yellow-500 mr-2"></i>
-                Card Features
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="text-center p-4 bg-slate-50 rounded-lg">
-                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <i class="fas fa-shield-alt text-green-600 text-xl"></i>
+                    <div class="feature-box">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                            <i class="fas fa-mobile-alt text-blue-600 text-xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-slate-900 mb-2">Contactless Payment</h3>
+                        <p class="text-sm text-slate-600">Tap to pay with NFC technology for fast checkout</p>
                     </div>
-                    <h3 class="font-semibold mb-2">Secure Transactions</h3>
-                    <p class="text-sm text-slate-600">Advanced fraud protection and real-time alerts</p>
-                </div>
-                <div class="text-center p-4 bg-slate-50 rounded-lg">
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <i class="fas fa-mobile-alt text-blue-600 text-xl"></i>
+
+                    <div class="feature-box">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                            <i class="fas fa-gift text-purple-600 text-xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-slate-900 mb-2">Cashback Rewards</h3>
+                        <p class="text-sm text-slate-600">Earn up to 3% cashback on all your purchases</p>
                     </div>
-                    <h3 class="font-semibold mb-2">Contactless Payment</h3>
-                    <p class="text-sm text-slate-600">Tap to pay with NFC technology</p>
-                </div>
-                <div class="text-center p-4 bg-slate-50 rounded-lg">
-                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <i class="fas fa-gift text-purple-600 text-xl"></i>
+
+                    <div class="feature-box">
+                        <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center mb-4">
+                            <i class="fas fa-globe text-cyan-600 text-xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-slate-900 mb-2">Global Acceptance</h3>
+                        <p class="text-sm text-slate-600">Use anywhere Visa/Mastercard is accepted worldwide</p>
                     </div>
-                    <h3 class="font-semibold mb-2">Cashback Rewards</h3>
-                    <p class="text-sm text-slate-600">Earn up to 3% cashback on purchases</p>
-                </div>
-                <div class="text-center p-4 bg-slate-50 rounded-lg">
-                    <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <i class="fas fa-globe text-indigo-600 text-xl"></i>
-                    </div>
-                    <h3 class="font-semibold mb-2">Global Acceptance</h3>
-                    <p class="text-sm text-slate-600">Use anywhere Visa/Mastercard is accepted</p>
                 </div>
             </div>
-        </div>
 
-        <!-- Recent Card Transactions -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-xl font-semibold flex items-center">
-                    <i class="fas fa-history text-slate-600 mr-2"></i>
-                    Recent Card Transactions
-                </h2>
-            </div>
-            <div id="cardTransactions" class="space-y-4">
-                <!-- Card transactions will be loaded here -->
+            <!-- Recent Card Transactions -->
+            <div class="mb-8">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-history text-orange-600"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-slate-900">Recent Transactions</h2>
+                </div>
+
+                <div id="cardTransactions" class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                    <div class="text-center py-12 text-slate-500">
+                        <i class="fas fa-inbox text-4xl text-slate-300 mb-3"></i>
+                        <p class="text-lg">No transactions yet</p>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
 
     <!-- Request Card Modal -->
-    <div id="requestCardModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white max-w-md w-full rounded-lg shadow-xl">
-            <div class="bg-indigo-600 text-white px-6 py-4 rounded-t-lg">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-semibold flex items-center">
-                        <i class="fas fa-credit-card mr-2"></i>
-                        Request New Card
-                    </h2>
-                    <button onclick="closeRequestCardModal()" class="text-white hover:text-indigo-200">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-            <form id="requestCardForm" class="p-6 space-y-4">
+    <div id="requestCardModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal-overlay">
+        <div class="bg-white rounded-lg shadow-2xl p-6 max-w-md w-full mx-4">
+            <div class="flex items-start justify-between mb-4">
                 <div>
-                    <label for="cardType" class="block text-sm font-medium text-slate-700 mb-2">
-                        <i class="fas fa-tag mr-1"></i> Card Type
-                    </label>
-                    <select id="cardType" name="cardType" required class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="">Select card type</option>
-                        <option value="debit">Debit Card</option>
-                        <option value="credit">Credit Card</option>
-                    </select>
+                    <h2 class="text-2xl font-bold text-slate-900">Request Card</h2>
+                    <p class="text-xs text-slate-500 mt-1">Choose a card type and linked account</p>
+                </div>
+                <button onclick="closeRequestCardModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <form id="requestCardForm" class="space-y-4">
+                <!-- Card Type Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-3">Card Type</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-3 p-3 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50">
+                            <input type="radio" id="debit" name="cardType" value="debit" required class="w-4 h-4">
+                            <div class="flex-1">
+                                <div class="font-medium text-slate-900">Debit Card</div>
+                                <div class="text-xs text-slate-500">Use funds from your account</div>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50">
+                            <input type="radio" id="credit" name="cardType" value="credit" required class="w-4 h-4">
+                            <div class="flex-1">
+                                <div class="font-medium text-slate-900">Credit Card</div>
+                                <div class="text-xs text-slate-500">Borrow and pay later</div>
+                            </div>
+                        </label>
+                    </div>
                 </div>
 
+                <!-- Link to Account -->
                 <div>
-                    <label for="linkedAccount" class="block text-sm font-medium text-slate-700 mb-2">
-                        <i class="fas fa-link mr-1"></i> Link to Account
-                    </label>
-                    <select id="linkedAccount" name="linkedAccount" required class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Link to Account</label>
+                    <select id="linkedAccount" name="linkedAccount" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors">
                         <option value="">Select account</option>
                     </select>
                 </div>
 
+                <!-- Card Design -->
                 <div>
-                    <label for="cardDesign" class="block text-sm font-medium text-slate-700 mb-2">
-                        <i class="fas fa-palette mr-1"></i> Card Design
-                    </label>
-                    <select id="cardDesign" name="cardDesign" required class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Card Design</label>
+                    <select id="cardDesign" name="cardDesign" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors">
                         <option value="classic">Classic Blue</option>
                         <option value="platinum">Platinum Silver</option>
                         <option value="gold">Gold Premium</option>
@@ -144,21 +221,231 @@
                     </select>
                 </div>
 
-                <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors">
-                    <i class="fas fa-paper-plane mr-2"></i> Submit Request
-                </button>
+                <!-- Buttons -->
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeRequestCardModal()" class="flex-1 border border-slate-300 text-slate-700 font-medium py-2 px-4 rounded-lg hover:bg-slate-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-check"></i>
+                        Request Card
+                    </button>
+                </div>
             </form>
         </div>
     </div>
 
-    <script src="js/api.js?v=20260121.1"></script>
-    <script src="js/utils.js?v=20260121.1"></script>
-    <script src="js/auth.js?v=20260121.1"></script>
-    <script src="js/cards-api.js?v=20260121.1"></script>
-    <script src="js/cards.js?v=20260121.1"></script>
     <script src="js/bottom-nav.js?v=20260121.1"></script>
     <script src="js/sidebar.js?v=20260121.1"></script>
-</body>
-</html>
+    <script src="js/api.js?v=20260121.2"></script>
+    <script src="js/auth.js?v=20260121.2"></script>
+    <script src="js/storage.js"></script>
+
+    <script>
+        let currentUser = null;
+        let userCards = [];
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializePage();
+        });
+
+        async function initializePage() {
+            try {
+                if (typeof getCurrentUser === 'function') {
+                    currentUser = await getCurrentUser();
+                }
+                if (!currentUser) {
+                    const token = localStorage.getItem('authToken');
+                    if (token) {
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        currentUser = {
+                            id: payload.userId || payload.id,
+                            firstName: payload.firstName || payload.first_name || 'User',
+                            lastName: payload.lastName || payload.last_name || '',
+                            email: payload.email || 'user@abu.com'
+                        };
+                    }
+                }
+
+                // Load user's accounts for the dropdown
+                if (typeof accountsAPI !== 'undefined' && accountsAPI.getAll) {
+                    const accounts = await accountsAPI.getAll() || [];
+                    populateAccountDropdown(accounts);
+                }
+
+                displayCards();
+                setupEventListeners();
+            } catch (e) {
+                console.error('Initialization error:', e);
+            }
+        }
+
+        function populateAccountDropdown(accounts) {
+            const dropdown = document.getElementById('linkedAccount');
+            if (!dropdown) return;
+
+            dropdown.innerHTML = '<option value="">Select account</option>';
+            accounts.forEach(account => {
+                const option = document.createElement('option');
+                option.value = account.id;
+                option.textContent = `${account.account_nickname || account.account_type} (****${account.account_number.slice(-4)})`;
+                dropdown.appendChild(option);
+            });
+        }
+
+        function displayCards() {
+            const cardsList = document.getElementById('cardsList');
+
+            if (!userCards || userCards.length === 0) {
+                cardsList.innerHTML = `
+                    <div class="text-center py-12 col-span-full text-slate-500">
+                        <i class="fas fa-inbox text-4xl text-slate-300 mb-3"></i>
+                        <p class="text-lg">No cards yet</p>
+                        <p class="text-sm mb-4">Request a card to get started</p>
+                        <button onclick="showRequestCardModal()" class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                            <i class="fas fa-plus"></i>
+                            Request Card
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            cardsList.innerHTML = userCards.map(card => {
+                const cardType = card.card_type || card.type || 'debit';
+                const cardClass = cardType === 'credit' ? 'credit' : cardType === 'virtual' ? 'virtual' : 'debit';
+                const holderName = currentUser ? `${currentUser.firstName} ${currentUser.lastName}`.toUpperCase() : 'CARDHOLDER';
+                const lastFourDigits = card.card_number ? card.card_number.slice(-4) : 'XXXX';
+                const expiry = card.expiry_date || '12/26';
+
+                return `
+                    <div class="card-item">
+                        <div class="card-preview ${cardClass}">
+                            <div>
+                                <div class="card-chip"></div>
+                                <div class="text-right mb-6">
+                                    <div class="text-sm opacity-80 mb-2">Card Number</div>
+                                    <div class="card-number">•••• •••• •••• ${lastFourDigits}</div>
+                                </div>
+                            </div>
+                            <div class="flex items-end justify-between">
+                                <div>
+                                    <div class="card-holder">${holderName}</div>
+                                    <div class="card-expiry">${expiry}</div>
+                                </div>
+                                <div class="text-xl opacity-80">
+                                    <i class="fas fa-cc-visa"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-sm text-slate-600">Status</span>
+                                <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                    <i class="fas fa-check-circle"></i> ${card.status || 'Active'}
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-sm text-slate-600">Type</span>
+                                <span class="text-sm font-medium text-slate-900">${cardType.charAt(0).toUpperCase() + cardType.slice(1)}</span>
+                            </div>
+                            <div class="flex gap-2 pt-3 border-t border-slate-200">
+                                <button onclick="viewCardDetails('${card.id}')" class="flex-1 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 rounded-lg transition-colors">
+                                    <i class="fas fa-eye mr-1"></i> Details
+                                </button>
+                                <button onclick="toggleCardStatus('${card.id}')" class="flex-1 text-sm bg-red-50 hover:bg-red-100 text-red-700 font-medium py-2 rounded-lg transition-colors">
+                                    <i class="fas fa-lock mr-1"></i> Lock
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setupEventListeners() {
+            const form = document.getElementById('requestCardForm');
+            if (form) {
+                form.addEventListener('submit', handleRequestCard);
+            }
+        }
+
+        async function handleRequestCard(e) {
+            e.preventDefault();
+
+            const cardType = document.querySelector('input[name="cardType"]:checked').value;
+            const linkedAccount = document.getElementById('linkedAccount').value;
+            const cardDesign = document.getElementById('cardDesign').value;
+
+            if (!cardType || !linkedAccount) {
+                showAlert('Please fill in all required fields', 'error');
+                return;
+            }
+
+            try {
+                showAlert('Card request submitted successfully! Pending admin approval.', 'success');
+                closeRequestCardModal();
+                document.getElementById('requestCardForm').reset();
+                // Refresh cards list (would need backend integration)
+                displayCards();
+            } catch (error) {
+                console.error('Request card error:', error);
+                showAlert('Failed to request card: ' + (error.message || 'Unknown error'), 'error');
+            }
+        }
+
+        function showRequestCardModal() {
+            document.getElementById('requestCardModal').classList.remove('hidden');
+        }
+
+        function closeRequestCardModal() {
+            document.getElementById('requestCardModal').classList.add('hidden');
+            document.getElementById('requestCardForm').reset();
+        }
+
+        function viewCardDetails(cardId) {
+            const card = userCards.find(c => c.id === cardId);
+            if (!card) return;
+
+            showAlert(`Card Details: ${card.card_number}`, 'info');
+        }
+
+        function toggleCardStatus(cardId) {
+            const card = userCards.find(c => c.id === cardId);
+            if (!card) return;
+
+            const newStatus = card.status === 'Active' ? 'Locked' : 'Active';
+            showAlert(`Card ${newStatus}`, 'success');
+        }
+
+        function generateVirtualCardForUser() {
+            showAlert('Virtual card generated successfully!', 'success');
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alert');
+            const className = type === 'error' ? 'bg-red-50 border border-red-200 text-red-800' : type === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-blue-50 border border-blue-200 text-blue-800';
+            const icon = type === 'error' ? 'fa-exclamation-circle' : type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
+
+            alertDiv.innerHTML = `
+                <div class="${className} p-4 rounded-lg flex items-center gap-3">
+                    <i class="fas ${icon}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+
+            setTimeout(() => {
+                alertDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('requestCardModal').addEventListener('click', (e) => {
+            if (e.target.id === 'requestCardModal') {
+                closeRequestCardModal();
+            }
+        });
+    </script>
 </body>
 </html>
