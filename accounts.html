@@ -58,7 +58,6 @@
             <div class="mb-8">
                 <div class="flex items-center gap-3 mb-6">
                     <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-credit-card text-blue-600"></i>
                     </div>
                     <h2 class="text-xl font-semibold text-slate-900">Your Accounts</h2>
                 </div>
@@ -304,11 +303,11 @@
                         </div>
 
                         <div class="flex gap-2">
-                            <button onclick="location.href='transfer.html'" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 px-3 rounded-lg transition-colors text-sm flex items-center justify-center gap-1">
+                            <button onclick="navigateToTransfer('${account.id}')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 px-3 rounded-lg transition-colors text-sm flex items-center justify-center gap-1">
                                 <i class="fas fa-arrow-right"></i>
                                 Send
                             </button>
-                            <button onclick="location.href='deposit.html'" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 px-3 rounded-lg transition-colors text-sm flex items-center justify-center gap-1">
+                            <button onclick="navigateToDeposit('${account.id}')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 px-3 rounded-lg transition-colors text-sm flex items-center justify-center gap-1">
                                 <i class="fas fa-arrow-down"></i>
                                 Receive
                             </button>
@@ -393,6 +392,16 @@
             // For now, navigate to transactions page for this account
             // In a full implementation, this could show a detailed modal
             window.location.href = `transactions.html?account=${accountId}`;
+        }
+
+        function navigateToTransfer(accountId) {
+            sessionStorage.setItem('selectedFromAccount', accountId);
+            window.location.href = 'transfer.html';
+        }
+
+        function navigateToDeposit(accountId) {
+            sessionStorage.setItem('selectedToAccount', accountId);
+            window.location.href = 'deposit.html';
         }
 
         function showAlert(message, type) {
