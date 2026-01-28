@@ -18,9 +18,9 @@
         .account-card { transition: all 0.3s ease; }
         .account-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); }
         .account-badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
-        .badge-checking { background: #fcdcee; color: #fff; }
-        .badge-savings { background: #fcdcee; color: #fff; }
-        .badge-business { background: #fcdcee; color: #fff; }
+        .badge-checking { background: #fff; color: #000; }
+        .badge-savings { background: #fff; color: #000; }
+        .badge-business { background: #fff; color: #000; }
         .modal-overlay { backdrop-filter: blur(4px); }
     </style>
 </head>
@@ -48,27 +48,12 @@
                         <p class="text-slate-500 text-sm mb-2">Total Available Balance</p>
                         <h2 id="accountsTotalBalance" class="text-4xl font-bold text-slate-900">$0.00</h2>
                     </div>
-                    <div class="w-12 h-12 rounded-full flex items-center justify-center">
+                    <button onclick="showCreateAccountModal()" class="w-12 h-12 rounded-full flex items-center justify-center">
                         <i class="fas fa-wallet text-2xl text-slate-400"></i>
-                    </div>
-                </div>
-                
-                <div class="flex gap-3 mt-6 pt-6 border-t border-slate-200">
-                    <button onclick="showCreateAccountModal()" class="flex-1 border border-slate-300 text-slate-700 font-medium py-2 px-4 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
-                        <i class="fas fa-plus-circle"></i>
-                        Open New Account
-                    </button>
-                    <button onclick="location.href='deposit.html'" class="flex-1 border border-slate-300 text-slate-700 font-medium py-2 px-4 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
-                        <i class="fas fa-arrow-down"></i>
-                        Deposit
-                    </button>
-                    <button onclick="location.href='transfer.html'" class="flex-1 border border-slate-300 text-slate-700 font-medium py-2 px-4 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
-                        <i class="fas fa-arrow-right"></i>
-                        Transfer
                     </button>
                 </div>
             </div>
-
+            
             <!-- Accounts Grid -->
             <div class="mb-8">
                 <div class="flex items-center gap-3 mb-6">
