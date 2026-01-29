@@ -19,6 +19,8 @@
         .transfer-type-btn.active { background-color: #9333ea; color: white; }
         .hidden-section { display: none; }
         .print-receipt { max-width: 500px; margin: 20px auto; }
+        .sub-option-btn { transition: all 0.3s ease; }
+        .sub-option-btn.active { background-color: #9333ea; color: white; border-color: #9333ea; }
     </style>
 </head>
 <body class="bg-slate-50">
@@ -70,16 +72,48 @@
                     </div>
 
                     <form id="transferForm" class="space-y-4">
-                        <!-- INTERNAL TRANSFER -->
+                        <!-- INTERNAL TRANSFER - TO ABU ACCOUNTS -->
                         <div id="internalTransfer" class="space-y-4">
+                            <!-- ABU Account Sub-Selection -->
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-2">Send To (My Other Accounts)</label>
-                                <select id="internalToAccount" name="internalToAccount" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors">
-                                    <option value="">Select receiving account</option>
-                                </select>
-                                <div id="internalToBalance" class="text-xs text-slate-500 mt-2"></div>
+                                <label class="block text-sm font-medium text-slate-700 mb-3">Transfer Destination</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button type="button" onclick="switchAbuTransferMode('myAccounts')" class="sub-option-btn active bg-purple-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                                        <i class="fas fa-user mr-1"></i>
+                                        My Accounts
+                                    </button>
+                                    <button type="button" onclick="switchAbuTransferMode('otherAccounts')" class="sub-option-btn border border-slate-300 text-slate-700 font-medium py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors text-sm">
+                                        <i class="fas fa-users mr-1"></i>
+                                        Other ABU Accounts
+                                    </button>
+                                </div>
                             </div>
 
+                            <!-- MY ACCOUNTS MODE -->
+                            <div id="myAccountsMode" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Send To (My Other Accounts)</label>
+                                    <select id="internalToAccount" name="internalToAccount" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors">
+                                        <option value="">Select receiving account</option>
+                                    </select>
+                                    <div id="internalToBalance" class="text-xs text-slate-500 mt-2"></div>
+                                </div>
+                            </div>
+
+                            <!-- OTHER ABU ACCOUNTS MODE -->
+                            <div id="otherAccountsMode" class="hidden-section space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Recipient Account Number or IBAN</label>
+                                    <input id="otherAbuAccountNumber" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Enter ABU account number or IBAN" />
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Recipient Name (Optional)</label>
+                                    <input id="otherAbuRecipientName" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Recipient's name (for reference)" />
+                                </div>
+                            </div>
+
+                            <!-- COMMON FIELDS FOR BOTH MODES -->
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-2">Send From</label>
                                 <select id="internalFromAccount" name="internalFromAccount" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors">
@@ -178,17 +212,14 @@
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-2">Account Holder's Name</label>
                                 <input id="intlAccountName" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Recipient's full name" />
-
                             </div>
                                
-                               
-                                <div class="relative">
-                                    <label class="block text-sm font-medium text-slate-700 mb-2">Select Reciever's Country</label>
-                                    <select id="intlCountry" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors mt-2">
-                                        <option value="">Select destination country</option>
-                                    </select>
-                                </div>
-                            
+                            <div class="relative">
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Select Reciever's Country</label>
+                                <select id="intlCountry" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors mt-2">
+                                    <option value="">Select destination country</option>
+                                </select>
+                            </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-2">SWIFT Code or Postal Code</label>
@@ -216,7 +247,7 @@
                                     <span class="absolute left-3 top-2.5 text-slate-500 font-medium">$</span>
                                     <input id="intlAmountUSD" type="number" min="0.01" step="0.01" class="w-full pl-7 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="0.00" oninput="calculateConvertedAmount()" />
                                 </div>
-                                <p class="text-xs text-slate-500 mt-1"><strong>Note</strong>that 5% conversion fee applies</p>
+                                <p class="text-xs text-slate-500 mt-1"><strong>Note</strong> that 5% conversion fee applies</p>
                             </div>
 
                             <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -299,10 +330,7 @@
     <script src="js/api.js?v=20260121.2"></script>
     <script src="js/auth.js?v=20260121.2"></script>
     <script src="js/storage.js"></script>
-    <script src="js/accounts.js?v=20260121.2"></script>
     <script src="js/utils.js"></script>
-    <script src="js/transactions-api.js"></script>
-    <script src="js/transfer-api.js"></script>
 
     <script>
         // Country currency mapping
@@ -332,6 +360,7 @@
         let currentUser = null;
         let userAccounts = [];
         let currentTransferType = 'internal';
+        let currentAbuMode = 'myAccounts';
         let lastTransferReceipt = null;
 
         // Initialize on page load
@@ -360,6 +389,18 @@
 
                 if (typeof accountsAPI !== 'undefined' && accountsAPI.getAll) {
                     userAccounts = await accountsAPI.getAll() || [];
+                }
+
+                // Check for pre-selected account from sessionStorage
+                const selectedFromAccountId = sessionStorage.getItem('selectedFromAccount');
+                if (selectedFromAccountId) {
+                    setTimeout(() => {
+                        document.getElementById('internalFromAccount').value = selectedFromAccountId;
+                        document.getElementById('externalFromAccount').value = selectedFromAccountId;
+                        document.getElementById('intlFromAccount').value = selectedFromAccountId;
+                        updateBalanceDisplay({ target: document.getElementById('internalFromAccount') });
+                        sessionStorage.removeItem('selectedFromAccount');
+                    }, 100);
                 }
 
                 populateAccountDropdowns();
@@ -408,22 +449,10 @@
             const options = countries.map(country => `<option value="${country}">${country}</option>`).join('');
             countrySelect.innerHTML = '<option value="">Select destination country</option>' + options;
 
-            // Search functionality
-            const searchInput = document.getElementById('intlCountrySearch');
-            searchInput.addEventListener('input', (e) => {
-                const searchTerm = e.target.value.toLowerCase();
-                const options = countrySelect.querySelectorAll('option');
-                options.forEach(opt => {
-                    if (opt.value === '') return;
-                    opt.style.display = opt.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
-                });
-            });
-
             countrySelect.addEventListener('change', updateCurrencyDisplay);
         }
 
         function setupEventListeners() {
-            // Balance display updates
             document.getElementById('internalFromAccount').addEventListener('change', updateBalanceDisplay);
             document.getElementById('externalFromAccount').addEventListener('change', updateBalanceDisplay);
             document.getElementById('intlFromAccount').addEventListener('change', updateBalanceDisplay);
@@ -432,14 +461,15 @@
 
         function updateBalanceDisplay(e) {
             const select = e.target;
-            const balanceDisplay = select.closest('div').parentElement.querySelector('[id$="Balance"]');
+            const wrapper = select.closest('div').parentElement;
+            const balanceDisplay = wrapper.querySelector('[id$="Balance"]');
             if (!balanceDisplay) return;
 
             const selectedOption = select.selectedOptions[0];
             const balance = selectedOption.getAttribute('data-balance');
 
             if (balance !== null) {
-                balanceDisplay.textContent = `Available balance: $${parseFloat(balance).toFixed(2)}`;
+                balanceDisplay.innerHTML = `<i class="fas fa-info-circle"></i><span>Available balance: <strong>$${parseFloat(balance).toFixed(2)}</strong></span>`;
             }
         }
 
@@ -481,11 +511,38 @@
             }
 
             const currency = countryCurrencies[country];
-            const fee = amount * 0.05; // 5% conversion fee
+            const fee = amount * 0.05;
             const netAmount = amount - fee;
             const convertedAmount = netAmount * currency.rate;
 
             receivedDisplay.textContent = `${currency.symbol}${convertedAmount.toFixed(2)} ${currency.code}`;
+        }
+
+        function switchAbuTransferMode(mode) {
+            currentAbuMode = mode;
+
+            const myAccountsMode = document.getElementById('myAccountsMode');
+            const otherAccountsMode = document.getElementById('otherAccountsMode');
+            const buttons = document.querySelectorAll('.sub-option-btn');
+
+            // Remove active state from all buttons
+            buttons.forEach(btn => {
+                btn.classList.remove('active', 'bg-purple-600', 'text-white');
+                btn.classList.add('border', 'border-slate-300', 'text-slate-700');
+            });
+
+            // Toggle sections and update button state
+            if (mode === 'myAccounts') {
+                myAccountsMode.classList.remove('hidden-section');
+                otherAccountsMode.classList.add('hidden-section');
+                buttons[0].classList.add('active', 'bg-purple-600', 'text-white');
+                buttons[0].classList.remove('border', 'border-slate-300', 'text-slate-700');
+            } else {
+                myAccountsMode.classList.add('hidden-section');
+                otherAccountsMode.classList.remove('hidden-section');
+                buttons[1].classList.add('active', 'bg-purple-600', 'text-white');
+                buttons[1].classList.remove('border', 'border-slate-300', 'text-slate-700');
+            }
         }
 
         function switchTransferType(type) {
@@ -517,17 +574,11 @@
         }
 
         function handleInternalTransfer() {
-            const toAccount = document.getElementById('internalToAccount').value;
             const fromAccount = document.getElementById('internalFromAccount').value;
             const amount = parseFloat(document.getElementById('internalAmount').value) || 0;
 
-            if (!toAccount || !fromAccount) {
-                showAlert('Please select both accounts', 'error');
-                return;
-            }
-
-            if (toAccount === fromAccount) {
-                showAlert('Cannot transfer to the same account', 'error');
+            if (!fromAccount) {
+                showAlert('Please select a sending account', 'error');
                 return;
             }
 
@@ -537,19 +588,46 @@
             }
 
             const from = userAccounts.find(a => a.id === fromAccount);
-            const to = userAccounts.find(a => a.id === toAccount);
 
             if (from.balance < amount) {
                 showAlert('Insufficient funds', 'error');
                 return;
             }
 
+            let toInfo = '';
+
+            if (currentAbuMode === 'myAccounts') {
+                const toAccount = document.getElementById('internalToAccount').value;
+                if (!toAccount) {
+                    showAlert('Please select a receiving account', 'error');
+                    return;
+                }
+
+                if (toAccount === fromAccount) {
+                    showAlert('Cannot transfer to the same account', 'error');
+                    return;
+                }
+
+                const to = userAccounts.find(a => a.id === toAccount);
+                toInfo = `${(to.account_type || 'Account').toUpperCase()} - ****${(to.account_number || '0000').slice(-4)}`;
+            } else {
+                const accountNumber = document.getElementById('otherAbuAccountNumber').value.trim();
+                const recipientName = document.getElementById('otherAbuRecipientName').value.trim() || 'ABU Account';
+
+                if (!accountNumber) {
+                    showAlert('Please enter the recipient account number or IBAN', 'error');
+                    return;
+                }
+
+                toInfo = `${recipientName} (${accountNumber})`;
+            }
+
             // Create receipt
             lastTransferReceipt = {
-                type: 'Internal Transfer',
+                type: currentAbuMode === 'myAccounts' ? 'Internal Transfer' : 'ABU Account Transfer',
                 date: new Date().toLocaleString(),
                 from: `${(from.account_type || 'Account').toUpperCase()} - ****${(from.account_number || '0000').slice(-4)}`,
-                to: `${(to.account_type || 'Account').toUpperCase()} - ****${(to.account_number || '0000').slice(-4)}`,
+                to: toInfo,
                 amount: amount,
                 currency: 'USD',
                 fee: 0,
@@ -558,6 +636,12 @@
 
             showSuccessModal();
             document.getElementById('internalAmount').value = '';
+            if (currentAbuMode === 'myAccounts') {
+                document.getElementById('internalToAccount').value = '';
+            } else {
+                document.getElementById('otherAbuAccountNumber').value = '';
+                document.getElementById('otherAbuRecipientName').value = '';
+            }
         }
 
         function handleExternalTransfer() {
@@ -675,7 +759,7 @@
             
             let receiptHTML = '';
 
-            if (lastTransferReceipt.type === 'Internal Transfer') {
+            if (lastTransferReceipt.type === 'Internal Transfer' || lastTransferReceipt.type === 'ABU Account Transfer') {
                 receiptHTML = `
                     <div class="flex justify-between"><span>From:</span><strong>${lastTransferReceipt.from}</strong></div>
                     <div class="border-t border-slate-300"></div>
@@ -757,7 +841,7 @@
                     <div class="receipt-divider"></div>
             `;
 
-            if (lastTransferReceipt.type === 'Internal Transfer') {
+            if (lastTransferReceipt.type === 'Internal Transfer' || lastTransferReceipt.type === 'ABU Account Transfer') {
                 receiptContent += `
                     <div class="receipt-item">
                         <span class="receipt-label">From:</span>
