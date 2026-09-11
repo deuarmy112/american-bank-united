@@ -246,7 +246,7 @@ async function adminRoutes(method, parts, user, body, query) {
         };
     }
 
-    if (method === 'GET' && parts[0] === 'users') {
+    if (method === 'GET' && parts[0] === 'users' && parts.length === 1) {
         const limit = Number(reqQuery(query, 'limit', 50)) || 50;
         const page = Number(reqQuery(query, 'page', 1)) || 1;
         const search = String(reqQuery(query, 'search', '') || '').trim().toLowerCase();
