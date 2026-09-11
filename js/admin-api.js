@@ -80,16 +80,11 @@ const adminAPI = {
 
     // Adjust account balance
     async adjustBalance(accountId, amount, type, reason) {
-        const response = await fetch(`${API_URL}/admin/accounts/${accountId}/adjust-balance`, {
+        return adminRequest(`${API_URL}/admin/accounts/${accountId}/adjust-balance`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${getAdminToken()}`
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ amount, type, reason })
         });
-        if (!response.ok) throw new Error('Failed to adjust balance');
-        return await response.json();
     },
 
     // Get transactions with filters

@@ -389,6 +389,47 @@ async function adminRoutes(method, parts, user, body, query) {
         };
     }
 
+    if (method === 'POST' && parts[0] === 'accounts' && parts[1] && parts[2] === 'adjust-balance') {
+        const accountId = parts[1];
+        const amount = Number(body.amount);
+        const type = body.type;
+        const reason = String(body.reason || '').trim();
+        const account = await getDoc('accounts', accountId);
+
+        if (!account) return { status: 404, body: { error: 'Account not found' } };
+        if (!['credit', 'debit'].includes(type) || !Number.isFinite(amount) || amount <= 0) {
+            return { status: 400, body: { error: 'Adjustment details are invalid' } };
+        }
+        if (!reason) return { status: 400, body: { error: 'Adjustment reason is required' } };
+
+        const balanceBefore = Number(account.balance || 0);
+        const balanceAfter = Number((type === 'credit' ? balanceBefore + amount : balanceBefore - amount).toFixed(2));
+        if (balanceAfter < 0) return { status: 400, body: { error: 'Adjustment would make the balance negative' } };
+
+        const timestamp = now();
+        await getDb().collection('accounts').doc(accountId).set({ balance: balanceAfter, updated_at: timestamp }, { merge: true });
+        await save('transactions', {
+            account_id: accountId,
+            type: type === 'credit' ? 'deposit' : 'withdrawal',
+            amount: type === 'credit' ? amount : -amount,
+            description: `Admin adjustment: ${reason}`,
+            balance_after: balanceAfter,
+            approval_status: 'approved',
+            created_at: timestamp
+        });
+
+        return {
+            body: {
+                message: 'Balance adjusted successfully',
+                balanceBefore,
+                balanceAfter,
+                adjustment: amount,
+                type,
+                reason
+            }
+        };
+    }
+
     if (method === 'GET' && parts[0] === 'transactions') {
         const transactions = await getDb().collection('transactions').orderBy('created_at', 'desc').limit(Number(reqQuery(query, 'limit', 50) || 50)).get();
         return { body: { transactions: transactions.docs.map(doc => clean({ id: doc.id, ...doc.data() })) } };
