@@ -1,25 +1,49 @@
 const bcrypt = require('bcryptjs');
 const admin = require('firebase-admin');
+const fs = require('fs');
+const path = require('path');
 
-const required = ['FIREBASE_PROJECT_ID', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_PRIVATE_KEY'];
-const missing = required.filter(name => !process.env[name]);
-if (missing.length) {
-    console.error(`Missing Firebase environment variables: ${missing.join(', ')}`);
-    process.exit(1);
-}
-if (process.env.FIREBASE_PRIVATE_KEY === '[SENSITIVE]') {
-    console.error('FIREBASE_PRIVATE_KEY was redacted by Vercel. Add the real Firebase service-account private key to .env.local before running npm run seed-admin.');
-    process.exit(1);
+const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+let credential;
+if (serviceAccountPath) {
+    const absolutePath = path.resolve(serviceAccountPath);
+    if (!fs.existsSync(absolutePath)) {
+        console.error(`Firebase service-account file not found: ${absolutePath}`);
+        process.exit(1);
+    }
+    credential = admin.credential.cert(require(absolutePath));
+} else {
+    const required = ['FIREBASE_PROJECT_ID', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_PRIVATE_KEY'];
+    const missing = required.filter(name => !process.env[name] || process.env[name] === '[SENSITIVE]');
+    if (missing.length) {
+        console.error(`Missing usable Firebase credentials: ${missing.join(', ')}. Set GOOGLE_APPLICATION_CREDENTIALS to a Firebase service-account JSON file.`);
+        process.exit(1);
+    }
+
+    let privateKey = process.env.FIREBASE_PRIVATE_KEY.trim();
+    if ((privateKey.startsWith('"') && privateKey.endsWith('"')) || (privateKey.startsWith("'") && privateKey.endsWith("'"))) {
+        privateKey = privateKey.slice(1, -1);
+    }
+    if (privateKey.startsWith('[') && privateKey.endsWith(']')) {
+        privateKey = privateKey.slice(1, -1).trim();
+    }
+    privateKey = privateKey.replace(/\\n/g, '\n');
+    if (!privateKey.includes('-----BEGIN PRIVATE KEY-----') || !privateKey.includes('-----END PRIVATE KEY-----')) {
+        console.error('FIREBASE_PRIVATE_KEY must contain a complete PEM private key. Check .env.local formatting.');
+        process.exit(1);
+    }
+
+    credential = admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey
+    });
 }
 
 const email = (process.env.ADMIN_EMAIL || 'admin@americanbankunited.com').toLowerCase();
 const password = process.env.ADMIN_PASSWORD || 'Admin@123';
 const app = admin.initializeApp({
-    credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
-    })
+    credential
 });
 
 async function seedAdmin() {

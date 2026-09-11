@@ -9,9 +9,13 @@ PostgreSQL migration files under `server/` are not used by the deployed app.
 ```bash
 npx vercel env pull .env.local --environment=production
 ```
-2. Vercel redacts sensitive values when pulling environment variables. Replace
-`FIREBASE_PRIVATE_KEY=[SENSITIVE]` in `.env.local` with the actual private key
-from the Firebase service-account JSON file, keeping the `\\n` line breaks.
+2. Download a Firebase service-account JSON file from Firebase Console > Project
+Settings > Service accounts. Keep it outside the repository, then set its path:
+```powershell
+$env:GOOGLE_APPLICATION_CREDENTIALS = "C:\path\to\firebase-service-account.json"
+```
+Vercel redacts sensitive values during environment pulls, so `.env.local` alone
+cannot be used for local Firestore seeding.
 3. Seed or reset the admin user in Firestore:
 ```bash
 npm run seed-admin
