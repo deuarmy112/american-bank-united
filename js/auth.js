@@ -3,17 +3,19 @@
  * Handles user login state and protection
  */
 
-// Ensure a token exists for pages that depend on auth-state checks
+// Ensure a token exists only for authenticated users
 function ensureAuthToken() {
-    if (!localStorage.getItem('authToken')) {
-        localStorage.setItem('authToken', 'guest-token');
+    const token = localStorage.getItem('authToken');
+    if (!token || token === 'guest-token') {
+        localStorage.removeItem('authToken');
+        return null;
     }
-    return localStorage.getItem('authToken');
+    return token;
 }
 
 // Check if user is logged in (has valid token)
 function isLoggedIn() {
-    return !!localStorage.getItem('authToken') || !!ensureAuthToken();
+    return !!ensureAuthToken();
 }
 
 // Get current user from API
@@ -33,7 +35,11 @@ async function getCurrentUser() {
 
 // Redirect to login if not authenticated
 function requireAuth() {
-    ensureAuthToken();
+    const token = ensureAuthToken();
+    if (!token) {
+        window.location.href = 'index.html';
+        return false;
+    }
     return true;
 }
 

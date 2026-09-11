@@ -32,8 +32,8 @@ const apiClient = {
             },
         };
 
-        // Add Authorization header if token exists
-        if (token) {
+        // Add Authorization header only for real authenticated tokens
+        if (token && token !== 'guest-token') {
             config.headers['Authorization'] = `Bearer ${token}`;
         }
 

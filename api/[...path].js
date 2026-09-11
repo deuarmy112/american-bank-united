@@ -224,14 +224,176 @@ async function externalRoutes(method, parts, user, body) {
 
 async function adminRoutes(method, parts, user, body, query) {
     requireAdmin(user);
+
     if (method === 'GET' && parts[0] === 'dashboard') {
-        const [users, accounts, transactions] = await Promise.all([getDb().collection('users').get(), getDb().collection('accounts').get(), getDb().collection('transactions').get()]);
-        return { body: { stats: { total_users: users.size, total_accounts: accounts.size, total_transactions: transactions.size }, recentActivity: [] } };
+        const [usersSnap, accountsSnap, transactionsSnap] = await Promise.all([
+            getDb().collection('users').get(),
+            getDb().collection('accounts').get(),
+            getDb().collection('transactions').get()
+        ]);
+
+        return {
+            body: {
+                stats: {
+                    total_users: usersSnap.size,
+                    total_accounts: accountsSnap.size,
+                    total_transactions: transactionsSnap.size,
+                    pending_accounts: accountsSnap.docs.filter(doc => doc.data().approval_status === 'pending').length,
+                    active_users: usersSnap.docs.filter(doc => doc.data().status === 'active').length
+                },
+                recentActivity: []
+            }
+        };
     }
+
     if (method === 'GET' && parts[0] === 'users') {
-        const snapshot = await getDb().collection('users').orderBy('created_at', 'desc').limit(Number(reqQuery(query, 'limit', 50))).get();
-        return { body: { users: snapshot.docs.map(doc => clean({ id: doc.id, ...doc.data(), password_hash: undefined })), total: snapshot.size, page: 1, limit: 50 } };
+        const limit = Number(reqQuery(query, 'limit', 50)) || 50;
+        const page = Number(reqQuery(query, 'page', 1)) || 1;
+        const search = String(reqQuery(query, 'search', '') || '').trim().toLowerCase();
+        const status = reqQuery(query, 'status', '');
+        const role = reqQuery(query, 'role', '');
+
+        const usersSnap = await getDb().collection('users').get();
+        const rows = usersSnap.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(item => item.role !== 'super_admin')
+            .filter(item => !status || item.status === status)
+            .filter(item => !role || item.role === role)
+            .filter(item => !search || [item.first_name, item.last_name, item.email].join(' ').toLowerCase().includes(search))
+            .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+
+        const pageUsers = rows.slice((page - 1) * limit, page * limit).map(async (item) => {
+            const accounts = await listDocs('accounts', 'user_id', item.id, null, 200);
+            const totalBalance = accounts.reduce((sum, account) => sum + Number(account.balance || 0), 0);
+            return {
+                ...clean(item),
+                account_count: accounts.length,
+                total_balance: totalBalance,
+                password_hash: undefined
+            };
+        });
+
+        const users = await Promise.all(pageUsers);
+
+        return {
+            body: {
+                users,
+                total: rows.length,
+                page,
+                limit
+            }
+        };
     }
+
+    if (method === 'GET' && parts[0] === 'users' && parts[1]) {
+        const userDoc = await getDoc('users', parts[1]);
+        if (!userDoc) return { status: 404, body: { error: 'User not found' } };
+
+        const accounts = await listDocs('accounts', 'user_id', userDoc.id, null, 200);
+        const recentTransactions = [];
+
+        for (const account of accounts) {
+            const tx = await listDocs('transactions', 'account_id', account.id, 'created_at', 20);
+            recentTransactions.push(...tx.map(item => ({ ...item, account_number: account.account_number })));
+        }
+
+        recentTransactions.sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+
+        return {
+            body: {
+                user: clean({ ...userDoc, password_hash: undefined }),
+                accounts: clean(accounts),
+                recentTransactions: clean(recentTransactions.slice(0, 20))
+            }
+        };
+    }
+
+    if (method === 'PUT' && parts[0] === 'users' && parts[1] && parts[2] === 'status') {
+        const userId = parts[1];
+        const { status, reason } = body;
+        if (!['active', 'inactive', 'suspended'].includes(status)) {
+            return { status: 400, body: { error: 'Invalid status value' } };
+        }
+
+        const user = await getDoc('users', userId);
+        if (!user) return { status: 404, body: { error: 'User not found' } };
+
+        await getDb().collection('users').doc(userId).set({ status, updated_at: now(), status_reason: reason || null }, { merge: true });
+
+        return {
+            body: {
+                message: 'User status updated successfully',
+                user: clean({ ...user, status, status_reason: reason || null, updated_at: now() })
+            }
+        };
+    }
+
+    if (method === 'GET' && parts[0] === 'accounts' && parts[1] === 'pending') {
+        const accounts = await listDocs('accounts', 'status', 'inactive', 'created_at', 500);
+        const pending = accounts.filter(account => account.approval_status === 'pending');
+
+        const withUsers = await Promise.all(pending.map(async (account) => {
+            const user = await getDoc('users', account.user_id);
+            return {
+                ...clean(account),
+                first_name: user ? user.first_name : '',
+                last_name: user ? user.last_name : '',
+                email: user ? user.email : ''
+            };
+        }));
+
+        return { body: { accounts: withUsers } };
+    }
+
+    if (method === 'POST' && parts[0] === 'accounts' && parts[1] && parts[2] === 'approve') {
+        const accountId = parts[1];
+        const account = await getDoc('accounts', accountId);
+        if (!account) return { status: 404, body: { error: 'Account not found' } };
+
+        const updated = await getDb().collection('accounts').doc(accountId).set({
+            approval_status: 'approved',
+            status: 'active',
+            approved_by: user.userId,
+            approved_at: now(),
+            updated_at: now()
+        }, { merge: true });
+
+        return {
+            body: {
+                message: 'Account approved successfully',
+                account: clean({ ...account, approval_status: 'approved', status: 'active', approved_by: user.userId, approved_at: now(), updated_at: now() })
+            }
+        };
+    }
+
+    if (method === 'POST' && parts[0] === 'accounts' && parts[1] && parts[2] === 'reject') {
+        const accountId = parts[1];
+        const account = await getDoc('accounts', accountId);
+        if (!account) return { status: 404, body: { error: 'Account not found' } };
+
+        const reason = body.reason || 'Rejected by admin';
+        await getDb().collection('accounts').doc(accountId).set({
+            approval_status: 'rejected',
+            status: 'closed',
+            rejection_reason: reason,
+            approved_by: user.userId,
+            approved_at: now(),
+            updated_at: now()
+        }, { merge: true });
+
+        return {
+            body: {
+                message: 'Account rejected successfully',
+                reason
+            }
+        };
+    }
+
+    if (method === 'GET' && parts[0] === 'transactions') {
+        const transactions = await getDb().collection('transactions').orderBy('created_at', 'desc').limit(Number(reqQuery(query, 'limit', 50) || 50)).get();
+        return { body: { transactions: transactions.docs.map(doc => clean({ id: doc.id, ...doc.data() })) } };
+    }
+
     return { status: 404, body: { error: 'Admin route not found' } };
 }
 

@@ -75,12 +75,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 password,
             });
 
-            showAlert('Registration successful! Redirecting...', 'success');
+            showAlert('Registration successful! Your account is pending admin approval. Please login to continue.', 'success');
             
-            // Redirect to dashboard
+            // Send new user back to login so they can sign in after approval
             setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 1500);
+                window.location.href = 'index.html';
+            }, 1800);
 
         } catch (error) {
             console.error('Registration error:', error);
