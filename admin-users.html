@@ -124,6 +124,39 @@
         </div>
     </div>
 
+    <!-- Adjust Balance Modal -->
+    <div id="adjustBalanceModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAdjustBalanceModal()">&times;</span>
+            <h2>Adjust Account Balance</h2>
+            <p id="adjustBalanceUser" style="color: #666;"></p>
+
+            <form id="adjustBalanceForm">
+                <input type="hidden" id="adjustBalanceUserId">
+                <div class="form-group">
+                    <label for="adjustBalanceAccount">Account</label>
+                    <select id="adjustBalanceAccount" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="adjustBalanceType">Adjustment Type</label>
+                    <select id="adjustBalanceType" required>
+                        <option value="credit">Credit</option>
+                        <option value="debit">Debit</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="adjustBalanceAmount">Amount</label>
+                    <input id="adjustBalanceAmount" type="number" min="0.01" step="0.01" required placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label for="adjustBalanceReason">Reason</label>
+                    <textarea id="adjustBalanceReason" rows="3" required placeholder="Reason for this adjustment"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Apply Adjustment</button>
+            </form>
+        </div>
+    </div>
+
     <script src="js/utils.js"></script>
     <script src="js/admin-api.js"></script>
     <script>
@@ -173,6 +206,9 @@
                         <td>
                             <button onclick="viewUserDetails('${user.id}')" class="btn btn-sm btn-secondary">
                                 <i class="fas fa-eye"></i> View
+                            </button>
+                            <button onclick="showAdjustBalanceModal('${user.id}')" class="btn btn-sm btn-primary">
+                                <i class="fas fa-dollar-sign"></i> Adjust
                             </button>
                             <button onclick="showChangeStatusModal('${user.id}', '${user.status}')" class="btn btn-sm btn-primary">
                                 <i class="fas fa-edit"></i> Status
@@ -279,6 +315,54 @@
         function closeChangeStatusModal() {
             document.getElementById('changeStatusModal').style.display = 'none';
         }
+
+        async function showAdjustBalanceModal(userId) {
+            try {
+                const data = await adminAPI.getUserDetails(userId);
+                const accountSelect = document.getElementById('adjustBalanceAccount');
+                const accounts = data.accounts || [];
+
+                if (!accounts.length) {
+                    showAlert('This user has no bank accounts to adjust', 'error');
+                    return;
+                }
+
+                document.getElementById('adjustBalanceUserId').value = userId;
+                document.getElementById('adjustBalanceUser').textContent = `${data.user.first_name} ${data.user.last_name} (${data.user.email})`;
+                accountSelect.innerHTML = accounts.map(account =>
+                    `<option value="${account.id}">${account.account_type.toUpperCase()} - ${account.account_number} - ${formatCurrency(account.balance)}</option>`
+                ).join('');
+                document.getElementById('adjustBalanceType').value = 'credit';
+                document.getElementById('adjustBalanceAmount').value = '';
+                document.getElementById('adjustBalanceReason').value = '';
+                document.getElementById('adjustBalanceModal').style.display = 'block';
+            } catch (error) {
+                console.error('Load adjustment accounts error:', error);
+                showAlert(error.message || 'Failed to load user accounts', 'error');
+            }
+        }
+
+        function closeAdjustBalanceModal() {
+            document.getElementById('adjustBalanceModal').style.display = 'none';
+        }
+
+        document.getElementById('adjustBalanceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const accountId = document.getElementById('adjustBalanceAccount').value;
+            const amount = Number(document.getElementById('adjustBalanceAmount').value);
+            const type = document.getElementById('adjustBalanceType').value;
+            const reason = document.getElementById('adjustBalanceReason').value.trim();
+
+            try {
+                const result = await adminAPI.adjustBalance(accountId, amount, type, reason);
+                showAlert(`Balance updated immediately: ${formatCurrency(result.balanceAfter)}`, 'success');
+                closeAdjustBalanceModal();
+                loadUsers();
+            } catch (error) {
+                console.error('Adjust balance error:', error);
+                showAlert(error.message || 'Failed to adjust balance', 'error');
+            }
+        });
 
         document.getElementById('changeStatusForm').addEventListener('submit', async (e) => {
             e.preventDefault();
