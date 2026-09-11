@@ -45,7 +45,21 @@ npx vercel --prod
 
 The frontend calls `/api`, so no Render URL or CORS configuration is needed for the deployed site.
 
-## 4. Firebase CLI rules and indexes
+## 4. Create the Firestore admin user
+
+Admin credentials are stored as a bcrypt hash in the Firestore `users` collection.
+After pulling the Vercel variables locally, run:
+
+```bash
+npx vercel env pull .env.local production
+npm run seed-admin
+```
+
+The command creates or updates `admin@americanbankunited.com` with the password
+from `ADMIN_PASSWORD`, or the documented default `Admin@123` when that variable
+is not set. Change the password before using the application publicly.
+
+## 5. Firebase CLI rules and indexes
 
 Install the Firebase CLI if needed, select the project, and deploy the rules/indexes:
 
@@ -56,7 +70,7 @@ firebase use your-project-id
 firebase deploy --only firestore:rules,firestore:indexes,storage
 ```
 
-## 5. Verify
+## 6. Verify
 
 After deployment, check:
 

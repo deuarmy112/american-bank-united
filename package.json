@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "build": "echo \"Static frontend and Vercel functions are ready\"",
-    "start": "vercel dev"
+    "start": "vercel dev",
+    "seed-admin": "node --env-file=.env.local scripts/seed-admin.js"
   },
   "engines": {
     "node": ">=20"

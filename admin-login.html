@@ -118,10 +118,16 @@
                     body: JSON.stringify({ email, password })
                 });
 
-                const data = await response.json();
+                const responseText = await response.text();
+                let data = {};
+                try {
+                    data = responseText ? JSON.parse(responseText) : {};
+                } catch {
+                    throw new Error(`Server returned an invalid response (${response.status})`);
+                }
 
                 if (!response.ok) {
-                    throw new Error(data.error || 'Login failed');
+                    throw new Error(data.error || `Login failed (${response.status})`);
                 }
 
                 // Check if user has admin role

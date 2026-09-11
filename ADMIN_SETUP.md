@@ -1,25 +1,17 @@
 # Admin System Setup Guide
 
-## Database Migration
+## Firestore Admin Setup
 
-To add the admin system to your database, run the migration script:
+The active application uses Firebase Firestore through the Vercel API. The legacy
+PostgreSQL migration files under `server/` are not used by the deployed app.
 
-### Local Development
+1. Pull the Vercel production variables into `.env.local`:
 ```bash
-cd server
-node scripts/run-admin-migration.js
+npx vercel env pull .env.local production
 ```
-
-### Production (Render)
-1. Go to your Render Dashboard
-2. Select your PostgreSQL database
-3. Click on "Shell" or "Query Editor"
-4. Copy and paste the contents of `server/scripts/add-admin-system.sql`
-5. Execute the SQL
-
-Or use the Render Shell with:
+2. Seed or reset the admin user in Firestore:
 ```bash
-psql $DATABASE_URL -f server/scripts/add-admin-system.sql
+npm run seed-admin
 ```
 
 ## Default Admin Credentials
