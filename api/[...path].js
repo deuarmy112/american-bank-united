@@ -55,10 +55,10 @@ async function getDoc(collection, id) {
 }
 
 async function listDocs(collection, field, value, orderField = 'created_at', limit = 200) {
-    let query = getDb().collection(collection).where(field, '==', value);
-    if (orderField) query = query.orderBy(orderField, 'desc');
-    const snapshot = await query.limit(limit).get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const snapshot = await getDb().collection(collection).where(field, '==', value).limit(limit).get();
+    return snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((left, right) => String(right[orderField] || '').localeCompare(String(left[orderField] || '')));
 }
 
 async function save(collection, data, id = randomUUID()) {
@@ -240,7 +240,7 @@ function reqQuery(body, key, fallback) {
 }
 
 async function route(req) {
-    const rawPath = req.query && req.query.path ? req.query.path : req.url.split('?')[0].replace(/^\/api\/?/, '');
+    const rawPath = req.url.split('?')[0].replace(/^\/api\/?/, '') || (req.query && req.query.path);
     const parts = String(Array.isArray(rawPath) ? rawPath.join('/') : rawPath).split('/').filter(Boolean);
     const method = req.method.toUpperCase();
     const body = readBody(req);
