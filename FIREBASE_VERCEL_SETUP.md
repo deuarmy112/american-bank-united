@@ -48,10 +48,13 @@ The frontend calls `/api`, so no Render URL or CORS configuration is needed for 
 ## 4. Create the Firestore admin user
 
 Admin credentials are stored as a bcrypt hash in the Firestore `users` collection.
-After pulling the Vercel variables locally, run:
+After pulling the non-sensitive Vercel variables locally, add the real
+`FIREBASE_PRIVATE_KEY` from the Firebase service-account JSON file. Vercel
+replaces sensitive values with `[SENSITIVE]` during environment pulls, so that
+placeholder cannot be used for local seeding. Then run:
 
 ```bash
-npx vercel env pull .env.local production
+npx vercel env pull .env.local --environment=production
 npm run seed-admin
 ```
 

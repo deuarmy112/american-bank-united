@@ -7,9 +7,12 @@ PostgreSQL migration files under `server/` are not used by the deployed app.
 
 1. Pull the Vercel production variables into `.env.local`:
 ```bash
-npx vercel env pull .env.local production
+npx vercel env pull .env.local --environment=production
 ```
-2. Seed or reset the admin user in Firestore:
+2. Vercel redacts sensitive values when pulling environment variables. Replace
+`FIREBASE_PRIVATE_KEY=[SENSITIVE]` in `.env.local` with the actual private key
+from the Firebase service-account JSON file, keeping the `\\n` line breaks.
+3. Seed or reset the admin user in Firestore:
 ```bash
 npm run seed-admin
 ```

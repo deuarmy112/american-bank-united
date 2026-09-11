@@ -7,6 +7,10 @@ if (missing.length) {
     console.error(`Missing Firebase environment variables: ${missing.join(', ')}`);
     process.exit(1);
 }
+if (process.env.FIREBASE_PRIVATE_KEY === '[SENSITIVE]') {
+    console.error('FIREBASE_PRIVATE_KEY was redacted by Vercel. Add the real Firebase service-account private key to .env.local before running npm run seed-admin.');
+    process.exit(1);
+}
 
 const email = (process.env.ADMIN_EMAIL || 'admin@americanbankunited.com').toLowerCase();
 const password = process.env.ADMIN_PASSWORD || 'Admin@123';
