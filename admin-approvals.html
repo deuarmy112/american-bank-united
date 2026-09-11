@@ -136,8 +136,8 @@
     <script>
         // Check admin authentication
         function checkAuth() {
-            const token = localStorage.getItem('authToken');
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const token = localStorage.getItem('adminAuthToken');
+            const user = JSON.parse(localStorage.getItem('adminUser') || '{}');
             
             if (!token || (user.role !== 'admin' && user.role !== 'super_admin')) {
                 window.location.href = 'admin-login.html';
@@ -150,8 +150,8 @@
         }
 
         function logout() {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user');
+            localStorage.removeItem('adminAuthToken');
+            localStorage.removeItem('adminUser');
             window.location.href = 'admin-login.html';
         }
 

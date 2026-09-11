@@ -137,8 +137,8 @@
                 }
 
                 // Store token and user info
-                localStorage.setItem('authToken', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
+                localStorage.setItem('adminAuthToken', data.token);
+                localStorage.setItem('adminUser', JSON.stringify(data.user));
 
                 showAlert('Login successful! Redirecting...', 'success');
                 setTimeout(() => {

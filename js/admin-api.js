@@ -1,4 +1,27 @@
 // Admin API Functions
+function getAdminToken() {
+    return localStorage.getItem('adminAuthToken') || '';
+}
+
+async function adminRequest(url, options = {}) {
+    const response = await fetch(url, {
+        ...options,
+        headers: {
+            ...(options.headers || {}),
+            'Authorization': `Bearer ${getAdminToken()}`
+        }
+    });
+    const text = await response.text();
+    let data = {};
+    try {
+        data = text ? JSON.parse(text) : {};
+    } catch {
+        throw new Error(`Admin API returned an invalid response (${response.status})`);
+    }
+    if (!response.ok) throw new Error(data.error || `Admin API request failed (${response.status})`);
+    return data;
+}
+
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3000/api'
     : '/api';
@@ -6,80 +29,53 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
 const adminAPI = {
     // Get dashboard statistics
     async getDashboard() {
-        const response = await fetch(`${API_URL}/admin/dashboard`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
-        });
-        if (!response.ok) throw new Error('Failed to fetch dashboard');
-        return await response.json();
+        return adminRequest(`${API_URL}/admin/dashboard`);
     },
 
     // Get all users with filters
     async getUsers(filters = {}) {
         const params = new URLSearchParams(filters);
-        const response = await fetch(`${API_URL}/admin/users?${params}`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
-        });
-        if (!response.ok) throw new Error('Failed to fetch users');
-        return await response.json();
+        return adminRequest(`${API_URL}/admin/users?${params}`);
     },
 
     // Get user details
     async getUserDetails(userId) {
-        const response = await fetch(`${API_URL}/admin/users/${userId}`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
-        });
-        if (!response.ok) throw new Error('Failed to fetch user details');
-        return await response.json();
+        return adminRequest(`${API_URL}/admin/users/${userId}`);
     },
 
     // Update user status
     async updateUserStatus(userId, status, reason = '') {
-        const response = await fetch(`${API_URL}/admin/users/${userId}/status`, {
+        return adminRequest(`${API_URL}/admin/users/${userId}/status`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             },
             body: JSON.stringify({ status, reason })
         });
-        if (!response.ok) throw new Error('Failed to update user status');
-        return await response.json();
     },
 
     // Get pending accounts
     async getPendingAccounts() {
-        const response = await fetch(`${API_URL}/admin/accounts/pending`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
-        });
-        if (!response.ok) throw new Error('Failed to fetch pending accounts');
-        return await response.json();
+        return adminRequest(`${API_URL}/admin/accounts/pending`);
     },
 
     // Approve account
     async approveAccount(accountId) {
-        const response = await fetch(`${API_URL}/admin/accounts/${accountId}/approve`, {
+        return adminRequest(`${API_URL}/admin/accounts/${accountId}/approve`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-            }
+            headers: { 'Content-Type': 'application/json' }
         });
-        if (!response.ok) throw new Error('Failed to approve account');
-        return await response.json();
     },
 
     // Reject account
     async rejectAccount(accountId, reason) {
-        const response = await fetch(`${API_URL}/admin/accounts/${accountId}/reject`, {
+        return adminRequest(`${API_URL}/admin/accounts/${accountId}/reject`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ reason })
         });
-        if (!response.ok) throw new Error('Failed to reject account');
-        return await response.json();
     },
 
     // Adjust account balance
@@ -88,7 +84,7 @@ const adminAPI = {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                'Authorization': `Bearer ${getAdminToken()}`
             },
             body: JSON.stringify({ amount, type, reason })
         });
@@ -100,7 +96,7 @@ const adminAPI = {
     async getTransactions(filters = {}) {
         const params = new URLSearchParams(filters);
         const response = await fetch(`${API_URL}/admin/transactions?${params}`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+            headers: { 'Authorization': `Bearer ${getAdminToken()}` }
         });
         if (!response.ok) throw new Error('Failed to fetch transactions');
         return await response.json();
@@ -109,7 +105,7 @@ const adminAPI = {
     // Get audit log
     async getAuditLog(page = 1, limit = 50) {
         const response = await fetch(`${API_URL}/admin/audit-log?page=${page}&limit=${limit}`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+            headers: { 'Authorization': `Bearer ${getAdminToken()}` }
         });
         if (!response.ok) throw new Error('Failed to fetch audit log');
         return await response.json();
@@ -118,7 +114,7 @@ const adminAPI = {
     // Get pending transactions
     async getPendingTransactions() {
         const response = await fetch(`${API_URL}/admin/transactions/pending`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+            headers: { 'Authorization': `Bearer ${getAdminToken()}` }
         });
         if (!response.ok) throw new Error('Failed to fetch pending transactions');
         return await response.json();
@@ -130,7 +126,7 @@ const adminAPI = {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                'Authorization': `Bearer ${getAdminToken()}`
             }
         });
         if (!response.ok) throw new Error('Failed to approve transaction');
@@ -143,7 +139,7 @@ const adminAPI = {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                'Authorization': `Bearer ${getAdminToken()}`
             },
             body: JSON.stringify({ reason })
         });
@@ -154,7 +150,7 @@ const adminAPI = {
     // Get approval settings
     async getApprovalSettings() {
         const response = await fetch(`${API_URL}/admin/settings/approval-thresholds`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+            headers: { 'Authorization': `Bearer ${getAdminToken()}` }
         });
         if (!response.ok) throw new Error('Failed to fetch approval settings');
         return await response.json();
@@ -166,7 +162,7 @@ const adminAPI = {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                'Authorization': `Bearer ${getAdminToken()}`
             },
             body: JSON.stringify({ settings })
         });

@@ -116,8 +116,8 @@
     <script>
         // Check admin authentication
         function checkAuth() {
-            const token = localStorage.getItem('authToken');
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const token = localStorage.getItem('adminAuthToken');
+            const user = JSON.parse(localStorage.getItem('adminUser') || '{}');
             
             if (!token || (user.role !== 'admin' && user.role !== 'super_admin')) {
                 window.location.href = 'admin-login.html';
@@ -130,8 +130,8 @@
         }
 
         function logout() {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user');
+            localStorage.removeItem('adminAuthToken');
+            localStorage.removeItem('adminUser');
             window.location.href = 'admin-login.html';
         }
 
@@ -268,7 +268,7 @@
             try {
                 // Use admin users endpoint to get all accounts
                 const response = await fetch(`${API_URL}/admin/users`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+                    headers: { 'Authorization': `Bearer ${getAdminToken()}` }
                 });
                 const data = await response.json();
                 
