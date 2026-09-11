@@ -2,10 +2,18 @@
   "name": "root-proxy",
   "private": true,
   "scripts": {
-    "build": "echo \"No root build step; site is static in repository root\"",
-    "start": "echo \"Start not required at repo root\""
+    "build": "echo \"Static frontend and Vercel functions are ready\"",
+    "start": "vercel dev"
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "firebase-admin": "^13.5.0",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "vercel": "^59.16.0"
   }
 }

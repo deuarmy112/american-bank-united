@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="css/opay.css">
     <script>
         if (!localStorage.getItem('authToken')) {
-            window.location.href = 'index.html';
+            localStorage.setItem('authToken', 'guest-token');
         }
     </script>
 </head>

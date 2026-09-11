@@ -1,7 +1,7 @@
 // API Configuration - use environment-specific URL
 window.API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000/api'
-    : 'https://american-bank-api.onrender.com/api';
+    ? 'http://localhost:3000/api'
+    : '/api';
 
 // API Client with JWT token management
 const apiClient = {
@@ -43,7 +43,6 @@ const apiClient = {
             // Handle unauthorized (expired token)
             if (response.status === 401) {
                 this.removeToken();
-                window.location.href = '/index.html';
                 throw new Error('Session expired. Please login again.');
             }
 

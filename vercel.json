@@ -1,9 +1,14 @@
 {
   "outputDirectory": ".",
+  "functions": {
+    "api/[...path].js": {
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     {
-      "source": "\\/(.*)",
-      "destination": "\/$1"
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
     }
   ]
 }
