@@ -243,7 +243,6 @@ function showTransactionDetails(transaction) {
                 <div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Date</dt><dd class="text-right">${date}</dd></div>
                 <div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Description</dt><dd class="text-right">${transaction.description || 'Account activity'}</dd></div>
                 ${destination ? `<div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Destination</dt><dd class="text-right">${destination}</dd></div>` : ''}
-                ${transaction.balance_after !== undefined ? `<div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Balance after</dt><dd class="font-medium text-right">${formatCurrency(transaction.balance_after)}</dd></div>` : ''}
             </dl>
             <button type="button" class="close-transaction-detail mt-6 w-full border border-slate-300 rounded-lg py-3 text-sm font-medium">Close</button>
         </section>`;
@@ -297,7 +296,6 @@ function showTransactionReceipt(transaction) {
                         ${account ? `<div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Source account</dt><dd class="text-right text-slate-900">${capitalize(accountType)} ****${accountNumber.slice(-4)}</dd></div>` : ''}
                         <div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Description</dt><dd class="text-right text-slate-900">${transaction.description || 'Account activity'}</dd></div>
                         <div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Destination</dt><dd class="text-right text-slate-900">${destination}</dd></div>
-                        ${transaction.balance_after !== undefined ? `<div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Balance after</dt><dd class="font-semibold text-right text-slate-900">${formatCurrency(transaction.balance_after)}</dd></div>` : ''}
                     </dl>
                     <div class="border-t border-dashed border-slate-300 pt-4 mt-3 text-xs text-slate-500 space-y-1">
                         <div class="flex justify-between gap-4"><span>Receipt type</span><span class="capitalize">${type}</span></div>
