@@ -11,6 +11,14 @@
       "destination": "/assets/favicon.svg"
     },
     {
+      "source": "/api/accounts/lookup",
+      "destination": "/api/[...path]?path=accounts/lookup"
+    },
+    {
+      "source": "/api/transactions/transfer",
+      "destination": "/api/[...path]?path=transactions/transfer"
+    },
+    {
       "source": "/api/cards/requests",
       "destination": "/api/[...path]?path=cards/requests"
     },
