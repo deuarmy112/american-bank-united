@@ -2,7 +2,8 @@
   "name": "root-proxy",
   "private": true,
   "scripts": {
-    "build": "echo \"Static frontend and Vercel functions are ready\"",
+    "build:css": "tailwindcss -i ./css/tailwind.input.css -o ./css/tailwind.css --minify",
+    "build": "npm run build:css && echo \"Static frontend and Vercel functions are ready\"",
     "start": "vercel dev",
     "seed-admin": "node --env-file=.env.local scripts/seed-admin.js"
   },
@@ -15,6 +16,7 @@
     "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
+    "tailwindcss": "^3.4.17",
     "vercel": "^59.16.0"
   }
 }

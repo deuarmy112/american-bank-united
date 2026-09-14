@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transfer - American Bank United</title>
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/tailwind.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/opay.css">
     <script>
@@ -14,13 +14,75 @@
         }
     </script>
     <style>
-        body { background: #f8fafc; font-family: Inter, system-ui, -apple-system, sans-serif; }
-        .transfer-type-btn { transition: all 0.3s ease; }
-        .transfer-type-btn.active { background-color: #9333ea; color: white; }
+        body {
+            background: #f3f4f6;
+            font-family: Inter, system-ui, -apple-system, sans-serif;
+            color: #0f172a;
+        }
+        .transfer-page-shell {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 20px 16px 32px;
+        }
+        .abu-shell-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+        }
+        .transfer-type-btn {
+            transition: all 0.25s ease;
+            border: 1px solid #dfe7ef;
+            background: #f8fafc;
+            color: #334155;
+            font-weight: 600;
+        }
+        .transfer-type-btn.active {
+            background: linear-gradient(135deg, var(--abu-silver), var(--abu-grey) 55%, var(--abu-gold));
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 8px 18px rgba(51, 65, 85, 0.1);
+        }
         .hidden-section { display: none; }
         .print-receipt { max-width: 500px; margin: 20px auto; }
-        .sub-option-btn { transition: all 0.3s ease; }
-        .sub-option-btn.active { background-color: #9333ea; color: white; border-color: #9333ea; }
+        .sub-option-btn {
+            transition: all 0.25s ease;
+            border: 1px solid #dfe7ef;
+            background: #f8fafc;
+            color: #334155;
+            font-weight: 600;
+        }
+        .sub-option-btn.active {
+            background: linear-gradient(135deg, var(--abu-silver), var(--abu-grey) 55%, var(--abu-gold));
+            color: white;
+            border-color: transparent;
+        }
+        .abu-primary-btn,
+        .bg-purple-600,
+        button[type="button"][onclick*="handleInternalTransfer"],
+        button[type="button"][onclick*="handleExternalTransfer"],
+        button[type="button"][onclick*="handleInternationalTransfer"] {
+            background: linear-gradient(135deg, var(--abu-silver), var(--abu-grey) 55%, var(--abu-gold)) !important;
+            color: white !important;
+            border: none !important;
+            box-shadow: 0 8px 18px rgba(51, 65, 85, 0.12);
+        }
+        .hover\:bg-purple-700:hover {
+            background: linear-gradient(135deg, var(--abu-grey), var(--abu-gold)) !important;
+        }
+        .bg-purple-100 { background-color: rgba(192, 192, 192, 0.28) !important; }
+        .text-purple-600 { color: var(--abu-grey) !important; }
+        .focus\:ring-purple-500:focus { --tw-ring-color: var(--abu-gold) !important; }
+        .focus\:border-purple-500:focus { border-color: var(--abu-gold) !important; }
+        .bg-blue-50 { background-color: rgba(212, 175, 55, 0.08) !important; }
+        .border-blue-200 { border-color: rgba(127, 127, 127, 0.35) !important; }
+        .text-blue-900, .text-blue-700 { color: var(--abu-grey) !important; }
+        .transfer-form-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+        }
     </style>
 </head>
 <body class="bg-slate-50">
@@ -160,6 +222,16 @@
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-2">Account Holder Name</label>
                                 <input id="extAccountName" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Enter recipient's full name" />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Recipient Email</label>
+                                <input id="extEmail" type="email" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Recipient will receive email notification" />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Recipient Phone Number</label>
+                                <input id="extPhone" type="tel" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Recipient will receive SMS notification" />
                             </div>
 
                             <div>
@@ -644,10 +716,12 @@
             }
         }
 
-        function handleExternalTransfer() {
+        async function handleExternalTransfer() {
             const fromAccount = document.getElementById('externalFromAccount').value;
             const accountNumber = document.getElementById('extAccountNumber').value.trim();
             const accountName = document.getElementById('extAccountName').value.trim();
+            const email = document.getElementById('extEmail').value.trim();
+            const phone = document.getElementById('extPhone').value.trim();
             const swiftCode = document.getElementById('extSwiftCode').value.trim();
             const amount = parseFloat(document.getElementById('extAmount').value) || 0;
             const description = document.getElementById('extDescription').value.trim();
@@ -668,11 +742,31 @@
                 return;
             }
 
+            try {
+                await apiClient.post('/external-transfers/send-to-bank', {
+                    fromAccountId: fromAccount,
+                    bankName: 'Other bank',
+                    accountNumber,
+                    routingNumber: swiftCode,
+                    accountHolderName: accountName,
+                    recipientEmail: email,
+                    recipientPhone: phone,
+                    amount,
+                    description,
+                    transferType: 'ach'
+                });
+            } catch (error) {
+                showAlert(error.message || 'Unable to initialize transfer', 'error');
+                return;
+            }
+
             lastTransferReceipt = {
                 type: 'External Transfer',
                 date: new Date().toLocaleString(),
                 from: `${(from.account_type || 'Account').toUpperCase()} - ****${(from.account_number || '0000').slice(-4)}`,
                 to: `${accountName} (${accountNumber})`,
+                email: email,
+                phone: phone,
                 swift: swiftCode,
                 amount: amount,
                 currency: 'USD',
@@ -685,11 +779,13 @@
             document.getElementById('extAmount').value = '';
             document.getElementById('extAccountNumber').value = '';
             document.getElementById('extAccountName').value = '';
+            document.getElementById('extEmail').value = '';
+            document.getElementById('extPhone').value = '';
             document.getElementById('extSwiftCode').value = '';
             document.getElementById('extDescription').value = '';
         }
 
-        function handleInternationalTransfer() {
+        async function handleInternationalTransfer() {
             const fromAccount = document.getElementById('intlFromAccount').value;
             const accountNumber = document.getElementById('intlAccountNumber').value.trim();
             const bankName = document.getElementById('intlBankName').value.trim();
@@ -721,6 +817,24 @@
             const fee = amount * 0.05;
             const netAmount = amount - fee;
             const convertedAmount = netAmount * currency.rate;
+
+            try {
+                await apiClient.post('/external-transfers/send-to-bank', {
+                    fromAccountId: fromAccount,
+                    bankName,
+                    accountNumber,
+                    routingNumber: swiftCode,
+                    accountHolderName: accountName,
+                    recipientEmail: email,
+                    recipientPhone: phone,
+                    amount,
+                    description,
+                    transferType: 'international'
+                });
+            } catch (error) {
+                showAlert(error.message || 'Unable to initialize transfer', 'error');
+                return;
+            }
 
             lastTransferReceipt = {
                 type: 'International Transfer',
@@ -776,6 +890,8 @@
                     <div class="flex justify-between"><span>To:</span><strong>${lastTransferReceipt.to}</strong></div>
                     <div class="border-t border-slate-300"></div>
                     <div class="flex justify-between"><span>SWIFT Code:</span><strong>${lastTransferReceipt.swift}</strong></div>
+                    ${lastTransferReceipt.email ? `<div class="border-t border-slate-300"></div><div class="flex justify-between"><span>Email:</span><span>${lastTransferReceipt.email}</span></div>` : ''}
+                    ${lastTransferReceipt.phone ? `<div class="border-t border-slate-300"></div><div class="flex justify-between"><span>Phone:</span><span>${lastTransferReceipt.phone}</span></div>` : ''}
                     <div class="border-t border-slate-300"></div>
                     <div class="flex justify-between"><span>Amount:</span><strong>$${lastTransferReceipt.amount.toFixed(2)}</strong></div>
                     ${lastTransferReceipt.description ? `<div class="border-t border-slate-300"></div><div class="flex justify-between"><span>Description:</span><span>${lastTransferReceipt.description}</span></div>` : ''}

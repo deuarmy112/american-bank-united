@@ -7,6 +7,18 @@
   },
   "rewrites": [
     {
+      "source": "/favicon.ico",
+      "destination": "/assets/favicon.svg"
+    },
+    {
+      "source": "/api/cards/requests",
+      "destination": "/api/[...path]?path=cards/requests"
+    },
+    {
+      "source": "/api/cards/:id/status",
+      "destination": "/api/[...path]?path=cards/:id/status"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/:path*"
     }

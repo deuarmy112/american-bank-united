@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cards - American Bank United</title>
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/tailwind.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/opay.css">
     <script>
@@ -18,30 +18,48 @@
         .card-item { transition: all 0.3s ease; }
         .card-item:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12); }
         .card-preview {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--abu-silver), var(--abu-grey) 55%, var(--abu-gold));
             border-radius: 16px;
-            padding: 24px;
+            aspect-ratio: 1.586 / 1;
+            padding: 20px;
             color: white;
             position: relative;
             overflow: hidden;
-            min-height: 220px;
+            min-height: 0;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.18), inset 0 1px 0 rgba(255,255,255,0.35);
         }
-        .card-preview.debit { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .card-preview.credit { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .card-preview.virtual { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .card-preview::before { content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, rgba(255,255,255,0.18), transparent 38%, rgba(255,255,255,0.08)); pointer-events: none; }
+        .card-preview::after { content: ''; position: absolute; width: 180px; height: 180px; right: -70px; top: -80px; border: 1px solid rgba(255,255,255,0.18); border-radius: 50%; box-shadow: 0 0 0 18px rgba(255,255,255,0.05), 0 0 0 36px rgba(255,255,255,0.04); pointer-events: none; }
+        .card-preview.debit { background: linear-gradient(135deg, var(--abu-silver), var(--abu-grey) 55%, var(--abu-gold)); }
+        .card-preview.credit { background: linear-gradient(135deg, var(--abu-grey), var(--abu-gold)); }
+        .card-preview.virtual { background: linear-gradient(135deg, var(--abu-silver), var(--abu-gold)); }
         .card-chip {
             width: 50px;
             height: 40px;
             background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%);
             border-radius: 8px;
             margin-bottom: 20px;
+            position: relative;
+            box-shadow: inset 0 0 0 1px rgba(80, 65, 25, 0.18), 0 2px 4px rgba(0,0,0,0.12);
         }
+        .card-chip::before, .card-chip::after { content: ''; position: absolute; background: rgba(90, 75, 35, 0.28); }
+        .card-chip::before { width: 1px; height: 100%; left: 50%; top: 0; }
+        .card-chip::after { height: 1px; width: 100%; top: 50%; left: 0; }
+        .card-contactless { font-size: 20px; transform: rotate(90deg); opacity: 0.8; }
         .card-number { letter-spacing: 2px; font-size: 18px; font-weight: 600; }
+        .card-network { font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
         .card-holder { font-size: 12px; text-transform: uppercase; opacity: 0.8; letter-spacing: 1px; }
         .card-expiry { font-size: 12px; opacity: 0.8; }
+        .card-back { aspect-ratio: 1.586 / 1; min-height: 0; background: linear-gradient(135deg, #777777, #252525); color: white; border-radius: 16px; padding: 20px; box-shadow: 0 14px 28px rgba(15, 23, 42, 0.18), inset 0 1px 0 rgba(255,255,255,0.2); }
+        .card-magnetic-strip { height: 42px; margin: 0 -20px 20px; background: #111827; }
+        .card-signature-strip { background: repeating-linear-gradient(-8deg, #f8fafc, #f8fafc 5px, #e5e7eb 6px, #f8fafc 8px); color: #111827; padding: 8px 12px; text-align: right; border-radius: 3px; }
+        .card-hologram { width: 34px; height: 34px; border-radius: 50%; background: conic-gradient(from 20deg, #d4af37, #f8fafc, #7f7f7f, #d4af37); opacity: 0.8; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.45); }
+        .card-locked .card-preview, .card-locked .card-back { position: relative; }
+        .card-locked .card-preview > *, .card-locked .card-back > * { visibility: hidden; }
+        .card-locked .card-preview::after, .card-locked .card-back::after { content: 'Card locked'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
         .feature-box {
             padding: 20px;
             background: white;
@@ -49,7 +67,7 @@
             border: 1px solid #e2e8f0;
             transition: all 0.3s ease;
         }
-        .feature-box:hover { border-color: #667eea; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1); }
+        .feature-box:hover { border-color: var(--abu-grey); box-shadow: 0 4px 12px rgba(127, 127, 127, 0.1); }
         .modal-overlay { backdrop-filter: blur(4px); }
     </style>
 </head>
@@ -75,10 +93,6 @@
                 <button onclick="showRequestCardModal()" class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
                     <i class="fas fa-plus"></i>
                     Request Card
-                </button>
-                <button onclick="generateVirtualCardForUser()" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                    <i class="fas fa-wand-magic-sparkles"></i>
-                    Virtual Card
                 </button>
             </div>
 
@@ -244,6 +258,7 @@
     <script>
         let currentUser = null;
         let userCards = [];
+        let cardRequests = [];
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', async () => {
@@ -274,7 +289,10 @@
                     populateAccountDropdown(accounts);
                 }
 
+                userCards = typeof cardsAPI.getAll === 'function' ? await cardsAPI.getAll() : [];
+                cardRequests = typeof cardsAPI.getRequests === 'function' ? await cardsAPI.getRequests() : [];
                 displayCards();
+                displayCardRequests();
                 setupEventListeners();
             } catch (e) {
                 console.error('Initialization error:', e);
@@ -315,35 +333,51 @@
             cardsList.innerHTML = userCards.map(card => {
                 const cardType = card.card_type || card.type || 'debit';
                 const cardClass = cardType === 'credit' ? 'credit' : cardType === 'virtual' ? 'virtual' : 'debit';
-                const holderName = currentUser ? `${currentUser.firstName} ${currentUser.lastName}`.toUpperCase() : 'CARDHOLDER';
-                const lastFourDigits = card.card_number ? card.card_number.slice(-4) : 'XXXX';
-                const expiry = card.expiry_date || '12/26';
+                const holderName = currentUser ? `${currentUser.firstName || currentUser.first_name || ''} ${currentUser.lastName || currentUser.last_name || ''}`.trim().toUpperCase() || 'CARDHOLDER' : 'CARDHOLDER';
+                const cardNumber = card.card_number ? card.card_number.match(/.{1,4}/g).join(' ') : '4000 XXXX XXXX XXXX';
+                const expiry = formatExpiry(card.expiry_date);
+                const isLocked = card.status === 'blocked';
 
                 return `
-                    <div class="card-item">
+                    <div class="card-item ${isLocked ? 'card-locked' : ''}">
                         <div class="card-preview ${cardClass}">
                             <div>
-                                <div class="card-chip"></div>
+                                <div class="flex items-start justify-between">
+                                    <div class="card-chip"></div>
+                                    <i class="fas fa-wifi card-contactless" aria-label="Contactless payment"></i>
+                                </div>
                                 <div class="text-right mb-6">
                                     <div class="text-sm opacity-80 mb-2">Card Number</div>
-                                    <div class="card-number">•••• •••• •••• ${lastFourDigits}</div>
+                                    <div class="card-number">${cardNumber}</div>
                                 </div>
                             </div>
-                            <div class="flex items-end justify-between">
+                            <div class="flex items-end justify-between w-full">
                                 <div>
+                                    <div class="text-[9px] opacity-70">CARDHOLDER</div>
                                     <div class="card-holder">${holderName}</div>
-                                    <div class="card-expiry">${expiry}</div>
+                                    <div class="mt-3">
+                                        <div>
+                                            <div class="text-[9px] opacity-70">EXPIRES</div>
+                                            <div class="card-expiry">${expiry}</div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="text-xl opacity-80">
-                                    <i class="fas fa-cc-visa"></i>
-                                </div>
+                                <div class="card-network text-right">${cardType} card</div>
+                            </div>
+                        </div>
+                        <div class="card-back mt-3">
+                            <div class="card-magnetic-strip"></div>
+                            <div class="card-signature-strip mb-5">CVV ${card.cvv || '***'}</div>
+                            <div class="flex items-end justify-between gap-4">
+                                <p class="text-xs opacity-80">Authorized use only. If found, return to American Bank United.</p>
+                                <div class="card-hologram" aria-hidden="true"></div>
                             </div>
                         </div>
                         <div class="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
                             <div class="flex items-center justify-between mb-3">
                                 <span class="text-sm text-slate-600">Status</span>
-                                <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                                    <i class="fas fa-check-circle"></i> ${card.status || 'Active'}
+                                <span class="inline-flex items-center gap-1 px-2 py-1 ${isLocked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'} rounded-full text-xs font-medium">
+                                    <i class="fas fa-${isLocked ? 'lock' : 'check-circle'}"></i> ${isLocked ? 'Locked' : (card.status || 'Active')}
                                 </span>
                             </div>
                             <div class="flex items-center justify-between mb-3">
@@ -354,14 +388,31 @@
                                 <button onclick="viewCardDetails('${card.id}')" class="flex-1 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 rounded-lg transition-colors">
                                     <i class="fas fa-eye mr-1"></i> Details
                                 </button>
-                                <button onclick="toggleCardStatus('${card.id}')" class="flex-1 text-sm bg-red-50 hover:bg-red-100 text-red-700 font-medium py-2 rounded-lg transition-colors">
-                                    <i class="fas fa-lock mr-1"></i> Lock
+                                <button onclick="toggleCardStatus('${card.id}')" class="flex-1 text-sm ${isLocked ? 'bg-green-50 hover:bg-green-100 text-green-700' : 'bg-red-50 hover:bg-red-100 text-red-700'} font-medium py-2 rounded-lg transition-colors">
+                                    <i class="fas fa-${isLocked ? 'unlock' : 'lock'} mr-1"></i> ${isLocked ? 'Unlock' : 'Lock'}
                                 </button>
                             </div>
                         </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        function displayCardRequests() {
+            const pending = cardRequests.filter(request => request.status === 'pending');
+            if (!pending.length) return;
+            const cardsList = document.getElementById('cardsList');
+            cardsList.insertAdjacentHTML('afterbegin', pending.map(request => `
+                <div class="col-span-full rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-clock text-lg text-slate-500 mt-1"></i>
+                        <div>
+                            <p class="font-semibold text-slate-900">Your ${request.card_type} card request has been received and is under process.</p>
+                            <p class="text-sm text-slate-600 mt-1">Your card will be ready in 3 working days. The approved card will appear here when processed by our team.</p>
+                        </div>
+                    </div>
+                </div>
+            `).join(''));
         }
 
         function setupEventListeners() {
@@ -371,10 +422,21 @@
             }
         }
 
+        function formatExpiry(value) {
+            if (!value) {
+                const fallback = new Date();
+                fallback.setFullYear(fallback.getFullYear() + 5);
+                return `${String(fallback.getMonth() + 1).padStart(2, '0')}/${String(fallback.getFullYear()).slice(-2)}`;
+            }
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return 'Unavailable';
+            return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getFullYear()).slice(-2)}`;
+        }
+
         async function handleRequestCard(e) {
             e.preventDefault();
 
-            const cardType = document.querySelector('input[name="cardType"]:checked').value;
+            const cardType = document.querySelector('input[name="cardType"]:checked')?.value;
             const linkedAccount = document.getElementById('linkedAccount').value;
             const cardDesign = document.getElementById('cardDesign').value;
 
@@ -384,12 +446,22 @@
             }
 
             try {
-                showAlert('Card request submitted successfully! Pending admin approval.', 'success');
+                await cardsAPI.request(cardType, linkedAccount, cardDesign);
+                cardRequests = typeof cardsAPI.getRequests === 'function' ? await cardsAPI.getRequests() : [];
+                showAlert('Your request has been received and is under process. Your card will be ready in 3 working days.', 'success');
                 closeRequestCardModal();
                 document.getElementById('requestCardForm').reset();
-                // Refresh cards list (would need backend integration)
                 displayCards();
+                displayCardRequests();
             } catch (error) {
+                if (error.status === 409) {
+                    cardRequests = typeof cardsAPI.getRequests === 'function' ? await cardsAPI.getRequests() : cardRequests;
+                    showAlert('Your card request has already been received and is under process. Your card will be ready in 3 working days.', 'success');
+                    closeRequestCardModal();
+                    displayCards();
+                    displayCardRequests();
+                    return;
+                }
                 console.error('Request card error:', error);
                 showAlert('Failed to request card: ' + (error.message || 'Unknown error'), 'error');
             }
@@ -407,20 +479,24 @@
         function viewCardDetails(cardId) {
             const card = userCards.find(c => c.id === cardId);
             if (!card) return;
-
-            showAlert(`Card Details: ${card.card_number}`, 'info');
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4';
+            modal.innerHTML = `<div class="bg-white rounded-lg shadow-2xl p-6 max-w-sm w-full"><div class="flex items-center justify-between mb-4"><h2 class="text-lg font-bold text-slate-900">Card Details</h2><button class="text-slate-500" aria-label="Close" onclick="this.closest('.fixed').remove()"><i class="fas fa-times"></i></button></div><dl class="space-y-3 text-sm"><div class="flex justify-between"><dt class="text-slate-500">Card number</dt><dd class="font-semibold">${card.card_number || 'Unavailable'}</dd></div><div class="flex justify-between"><dt class="text-slate-500">Cardholder</dt><dd class="font-semibold">${currentUser?.firstName || currentUser?.first_name || ''} ${currentUser?.lastName || currentUser?.last_name || ''}</dd></div><div class="flex justify-between"><dt class="text-slate-500">Expires</dt><dd class="font-semibold">${formatExpiry(card.expiry_date)}</dd></div><div class="flex justify-between"><dt class="text-slate-500">CVV</dt><dd class="font-semibold">${card.cvv || 'Unavailable'}</dd></div><div class="flex justify-between"><dt class="text-slate-500">Status</dt><dd class="font-semibold">${card.status || 'active'}</dd></div></dl></div>`;
+            document.body.appendChild(modal);
         }
 
-        function toggleCardStatus(cardId) {
+        async function toggleCardStatus(cardId) {
             const card = userCards.find(c => c.id === cardId);
             if (!card) return;
-
-            const newStatus = card.status === 'Active' ? 'Locked' : 'Active';
-            showAlert(`Card ${newStatus}`, 'success');
-        }
-
-        function generateVirtualCardForUser() {
-            showAlert('Virtual card generated successfully!', 'success');
+            const newStatus = card.status === 'blocked' ? 'active' : 'blocked';
+            try {
+                await cardsAPI.updateStatus(cardId, newStatus);
+                card.status = newStatus;
+                displayCards();
+                showAlert(`Card ${newStatus === 'blocked' ? 'locked' : 'unlocked'}`, 'success');
+            } catch (error) {
+                showAlert(error.message || 'Unable to update card status', 'error');
+            }
         }
 
         function showAlert(message, type) {

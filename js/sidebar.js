@@ -106,7 +106,7 @@ function injectSidebar() {
                 <!-- Sidebar Footer -->
                 <div class="border-t border-slate-200 p-6">
                     <div class="flex items-center gap-3 mb-4">
-                        <img id="sidebarAvatar" src="https://via.placeholder.com/40" class="w-10 h-10 rounded-full" alt="avatar">
+                        <img id="sidebarAvatar" src="assets/favicon.svg" class="w-10 h-10 rounded-full" alt="avatar">
                         <div>
                             <div id="sidebarName" class="font-medium text-slate-900">User</div>
                             <div id="sidebarEmail" class="text-sm text-slate-500">user@example.com</div>

@@ -64,6 +64,19 @@
             </div>
         </div>
 
+        <div class="section">
+            <div class="section-header">
+                <h2>Card Requests</h2>
+                <button onclick="loadCardRequests()" class="btn btn-secondary btn-sm"><i class="fas fa-sync"></i> Refresh</button>
+            </div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead><tr><th>User</th><th>Card</th><th>Account</th><th>Requested</th><th>Actions</th></tr></thead>
+                    <tbody id="cardRequestsTable"><tr><td colspan="5" style="text-align:center;padding:20px;">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Users Table -->
         <div class="section">
             <div class="table-container">
@@ -221,6 +234,44 @@
                 console.error('Load users error:', error);
                 showAlert('Failed to load users', 'error');
             }
+        }
+
+        async function loadCardRequests() {
+            if (!checkAuth()) return;
+            try {
+                const data = await adminAPI.getCardRequests();
+                const tbody = document.getElementById('cardRequestsTable');
+                tbody.innerHTML = data.requests.length ? data.requests.map(request => `
+                    <tr>
+                        <td><strong>${request.user ? `${request.user.first_name} ${request.user.last_name}` : 'Unknown'}</strong><br><small>${request.user?.email || ''}</small></td>
+                        <td>${request.card_type.toUpperCase()}<br><small>${request.design}</small></td>
+                        <td>${request.account ? `${request.account.account_type} - ${request.account.account_number}` : 'Unknown'}</td>
+                        <td>${formatDate(request.requested_at || request.created_at)}</td>
+                        <td><button onclick="approveCardRequest('${request.id}')" class="btn btn-sm btn-primary"><i class="fas fa-check"></i> Process & Send</button> <button onclick="rejectCardRequest('${request.id}')" class="btn btn-sm btn-danger"><i class="fas fa-times"></i> Reject</button></td>
+                    </tr>
+                `).join('') : '<tr><td colspan="5" style="text-align:center;padding:20px;">No pending card requests</td></tr>';
+            } catch (error) {
+                console.error('Load card requests error:', error);
+                showAlert('Failed to load card requests', 'error');
+            }
+        }
+
+        async function approveCardRequest(requestId) {
+            try {
+                await adminAPI.approveCardRequest(requestId);
+                showAlert('Card processed and sent to the user card page', 'success');
+                loadCardRequests();
+            } catch (error) { showAlert(error.message, 'error'); }
+        }
+
+        async function rejectCardRequest(requestId) {
+            const reason = prompt('Reason for rejecting this card request:', 'Unable to process request');
+            if (reason === null) return;
+            try {
+                await adminAPI.rejectCardRequest(requestId, reason);
+                showAlert('Card request rejected', 'success');
+                loadCardRequests();
+            } catch (error) { showAlert(error.message, 'error'); }
         }
 
         function applyFilters() {
@@ -384,6 +435,7 @@
 
         // Load users on page load
         loadUsers();
+        loadCardRequests();
 
         // Enter key for search
         document.getElementById('searchInput').addEventListener('keypress', (e) => {

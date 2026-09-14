@@ -23,9 +23,16 @@ FIREBASE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----
 FIREBASE_STORAGE_BUCKET=your-project-id.firebasestorage.app
 JWT_SECRET=use-a-long-random-secret
 NODE_ENV=production
+RESEND_API_KEY=your-resend-api-key
+EMAIL_FROM=American Bank United <transfers@your-domain.com>
+TWILIO_ACCOUNT_SID=your-twilio-account-sid
+TWILIO_AUTH_TOKEN=your-twilio-auth-token
+TWILIO_FROM_NUMBER=+15551234567
 ```
 
 `FIREBASE_PRIVATE_KEY` must contain the literal `\n` sequences when entered in the Vercel dashboard. The API converts them to line breaks at runtime.
+
+`RESEND_API_KEY` and `EMAIL_FROM` enable full transfer confirmation emails. The Twilio variables enable SMS notifications. Without these provider variables, transfers still complete and the API reports notifications as `not_configured`.
 
 ## 3. Deploy
 

@@ -68,6 +68,33 @@ body{
 }
 .hover\:bg-indigo-700:hover, .hover\:bg-indigo-600:hover { background: #eef0f1 !important; }
 
+.bg-purple-600, .bg-violet-600, .bg-blue-600 {
+  background: linear-gradient(135deg, var(--abu-silver), var(--abu-grey) 55%, var(--abu-gold)) !important;
+  color: #ffffff !important;
+}
+.hover\:bg-purple-700:hover, .hover\:bg-violet-700:hover, .hover\:bg-blue-700:hover {
+  background: linear-gradient(135deg, var(--abu-grey), var(--abu-gold)) !important;
+}
+.bg-purple-100, .bg-violet-100, .bg-blue-100, .bg-cyan-100 {
+  background-color: rgba(192, 192, 192, 0.28) !important;
+}
+.bg-blue-50, .bg-purple-50, .bg-violet-50, .bg-cyan-50 {
+  background-color: rgba(212, 175, 55, 0.1) !important;
+}
+.text-purple-600, .text-violet-600, .text-blue-600, .text-cyan-600 {
+  color: var(--abu-grey) !important;
+}
+.text-blue-700, .text-blue-800, .text-blue-900,
+.text-purple-700, .text-purple-800, .text-purple-900 {
+  color: var(--abu-grey) !important;
+}
+.hover\:text-purple-700:hover, .hover\:text-blue-700:hover,
+.hover\:text-blue-800:hover { color: var(--abu-gold) !important; }
+.focus\:ring-purple-500:focus, .focus\:ring-blue-500:focus,
+.focus\:ring-indigo-500:focus { --tw-ring-color: var(--abu-gold) !important; }
+.focus\:border-purple-500:focus, .focus\:border-blue-500:focus,
+.focus\:border-indigo-500:focus { border-color: var(--abu-gold) !important; }
+
 /* Override inline-colored icons: prefer the silver/grey control tone for icon glyphs */
 i[style*="color"], .fas[style*="color"], .far[style*="color"], .fab[style*="color"] {
   color: var(--abu-control) !important;

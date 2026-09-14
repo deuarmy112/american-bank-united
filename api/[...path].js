@@ -10,6 +10,39 @@ function now() {
     return new Date().toISOString();
 }
 
+async function sendTransferNotifications({ email, phone, recipientName, amount, transferType, bankName, accountNumber, description }) {
+    const details = `Recipient: ${recipientName || 'Recipient'}\nAmount: $${Number(amount).toFixed(2)}\nTransfer type: ${transferType}\nBank: ${bankName || 'External bank'}\nAccount: ${accountNumber || 'Not provided'}\nDescription: ${description || 'External transfer'}\nDate: ${new Date().toLocaleString('en-US', { timeZone: 'UTC' })} UTC`;
+    const result = { email: email ? 'not_configured' : 'not_provided', sms: phone ? 'not_configured' : 'not_provided' };
+
+    if (email && process.env.RESEND_API_KEY && process.env.EMAIL_FROM) {
+        try {
+            const response = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [email], subject: 'American Bank United transfer confirmation', text: `Hello ${recipientName || 'there'},\n\nA transfer has been initiated for you.\n\n${details}\n\nPlease contact American Bank United support if you do not recognize this transaction.` })
+            });
+            result.email = response.ok ? 'sent' : 'failed';
+        } catch (error) {
+            console.error('Transfer email notification failed:', error);
+            result.email = 'failed';
+        }
+    }
+
+    if (phone && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM_NUMBER) {
+        try {
+            const params = new URLSearchParams({ To: phone, From: process.env.TWILIO_FROM_NUMBER, Body: `American Bank United transfer: $${Number(amount).toFixed(2)} ${transferType} transfer for ${recipientName || 'you'}. Account ending ${String(accountNumber || '').slice(-4)}.` });
+            const credentials = Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64');
+            const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${process.env.TWILIO_ACCOUNT_SID}/Messages.json`, { method: 'POST', headers: { Authorization: `Basic ${credentials}`, 'Content-Type': 'application/x-www-form-urlencoded' }, body: params });
+            result.sms = response.ok ? 'sent' : 'failed';
+        } catch (error) {
+            console.error('Transfer SMS notification failed:', error);
+            result.sms = 'failed';
+        }
+    }
+
+    return result;
+}
+
 function clean(data) {
     return JSON.parse(JSON.stringify(data, (_, value) => {
         if (value && typeof value.toDate === 'function') return value.toDate().toISOString();
@@ -161,13 +194,18 @@ async function transactionRoutes(method, parts, user, body) {
 }
 
 async function cardRoutes(method, parts, user, body) {
+    if (method === 'GET' && parts[0] === 'requests') return { body: clean(await listDocs('card_requests', 'user_id', user.userId, 'created_at', 100)) };
     if (method === 'GET') return { body: clean(await listDocs('cards', 'user_id', user.userId)) };
     if (method === 'POST') {
         if (!['debit', 'credit'].includes(body.cardType)) return { status: 400, body: { error: 'Invalid card type' } };
         const account = await getDoc('accounts', body.linkedAccountId);
         if (!account || account.user_id !== user.userId) return { status: 404, body: { error: 'Account not found' } };
-        const card = await save('cards', { user_id: user.userId, linked_account_id: body.linkedAccountId, card_number: `4000${String(Math.floor(Math.random() * 1000000000000)).padStart(12, '0')}`, card_type: body.cardType, design: body.design || 'classic', status: 'active', expiry_date: new Date(Date.now() + 3 * 365 * 86400000).toISOString(), cvv: String(Math.floor(100 + Math.random() * 900)) });
-        return { status: 201, body: { message: 'Card created successfully', card: clean(card) } };
+        const existing = await listDocs('card_requests', 'user_id', user.userId, 'created_at', 100);
+        if (existing.some(request => request.status === 'pending' && request.linked_account_id === body.linkedAccountId && request.card_type === body.cardType)) {
+            return { status: 409, body: { error: 'A card request is already being processed' } };
+        }
+        const request = await save('card_requests', { user_id: user.userId, linked_account_id: body.linkedAccountId, card_type: body.cardType, design: body.design || 'classic', status: 'pending', requested_at: now() });
+        return { status: 201, body: { message: 'Your card request has been received and is under process. Your card will be ready in 3 working days.', request: clean(request) } };
     }
     if (method === 'PATCH' && parts[1] === 'status') {
         if (!['active', 'blocked'].includes(body.status)) return { status: 400, body: { error: 'Invalid status' } };
@@ -207,7 +245,7 @@ async function billRoutes(method, parts, user, body) {
 }
 
 async function externalRoutes(method, parts, user, body) {
-    if (method === 'GET' && parts[0] === 'external') return { body: clean(await listDocs('external_transfers', 'user_id', user.userId)) };
+    if (method === 'GET' && (parts[0] === 'external' || parts[0] === 'transfers')) return { body: clean(await listDocs('external_transfers', 'user_id', user.userId)) };
     if (method === 'POST' && ['send-to-bank', 'send-to-user'].includes(parts[0])) {
         const account = await getDoc('accounts', body.fromAccountId);
         const amount = Number(body.amount);
@@ -215,15 +253,42 @@ async function externalRoutes(method, parts, user, body) {
         if (Number(account.balance) < amount) return { status: 400, body: { error: 'Insufficient funds' } };
         const newBalance = Number((Number(account.balance) - amount).toFixed(2));
         await getDb().runTransaction(async transaction => transaction.update(getDb().collection('accounts').doc(account.id), { balance: newBalance, updated_at: now() }));
-        const transfer = await save('external_transfers', { user_id: user.userId, account_id: account.id, transfer_type: parts[0] === 'send-to-user' ? 'p2p' : (body.transferType || 'ach'), direction: 'outgoing', amount, recipient_name: body.accountHolderName || body.recipientEmail || '', recipient_identifier: body.accountNumber || body.recipientEmail || '', bank_name: body.bankName || null, status: 'completed', description: body.description || 'External transfer' });
+        const transferType = parts[0] === 'send-to-user' ? 'p2p' : (body.transferType || 'ach');
+        const notification = await sendTransferNotifications({ email: body.recipientEmail, phone: body.recipientPhone, recipientName: body.accountHolderName, amount, transferType, bankName: body.bankName, accountNumber: body.accountNumber, description: body.description });
+        const transfer = await save('external_transfers', { user_id: user.userId, account_id: account.id, transfer_type: transferType, direction: 'outgoing', amount, recipient_name: body.accountHolderName || body.recipientEmail || '', recipient_identifier: body.accountNumber || body.recipientEmail || '', recipient_email: body.recipientEmail || null, recipient_phone: body.recipientPhone || null, bank_name: body.bankName || null, status: 'completed', description: body.description || 'External transfer', notification_status: notification });
         await save('transactions', { account_id: account.id, type: 'withdrawal', amount: -amount, description: transfer.description, balance_after: newBalance });
-        return { body: { success: true, message: 'Transfer completed successfully', transfer: { id: transfer.id, amount, status: 'completed', newBalance } } };
+        return { body: { success: true, message: 'Transfer completed successfully', transfer: { id: transfer.id, amount, status: 'completed', newBalance, notification } } };
     }
     return { status: 404, body: { error: 'Route not found' } };
 }
 
 async function adminRoutes(method, parts, user, body, query) {
     requireAdmin(user);
+
+    if (method === 'GET' && parts[0] === 'card-requests') {
+        const requests = await listDocs('card_requests', 'status', 'pending', 'created_at', 500);
+        const withUsers = await Promise.all(requests.map(async request => {
+            const requestedUser = await getDoc('users', request.user_id);
+            const account = await getDoc('accounts', request.linked_account_id);
+            return clean({ ...request, user: requestedUser ? { id: requestedUser.id, first_name: requestedUser.first_name, last_name: requestedUser.last_name, email: requestedUser.email } : null, account: account ? { account_number: account.account_number, account_type: account.account_type } : null });
+        }));
+        return { body: { requests: withUsers } };
+    }
+
+    if (method === 'POST' && parts[0] === 'card-requests' && parts[1] && parts[2] === 'approve') {
+        const request = await getDoc('card_requests', parts[1]);
+        if (!request || request.status !== 'pending') return { status: 404, body: { error: 'Pending card request not found' } };
+        const card = await save('cards', { user_id: request.user_id, linked_account_id: request.linked_account_id, card_number: `4000${String(Math.floor(Math.random() * 1000000000000)).padStart(12, '0')}`, card_type: request.card_type, design: request.design || 'classic', status: 'active', expiry_date: new Date(Date.now() + 3 * 365 * 86400000).toISOString(), cvv: String(Math.floor(100 + Math.random() * 900)) });
+        await getDb().collection('card_requests').doc(request.id).set({ status: 'approved', processed_by: user.userId, processed_at: now(), card_id: card.id }, { merge: true });
+        return { body: { message: 'Card request approved', card: clean(card) } };
+    }
+
+    if (method === 'POST' && parts[0] === 'card-requests' && parts[1] && parts[2] === 'reject') {
+        const request = await getDoc('card_requests', parts[1]);
+        if (!request || request.status !== 'pending') return { status: 404, body: { error: 'Pending card request not found' } };
+        await getDb().collection('card_requests').doc(request.id).set({ status: 'rejected', processed_by: user.userId, processed_at: now(), rejection_reason: body.reason || 'Request rejected by admin' }, { merge: true });
+        return { body: { message: 'Card request rejected' } };
+    }
 
     if (method === 'GET' && parts[0] === 'dashboard') {
         const [usersSnap, accountsSnap, transactionsSnap] = await Promise.all([
@@ -412,7 +477,7 @@ async function adminRoutes(method, parts, user, body, query) {
             account_id: accountId,
             type: type === 'credit' ? 'deposit' : 'withdrawal',
             amount: type === 'credit' ? amount : -amount,
-            description: `Admin adjustment: ${reason}`,
+            description: type === 'credit' ? 'Deposit' : 'Withdrawal',
             balance_after: balanceAfter,
             approval_status: 'approved',
             created_at: timestamp
@@ -443,7 +508,8 @@ function reqQuery(body, key, fallback) {
 }
 
 async function route(req) {
-    const rawPath = req.url.split('?')[0].replace(/^\/api\/?/, '') || (req.query && req.query.path);
+    const requestPath = req.url.split('?')[0].replace(/^\/api\/?/, '');
+    const rawPath = requestPath === '[...path]' ? (req.query && req.query.path) : requestPath || (req.query && req.query.path);
     const parts = String(Array.isArray(rawPath) ? rawPath.join('/') : rawPath).split('/').filter(Boolean);
     const method = req.method.toUpperCase();
     const body = readBody(req);

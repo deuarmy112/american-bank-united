@@ -119,12 +119,12 @@ function loadDashboardAccounts(accounts) {
     });
 }
 
-let _carouselInterval = null;
+window._carouselInterval = window._carouselInterval || null;
 function startAccountsCarousel() {
     const el = document.getElementById('accountsList');
     if (!el) return;
     // clear existing
-    if (_carouselInterval) clearInterval(_carouselInterval);
+    if (window._carouselInterval) clearInterval(window._carouselInterval);
 
     const scrollStep = () => {
         if (el.scrollWidth <= el.clientWidth) return; // no scroll needed
@@ -140,10 +140,10 @@ function startAccountsCarousel() {
         }
     };
 
-    _carouselInterval = setInterval(scrollStep, 3000);
+    window._carouselInterval = setInterval(scrollStep, 3000);
     // pause on hover/touch
-    el.addEventListener('mouseenter', () => clearInterval(_carouselInterval));
-    el.addEventListener('mouseleave', () => { if (_carouselInterval) clearInterval(_carouselInterval); _carouselInterval = setInterval(scrollStep, 3000); });
+    el.addEventListener('mouseenter', () => clearInterval(window._carouselInterval));
+    el.addEventListener('mouseleave', () => { if (window._carouselInterval) clearInterval(window._carouselInterval); window._carouselInterval = setInterval(scrollStep, 3000); });
 }
 
 function loadRecentTransactions(transactions) {

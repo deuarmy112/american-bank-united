@@ -4,7 +4,7 @@ window.API_BASE_URL = window.location.hostname === 'localhost' || window.locatio
     : '/api';
 
 // API Client with JWT token management
-const apiClient = {
+window.apiClient = window.apiClient || {
     // Get token from localStorage
     getToken() {
         return localStorage.getItem('authToken');
@@ -49,7 +49,9 @@ const apiClient = {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                const error = new Error(data.error || `HTTP error! status: ${response.status}`);
+                error.status = response.status;
+                throw error;
             }
 
             return data;
@@ -161,6 +163,10 @@ const cardsAPI = {
             linkedAccountId,
             design,
         });
+    },
+
+    async getRequests() {
+        return apiClient.get('/cards/requests');
     },
 
     async updateStatus(cardId, status) {

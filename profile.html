@@ -5,9 +5,220 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile - American Bank United</title>
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/tailwind.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/opay.css">
+    <style>
+        body {
+            background: #f5f5f5;
+            color: #0f172a;
+        }
+        .profile-shell {
+            max-width: 440px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding: 16px 16px 24px;
+            background: #f5f5f5;
+        }
+        .profile-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 0 2px;
+        }
+        .profile-header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .profile-close {
+            width: 34px;
+            height: 34px;
+            border-radius: 999px;
+            border: 1px solid #d7dee8;
+            background: rgba(255,255,255,0.9);
+            color: #475569;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+        }
+        .profile-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+        }
+        .profile-summary-card {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            padding: 0;
+        }
+        .profile-avatar-wrap {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #b9b9b9 0%, #8a8a8a 45%, #d6d4d2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 2.15rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            box-shadow: inset 0 0 0 2px rgba(255,255,255,0.35);
+            margin: 0 auto 14px;
+        }
+        .profile-name {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.15;
+            text-align: center;
+            margin: 0;
+        }
+        .profile-email, .profile-phone {
+            color: #475569;
+            text-align: center;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .profile-balance-box {
+            background: #eef2f4;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-top: 14px;
+            padding: 18px 16px;
+            text-align: center;
+        }
+        .profile-balance-label {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+        .profile-balance-value {
+            font-size: 1.7rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            color: #0f172a;
+        }
+        .profile-manage {
+            margin-top: 18px;
+            background: #eef2f4;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            color: #0f172a;
+        }
+        .profile-action-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .profile-action-btn {
+            border-radius: 10px;
+            font-weight: 700;
+            transition: filter 0.2s ease;
+            font-size: 0.98rem;
+            letter-spacing: -0.01em;
+            min-height: 44px;
+            border: 0;
+            background: linear-gradient(135deg, var(--abu-silver), var(--abu-grey) 55%, var(--abu-gold));
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.1);
+        }
+        .profile-action-btn:hover { filter: brightness(0.96); }
+        .profile-edit-btn {
+            margin-top: 10px;
+            background: linear-gradient(135deg, #0f172a 0%, #1f2937 100%);
+            color: #fff;
+            border-radius: 10px;
+            min-height: 44px;
+            font-weight: 700;
+        }
+        .profile-logout-btn {
+            margin-top: 10px;
+            background: transparent;
+            border: 1px solid #b3a67a;
+            color: #7a6d3d;
+            border-radius: 10px;
+            min-height: 44px;
+            font-weight: 700;
+        }
+        .profile-section {
+            margin-top: 24px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px 14px 14px;
+        }
+        .profile-section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .profile-section-title {
+            color: #0f172a;
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+        .profile-section-edit {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        .profile-info-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 12px;
+            color: #0f172a;
+        }
+        .profile-info-label {
+            color: #64748b;
+            font-size: 0.8rem;
+            text-transform: none;
+        }
+        .profile-info-value {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #0f172a;
+            word-break: break-word;
+        }
+        .profile-copy-btn {
+            background: #f4f4f3;
+            border: 1px solid #dfe7ef;
+            border-radius: 8px;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            color: #334155;
+        }
+        .profile-standing-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .profile-standalone-link {
+            color: #7a6d3d;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        @media (max-width: 480px) {
+            .profile-shell {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+        }
+    </style>
     <script>
         if (!localStorage.getItem('authToken')) {
             localStorage.setItem('authToken', 'guest-token');
@@ -15,87 +226,89 @@
     </script>
 </head>
 <body class="bg-slate-50">
-    <main class="max-w-4xl mx-auto bg-white min-h-screen pb-20 px-4">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
-            <!-- Left: Profile summary -->
-            <aside class="md:col-span-1 bg-white rounded-lg shadow p-4">
-                <div class="flex flex-col items-center text-center">
-                    <img id="profileAvatar" src="https://via.placeholder.com/96" class="w-24 h-24 rounded-full mb-3 shadow" alt="avatar">
-                    <h2 id="profileName" class="text-xl font-semibold">User</h2>
-                    <p id="profileEmail" class="text-slate-600 text-sm">email@example.com</p>
-                    <p id="profilePhone" class="text-slate-600 text-sm">+1234567890</p>
-                </div>
+    <main class="profile-shell">
+        <div class="profile-topbar">
+            <div class="profile-header-title">
+                <i class="fas fa-user-circle text-slate-700"></i>
+                <span>Profile</span>
+            </div>
+            <button class="profile-close" aria-label="Close and return home" onclick="window.location.href='dashboard.html'">
+                <i class="fas fa-xmark"></i>
+            </button>
+        </div>
+        <div class="profile-summary-card">
+            <div class="flex flex-col items-center text-center pt-2">
+                <div id="profileAvatar" class="profile-avatar-wrap" aria-label="User avatar">ABU</div>
+                <h2 id="profileName" class="profile-name">User</h2>
+                <p id="profileEmail" class="profile-email">email@example.com</p>
+                <p id="profilePhone" class="profile-phone">+1234567890</p>
+            </div>
 
-                <div class="mt-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg p-4 text-center">
-                    <div class="text-sm text-slate-500">Total Balance</div>
-                    <div id="balance" class="text-2xl font-bold">$0.00</div>
-                </div>
+            <div class="profile-balance-box">
+                <div class="profile-balance-label">Total Balance</div>
+                <div id="balance" class="profile-balance-value">$0.00</div>
+            </div>
 
-                <div class="mt-4 space-y-2">
-                    <button id="manageCardsBtn" class="w-full py-2 rounded border text-sm hover:bg-slate-50 transition-colors">Manage Cards</button>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button id="depositBtn" class="py-2 rounded bg-green-600 text-white text-sm hover:bg-green-700 transition-colors">Deposit</button>
-                        <button id="transferBtn" class="py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 transition-colors">Transfer</button>
-                        <button id="withdrawBtn" class="py-2 rounded bg-red-600 text-white text-sm hover:bg-red-700 transition-colors">Withdraw</button>
-                    </div>
-                    <button id="editProfileBtn" class="w-full py-2 rounded bg-slate-800 text-white text-sm hover:bg-slate-900 transition-colors">Edit Profile</button>
-                    <button id="logoutBtn" class="w-full py-2 rounded border border-rose-600 text-rose-600 text-sm hover:bg-rose-50 transition-colors">Logout</button>
-                </div>
-            </aside>
+            <div class="profile-manage">Manage Cards</div>
 
-            <!-- Right: Details and settings -->
-            <section class="md:col-span-2 space-y-6">
-                <div class="bg-white rounded-lg shadow p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-lg font-semibold">Contact & Account</h3>
-                        <button class="text-sm text-slate-500" onclick="openEditModal()">Edit</button>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <div class="text-xs text-slate-500">Account Name</div>
-                            <div id="accountName" class="font-medium">—</div>
-                        </div>
-                        <div>
-                            <div class="text-xs text-slate-500">Primary Email</div>
-                            <div class="flex items-center justify-between">
-                                <div id="contactEmail" class="font-medium">—</div>
-                                <button class="copy-btn text-xs text-indigo-600" data-copy-target="contactEmail">Copy</button>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="text-xs text-slate-500">Phone</div>
-                            <div class="flex items-center justify-between">
-                                <div id="contactPhone" class="font-medium">—</div>
-                                <button class="copy-btn text-xs text-indigo-600" data-copy-target="contactPhone">Copy</button>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="text-xs text-slate-500">Customer ID</div>
-                            <div id="customerId" class="font-medium">—</div>
-                        </div>
-                    </div>
-                </div>
+            <div class="profile-action-grid">
+                <button id="depositBtn" class="profile-action-btn">Deposit</button>
+                <button id="transferBtn" class="profile-action-btn">Transfer</button>
+                <button id="withdrawBtn" class="profile-action-btn">Withdraw</button>
+            </div>
 
-                <div class="bg-white rounded-lg shadow p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-lg font-semibold">Linked Accounts</h3>
-                        <a href="accounts.html" class="text-sm text-indigo-600">Manage</a>
-                    </div>
-                    <ul id="linkedAccountsList" class="space-y-2 text-sm text-slate-700">
-                        <li class="p-3 border rounded">No linked accounts yet.</li>
-                    </ul>
-                </div>
+            <button id="editProfileBtn" class="profile-edit-btn w-full mt-3">Edit Profile</button>
+            <button id="logoutBtn" class="profile-logout-btn w-full mt-3">Logout</button>
+        </div>
 
-                <div class="bg-white rounded-lg shadow p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-lg font-semibold">Recent Transactions</h3>
-                        <a href="transactions.html" class="text-sm text-indigo-600">See all</a>
-                    </div>
-                    <ul id="recentTxList" class="space-y-3 text-sm">
-                        <li class="p-3 border rounded flex items-center justify-between"><div><div class="font-medium">No recent transactions</div><div class="text-xs text-slate-500">Your recent activity will appear here</div></div></li>
-                    </ul>
+        <section class="profile-section">
+            <div class="profile-section-head">
+                <h3 class="profile-section-title">Contact &amp; Account</h3>
+                <button class="profile-section-edit" onclick="openEditModal()">Edit</button>
+            </div>
+            <div class="profile-info-row">
+                <div class="profile-info-label">Account Name</div>
+                <div id="accountName" class="profile-info-value">—</div>
+            </div>
+            <div class="profile-info-row">
+                <div class="profile-info-label">Primary Email</div>
+                <div class="profile-standing-row">
+                    <div id="contactEmail" class="profile-info-value">—</div>
+                    <button class="copy-btn profile-copy-btn" data-copy-target="contactEmail">Copy</button>
                 </div>
-            </section>
+            </div>
+            <div class="profile-info-row">
+                <div class="profile-info-label">Phone</div>
+                <div class="profile-standing-row">
+                    <div id="contactPhone" class="profile-info-value">—</div>
+                    <button class="copy-btn profile-copy-btn" data-copy-target="contactPhone">Copy</button>
+                </div>
+            </div>
+            <div class="profile-info-row" style="margin-bottom:0;">
+                <div class="profile-info-label">Customer ID</div>
+                <div id="customerId" class="profile-info-value">—</div>
+            </div>
+        </section>
+
+        <section class="profile-section">
+            <div class="profile-section-head">
+                <h3 class="profile-section-title">Linked Accounts</h3>
+                <a href="accounts.html" class="profile-standalone-link">Manage</a>
+            </div>
+            <ul id="linkedAccountsList" class="space-y-2 text-sm text-slate-700">
+                <li class="p-3 border rounded">No linked accounts yet.</li>
+            </ul>
+        </section>
+
+        <section class="profile-section" style="margin-bottom: 20px;">
+            <div class="profile-section-head">
+                <h3 class="profile-section-title">Recent Transactions</h3>
+                <a href="transactions.html" class="profile-standalone-link">See all</a>
+            </div>
+            <ul id="recentTxList" class="space-y-3 text-sm">
+                <li class="p-3 border rounded flex items-center justify-between"><div><div class="font-medium">No recent transactions</div><div class="text-xs text-slate-500">Your recent activity will appear here</div></div></li>
+            </ul>
+        </section>
         </div>
     </main>
 

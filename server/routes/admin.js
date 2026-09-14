@@ -364,7 +364,7 @@ router.post('/accounts/:id/adjust-balance',
             await client.query(
                 `INSERT INTO transactions (id, account_id, type, amount, description, balance_after)
                  VALUES ($1, $2, $3, $4, $5, $6)`,
-                [txnId, id, txnType, adjustmentAmount, `Admin adjustment: ${reason}`, balanceAfter]
+                [txnId, id, txnType, type === 'credit' ? adjustmentAmount : -adjustmentAmount, txnType === 'deposit' ? 'Deposit' : 'Withdrawal', balanceAfter]
             );
 
             await logAdminAction(

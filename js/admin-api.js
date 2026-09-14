@@ -87,6 +87,25 @@ const adminAPI = {
         });
     },
 
+    async getCardRequests() {
+        return adminRequest(`${API_URL}/admin/card-requests`);
+    },
+
+    async approveCardRequest(requestId) {
+        return adminRequest(`${API_URL}/admin/card-requests/${requestId}/approve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+    },
+
+    async rejectCardRequest(requestId, reason = '') {
+        return adminRequest(`${API_URL}/admin/card-requests/${requestId}/reject`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason })
+        });
+    },
+
     // Get transactions with filters
     async getTransactions(filters = {}) {
         const params = new URLSearchParams(filters);
