@@ -116,10 +116,9 @@ async function ensureGuest() {
     if (!snapshot.exists) {
         await ref.set({ id: GUEST_ID, email: 'guest@americanbankunited.local', first_name: 'Guest', last_name: 'User', role: 'customer', status: 'active', created_at: now() });
     }
-    const accounts = await listDocs('accounts', 'user_id', GUEST_ID, null, 10);
-    if (!accounts.length) {
-        await save('accounts', { user_id: GUEST_ID, account_number: '1000000001', account_type: 'checking', balance: 10000, status: 'active', approval_status: 'approved' }, 'guest-checking');
-    }
+
+    // Do not recreate a default guest account after it has been manually deleted.
+    // The app should only create real accounts when the user explicitly requests one.
 }
 
 async function userProfile(userId) {

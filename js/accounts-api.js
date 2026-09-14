@@ -12,12 +12,26 @@ document.addEventListener('DOMContentLoaded', async function() {
 async function loadAccounts() {
     try {
         const accounts = await accountsAPI.getAll();
+        clearStaleSelectedAccount(accounts);
         displayAccounts(accounts);
         // notify other components (balance carousel) that accounts were updated
         window.dispatchEvent(new CustomEvent('accounts:updated', { detail: accounts }));
     } catch (error) {
         console.error('Failed to load accounts:', error);
         showAlert('Failed to load accounts', 'error');
+    }
+}
+
+function clearStaleSelectedAccount(accounts) {
+    const selectedId = localStorage.getItem('selectedAccountId');
+    if (!selectedId) return;
+
+    const stillExists = Array.isArray(accounts) && accounts.some(account => account.id === selectedId);
+    if (!stillExists) {
+        localStorage.removeItem('selectedAccountId');
+        localStorage.removeItem('selectedAccountNumber');
+        sessionStorage.removeItem('selectedFromAccount');
+        sessionStorage.removeItem('selectedToAccount');
     }
 }
 
