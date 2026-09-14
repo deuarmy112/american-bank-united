@@ -149,7 +149,26 @@ async function authLogin(body) {
     return { body: { message: 'Login successful', token: makeToken(user), user: { id: user.id, email: user.email, firstName: user.first_name, lastName: user.last_name, role: user.role || 'customer' } } };
 }
 
-async function accountRoutes(method, parts, user, body) {
+async function accountRoutes(method, parts, user, body, query = {}) {
+    if (method === 'GET' && parts[0] === 'lookup') {
+        const identifier = String(query.identifier || '').trim();
+        const digits = identifier.replace(/\D/g, '');
+        const candidates = [identifier, digits, digits.slice(-10)].filter(Boolean);
+        const snapshot = await getDb().collection('accounts').where('status', '==', 'active').limit(1000).get();
+        const accountDoc = snapshot.docs.find(doc => candidates.includes(String(doc.data().account_number || '')));
+        if (!accountDoc) return { status: 404, body: { error: 'ABU account not found' } };
+        const account = { id: accountDoc.id, ...accountDoc.data() };
+        const profile = await userProfile(account.user_id);
+        return {
+            body: {
+                id: account.id,
+                accountNumber: account.account_number,
+                accountType: account.account_type,
+                recipientName: `${profile?.first_name || profile?.firstName || ''} ${profile?.last_name || profile?.lastName || ''}`.trim(),
+                recipientEmail: profile?.email || ''
+            }
+        };
+    }
     if (method === 'GET' && parts.length === 0) return { body: clean(await listDocs('accounts', 'user_id', user.userId)) };
     if (method === 'GET' && parts.length === 1) {
         const account = await getDoc('accounts', parts[0]);
@@ -705,7 +724,7 @@ async function route(req) {
 
     const user = await authenticate(req);
     await ensureGuest();
-    if (parts[0] === 'accounts') return accountRoutes(method, parts.slice(1), user, body);
+    if (parts[0] === 'accounts') return accountRoutes(method, parts.slice(1), user, body, req.query || {});
     if (parts[0] === 'transactions') return transactionRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'notifications') return notificationRoutes(method, parts.slice(1), user);
     if (parts[0] === 'cards') return cardRoutes(method, parts.slice(1), user, body);

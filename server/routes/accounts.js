@@ -21,6 +21,33 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
+// Look up an active ABU account by account number or IBAN digits
+router.get('/lookup', authenticateToken, async (req, res) => {
+    try {
+        const identifier = String(req.query.identifier || '').trim();
+        const digits = identifier.replace(/\D/g, '');
+        const result = await pool.query(
+            `SELECT a.id, a.account_number, a.account_type, u.first_name, u.last_name, u.email
+             FROM accounts a JOIN users u ON u.id = a.user_id
+             WHERE a.status = 'active' AND (a.account_number = $1 OR a.account_number = $2)
+             LIMIT 1`,
+            [identifier, digits.slice(-10)]
+        );
+        if (result.rows.length === 0) return res.status(404).json({ error: 'ABU account not found' });
+        const account = result.rows[0];
+        res.json({
+            id: account.id,
+            accountNumber: account.account_number,
+            accountType: account.account_type,
+            recipientName: `${account.first_name || ''} ${account.last_name || ''}`.trim(),
+            recipientEmail: account.email || ''
+        });
+    } catch (error) {
+        console.error('Account lookup error:', error);
+        res.status(500).json({ error: 'Unable to look up ABU account' });
+    }
+});
+
 // Get single account by ID
 router.get('/:id', authenticateToken, async (req, res) => {
     try {

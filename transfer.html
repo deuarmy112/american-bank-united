@@ -166,12 +166,13 @@
                             <div id="otherAccountsMode" class="hidden-section space-y-4">
                                 <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-2">Recipient Account Number or IBAN</label>
-                                    <input id="otherAbuAccountNumber" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Enter ABU account number or IBAN" />
+                                    <input id="otherAbuAccountNumber" type="text" autocomplete="off" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Enter ABU account number or IBAN" />
+                                    <div id="otherAbuLookupStatus" class="text-xs text-slate-500 mt-2"></div>
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-2">Recipient Name (Optional)</label>
-                                    <input id="otherAbuRecipientName" type="text" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Recipient's name (for reference)" />
+                                    <input id="otherAbuRecipientName" type="text" readonly class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-slate-50 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Verified account name appears here" />
                                 </div>
                             </div>
 
@@ -399,7 +400,7 @@
     <script src="js/bottom-nav.js?v=20260121.1"></script>
     <script src="js/sidebar.js?v=20260121.1"></script>
     <script src="js/demo-data.js"></script>
-    <script src="js/api.js?v=20260121.2"></script>
+    <script src="js/api.js?v=20260914.13"></script>
     <script src="js/auth.js?v=20260121.2"></script>
     <script src="js/storage.js"></script>
     <script src="js/utils.js"></script>
@@ -434,6 +435,7 @@
         let currentTransferType = 'internal';
         let currentAbuMode = 'myAccounts';
         let lastTransferReceipt = null;
+        let abuLookupTimer = null;
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', async () => {
@@ -529,6 +531,41 @@
             document.getElementById('externalFromAccount').addEventListener('change', updateBalanceDisplay);
             document.getElementById('intlFromAccount').addEventListener('change', updateBalanceDisplay);
             document.getElementById('internalToAccount').addEventListener('change', updateToBalanceDisplay);
+            document.getElementById('otherAbuAccountNumber').addEventListener('input', scheduleAbuRecipientLookup);
+            document.getElementById('otherAbuAccountNumber').addEventListener('blur', lookupAbuRecipient);
+        }
+
+        function scheduleAbuRecipientLookup() {
+            clearTimeout(abuLookupTimer);
+            const status = document.getElementById('otherAbuLookupStatus');
+            const nameInput = document.getElementById('otherAbuRecipientName');
+            nameInput.value = '';
+            delete nameInput.dataset.accountId;
+            if (status) status.textContent = '';
+            if (document.getElementById('otherAbuAccountNumber').value.trim().length < 6) return;
+            abuLookupTimer = setTimeout(lookupAbuRecipient, 450);
+        }
+
+        async function lookupAbuRecipient() {
+            const input = document.getElementById('otherAbuAccountNumber');
+            const status = document.getElementById('otherAbuLookupStatus');
+            const nameInput = document.getElementById('otherAbuRecipientName');
+            const identifier = input.value.trim();
+            if (identifier.length < 6) return;
+            status.textContent = 'Verifying ABU account...';
+            status.className = 'text-xs text-slate-500 mt-2';
+            try {
+                const recipient = await apiClient.get(`/accounts/lookup?identifier=${encodeURIComponent(identifier)}`);
+                nameInput.value = recipient.recipientName;
+                nameInput.dataset.accountId = recipient.id;
+                status.textContent = `${recipient.accountType.toUpperCase()} account verified`;
+                status.className = 'text-xs text-emerald-600 mt-2';
+            } catch (error) {
+                nameInput.value = '';
+                delete nameInput.dataset.accountId;
+                status.textContent = error.message || 'ABU account not found';
+                status.className = 'text-xs text-rose-600 mt-2';
+            }
         }
 
         function updateBalanceDisplay(e) {
@@ -645,7 +682,7 @@
             }
         }
 
-        function handleInternalTransfer() {
+        async function handleInternalTransfer() {
             const fromAccount = document.getElementById('internalFromAccount').value;
             const amount = parseFloat(document.getElementById('internalAmount').value) || 0;
 
@@ -661,12 +698,13 @@
 
             const from = userAccounts.find(a => a.id === fromAccount);
 
-            if (from.balance < amount) {
+            if (!from || Number(from.balance) < amount) {
                 showAlert('Insufficient funds', 'error');
                 return;
             }
 
             let toInfo = '';
+            let destinationAccountId = '';
 
             if (currentAbuMode === 'myAccounts') {
                 const toAccount = document.getElementById('internalToAccount').value;
@@ -681,17 +719,32 @@
                 }
 
                 const to = userAccounts.find(a => a.id === toAccount);
+                destinationAccountId = toAccount;
                 toInfo = `${(to.account_type || 'Account').toUpperCase()} - ****${(to.account_number || '0000').slice(-4)}`;
             } else {
                 const accountNumber = document.getElementById('otherAbuAccountNumber').value.trim();
-                const recipientName = document.getElementById('otherAbuRecipientName').value.trim() || 'ABU Account';
+                const recipientNameInput = document.getElementById('otherAbuRecipientName');
+                const recipientName = recipientNameInput.value.trim();
+                destinationAccountId = recipientNameInput.dataset.accountId || '';
 
-                if (!accountNumber) {
-                    showAlert('Please enter the recipient account number or IBAN', 'error');
+                if (!accountNumber || !destinationAccountId || !recipientName) {
+                    showAlert('Enter a valid ABU account number or IBAN and wait for the recipient name to be verified.', 'error');
                     return;
                 }
 
                 toInfo = `${recipientName} (${accountNumber})`;
+            }
+
+            try {
+                await apiClient.post('/transactions/transfer', {
+                    fromAccountId: fromAccount,
+                    toAccountId: destinationAccountId,
+                    amount,
+                    description: currentAbuMode === 'myAccounts' ? 'Transfer between ABU accounts' : 'Transfer to ABU account'
+                });
+            } catch (error) {
+                showAlert(error.message || 'Transfer failed. No funds were deducted.', 'error');
+                return;
             }
 
             // Create receipt
@@ -713,6 +766,8 @@
             } else {
                 document.getElementById('otherAbuAccountNumber').value = '';
                 document.getElementById('otherAbuRecipientName').value = '';
+                delete document.getElementById('otherAbuRecipientName').dataset.accountId;
+                document.getElementById('otherAbuLookupStatus').textContent = '';
             }
         }
 
