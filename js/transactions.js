@@ -223,9 +223,9 @@ function showTransactionDetails(transaction) {
     const status = transaction.status || transaction.approval_status || 'completed';
     const destination = transaction.recipient_name || transaction.wallet_platform || transaction.bank_name || transaction.recipient_identifier || '';
     const overlay = document.createElement('div');
-    overlay.className = 'transaction-detail-overlay fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50';
+    overlay.className = 'transaction-detail-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4';
     overlay.innerHTML = `
-        <section class="transaction-detail-sheet bg-white w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl shadow-xl p-6 max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-label="Transaction details">
+        <section class="transaction-detail-sheet bg-white w-full max-w-lg rounded-2xl shadow-xl p-6 max-h-[85vh] overflow-y-auto" role="dialog" aria-modal="true" aria-label="Transaction details">
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <p class="text-xs uppercase tracking-wide text-slate-500">Transaction details</p>
