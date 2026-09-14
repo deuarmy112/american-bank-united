@@ -305,7 +305,7 @@ router.post('/accounts/:id/adjust-balance',
     requireAdmin,
     [
         body('amount').isFloat({ min: 0.01 }),
-        body('type').isIn(['credit', 'debit']),
+        body('type').custom((value) => ['credit', 'deposit'].includes(value)),
         body('reason').notEmpty()
     ],
     async (req, res) => {
@@ -319,7 +319,8 @@ router.post('/accounts/:id/adjust-balance',
             await client.query('BEGIN');
 
             const { id } = req.params;
-            const { amount, type, reason } = req.body;
+            const { amount, reason } = req.body;
+            const type = req.body.type === 'deposit' ? 'credit' : req.body.type;
 
             // Get current balance
             const accountResult = await client.query(

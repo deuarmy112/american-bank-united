@@ -10,22 +10,63 @@ function now() {
     return new Date().toISOString();
 }
 
+function isValidEmail(email) {
+    if (typeof email !== 'string') return false;
+    const value = email.trim();
+    if (!value || value.length > 254) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+async function sendTransactionalEmail({ email, subject, text }) {
+    if (!isValidEmail(email)) return { status: 'invalid_email' };
+    if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) return { status: 'not_configured' };
+
+    try {
+        const response = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [email], subject, text })
+        });
+        return response.ok ? { status: 'sent' } : { status: 'failed', httpStatus: response.status };
+    } catch (error) {
+        console.error('Transactional email failed:', error);
+        return { status: 'failed' };
+    }
+}
+
+async function sendWelcomeEmail(user, { force = false } = {}) {
+    const email = user?.email || '';
+    if (!force && user?.welcome_email_sent) return { status: 'already_sent' };
+    if (!isValidEmail(email)) return { status: 'invalid_email' };
+    if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) return { status: 'not_configured' };
+
+    const firstName = user?.first_name || user?.firstName || 'there';
+    const result = await sendTransactionalEmail({
+        email,
+        subject: 'Welcome to American Bank United',
+        text: `Hello ${firstName},\n\nWelcome to American Bank United. Your account is ready and we are happy to serve you.\n\nIf you have any questions, please reach out to our support team.\n\nThank you for joining us.`
+    });
+
+    if (result.status === 'sent' || result.status === 'already_sent') {
+        if (user?.id) {
+            await getDb().collection('users').doc(user.id).set({ welcome_email_sent: true, updated_at: now() }, { merge: true });
+        }
+    }
+
+    return result;
+}
+
 async function sendTransferNotifications({ email, phone, recipientName, amount, transferType, bankName, accountNumber, description }) {
     const details = `Recipient: ${recipientName || 'Recipient'}\nAmount: $${Number(amount).toFixed(2)}\nTransfer type: ${transferType}\nBank: ${bankName || 'External bank'}\nAccount: ${accountNumber || 'Not provided'}\nDescription: ${description || 'External transfer'}\nDate: ${new Date().toLocaleString('en-US', { timeZone: 'UTC' })} UTC`;
-    const result = { email: email ? 'not_configured' : 'not_provided', sms: phone ? 'not_configured' : 'not_provided' };
+    const result = { email: isValidEmail(email) ? 'not_configured' : 'not_provided', sms: phone ? 'not_configured' : 'not_provided' };
 
-    if (email && process.env.RESEND_API_KEY && process.env.EMAIL_FROM) {
-        try {
-            const response = await fetch('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [email], subject: 'American Bank United transfer confirmation', text: `Hello ${recipientName || 'there'},\n\nA transfer has been initiated for you.\n\n${details}\n\nPlease contact American Bank United support if you do not recognize this transaction.` })
-            });
-            result.email = response.ok ? 'sent' : 'failed';
-        } catch (error) {
-            console.error('Transfer email notification failed:', error);
-            result.email = 'failed';
-        }
+    if (isValidEmail(email)) {
+        const emailResult = await sendTransactionalEmail({
+            email,
+            subject: 'American Bank United transfer confirmation',
+            text: `Hello ${recipientName || 'there'},\n\nA transfer has been initiated for you.\n\n${details}\n\nPlease contact American Bank United support if you do not recognize this transaction.`
+        });
+        result.email = emailResult.status === 'sent' ? 'sent' : emailResult.status;
     }
 
     if (phone && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM_NUMBER) {
@@ -134,7 +175,8 @@ async function authRegister(body) {
     const id = randomUUID();
     const user = { id, email: email.toLowerCase(), first_name: firstName, last_name: lastName, phone: phone || null, date_of_birth: dateOfBirth || null, password_hash: await bcrypt.hash(password, 10), role: 'customer', status: 'active', created_at: now() };
     await getDb().collection('users').doc(id).set(user);
-    return { status: 201, body: { message: 'User registered successfully', token: makeToken(user), user: { id, email: user.email, firstName, lastName, role: 'customer' } } };
+    const welcomeResult = await sendWelcomeEmail(user);
+    return { status: 201, body: { message: 'User registered successfully', token: makeToken(user), user: { id, email: user.email, firstName, lastName, role: 'customer' }, welcomeEmail: welcomeResult } };
 }
 
 async function authLogin(body) {
@@ -181,7 +223,9 @@ async function accountRoutes(method, parts, user, body, query = {}) {
     if (method === 'POST' && parts.length === 0) {
         if (!['checking', 'savings', 'business'].includes(body.accountType)) return { status: 400, body: { error: 'Invalid account type' } };
         const account = await save('accounts', { user_id: user.userId, account_number: String(Math.floor(1000000000 + Math.random() * 8999999999)), account_type: body.accountType, balance: 0, status: 'inactive', approval_status: 'pending' });
-        return { status: 201, body: { message: 'Account created successfully. Pending admin approval.', account: clean(account) } };
+        const profile = await userProfile(user.userId);
+        const welcomeResult = await sendWelcomeEmail(profile, { force: false });
+        return { status: 201, body: { message: 'Account created successfully. Pending admin approval.', account: clean(account), welcomeEmail: welcomeResult } };
     }
     if (method === 'POST' && parts[0] === 'deposit') {
         const amount = Number(body.amount);
@@ -202,7 +246,13 @@ async function accountRoutes(method, parts, user, body, query = {}) {
             });
             return balance;
         });
-        return { body: { message: 'Deposit completed successfully', transactionId, receiptId, newBalance: result } };
+        const profile = await userProfile(user.userId);
+        const emailResult = await sendTransactionalEmail({
+            email: profile?.email,
+            subject: 'American Bank United deposit confirmation',
+            text: `Hello ${profile?.first_name || profile?.firstName || 'there'},\n\nYour deposit of $${Number(amount).toFixed(2)} has been received and credited to your account.\n\nReference: ${receiptId}\nDate: ${new Date().toISOString()}`
+        });
+        return { body: { message: 'Deposit completed successfully', transactionId, receiptId, newBalance: result, email: emailResult } };
     }
     return { status: 404, body: { error: 'Route not found' } };
 }
@@ -248,7 +298,13 @@ async function transactionRoutes(method, parts, user, body) {
         accountNumber: body.toAccountId,
         description: body.description || 'Transfer received'
     });
-    return { body: { message: 'Transfer completed successfully', status: 'approved', withdrawalId: result.withdrawalId, depositId: result.depositId, newBalance: result.fromBalance, notification } };
+    const senderProfile = await userProfile(user.userId);
+    const senderEmailResult = await sendTransactionalEmail({
+        email: senderProfile?.email,
+        subject: 'American Bank United transfer sent',
+        text: `Hello ${senderProfile?.first_name || senderProfile?.firstName || 'there'},\n\nYour transfer of $${Number(amount).toFixed(2)} has been sent successfully.\n\nReference: ${result.withdrawalId}\nDate: ${new Date().toISOString()}`
+    });
+    return { body: { message: 'Transfer completed successfully', status: 'approved', withdrawalId: result.withdrawalId, depositId: result.depositId, newBalance: result.fromBalance, notification, senderEmail: senderEmailResult } };
 }
 
 async function notificationRoutes(method, parts, user) {
