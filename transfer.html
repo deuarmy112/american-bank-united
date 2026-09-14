@@ -227,7 +227,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-2">Recipient Email</label>
-                                <input id="extEmail" type="email" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Recipient will receive email notification" />
+                                <input id="extEmail" type="email" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Recipient email for transfer alert" />
                             </div>
 
                             <div>
@@ -301,7 +301,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-2">Recipient Email</label>
-                                <input id="intlEmail" type="email" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Recipient will receive email notification" />
+                                <input id="intlEmail" type="email" required class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors" placeholder="Recipient email for transfer alert" />
                             </div>
 
                             <div>
@@ -400,7 +400,7 @@
     <script src="js/bottom-nav.js?v=20260121.1"></script>
     <script src="js/sidebar.js?v=20260121.1"></script>
     <script src="js/demo-data.js"></script>
-    <script src="js/api.js?v=20260914.13"></script>
+    <script src="js/api.js?v=20260914.14"></script>
     <script src="js/auth.js?v=20260121.2"></script>
     <script src="js/storage.js"></script>
     <script src="js/utils.js"></script>
@@ -781,7 +781,7 @@
             const amount = parseFloat(document.getElementById('extAmount').value) || 0;
             const description = document.getElementById('extDescription').value.trim();
 
-            if (!fromAccount || !accountNumber || !accountName || !swiftCode) {
+            if (!fromAccount || !accountNumber || !accountName || !swiftCode || !email) {
                 showAlert('Please fill all required fields', 'error');
                 return;
             }
@@ -852,7 +852,7 @@
             const description = document.getElementById('intlDescription').value.trim();
             const amount = parseFloat(document.getElementById('intlAmountUSD').value) || 0;
 
-            if (!fromAccount || !accountNumber || !bankName || !accountName || !country || !swiftCode) {
+            if (!fromAccount || !accountNumber || !bankName || !accountName || !country || !swiftCode || !email) {
                 showAlert('Please fill all required fields', 'error');
                 return;
             }

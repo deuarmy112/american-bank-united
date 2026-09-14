@@ -238,9 +238,18 @@ async function transactionRoutes(method, parts, user, body) {
         const depositId = randomUUID();
         transaction.set(db.collection('transactions').doc(withdrawalId), { id: withdrawalId, receipt_id: `RCPT-${Date.now()}-${withdrawalId.slice(0, 8).toUpperCase()}`, account_id: from.id, type: 'transfer', amount: -amount, description: body.description || 'Transfer out', related_account_id: to.id, balance_after: fromBalance, status: 'completed', approval_status: 'approved', created_at: now() });
         transaction.set(db.collection('transactions').doc(depositId), { id: depositId, receipt_id: `RCPT-${Date.now()}-${depositId.slice(0, 8).toUpperCase()}`, account_id: to.id, type: 'deposit', amount, description: body.description || 'Transfer in', related_account_id: from.id, balance_after: toBalance, status: 'completed', approval_status: 'approved', created_at: now() });
-        return { withdrawalId, depositId, fromBalance };
+        return { withdrawalId, depositId, fromBalance, recipientUserId: to.user_id };
     });
-    return { body: { message: 'Transfer completed successfully', status: 'approved', withdrawalId: result.withdrawalId, depositId: result.depositId, newBalance: result.fromBalance } };
+    const recipient = await userProfile(result.recipientUserId);
+    const notification = await sendTransferNotifications({
+        email: recipient?.email,
+        recipientName: `${recipient?.first_name || recipient?.firstName || ''} ${recipient?.last_name || recipient?.lastName || ''}`.trim(),
+        amount,
+        transferType: 'ABU account transfer',
+        accountNumber: body.toAccountId,
+        description: body.description || 'Transfer received'
+    });
+    return { body: { message: 'Transfer completed successfully', status: 'approved', withdrawalId: result.withdrawalId, depositId: result.depositId, newBalance: result.fromBalance, notification } };
 }
 
 async function notificationRoutes(method, parts, user) {
