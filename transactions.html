@@ -17,14 +17,17 @@
 <body class="bg-slate-50">
     <main class="max-w-6xl mx-auto bg-white min-h-screen pb-20 px-4">
         <!-- Header -->
-        <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg p-6 mb-6">
+        <div class="text-white rounded-lg p-5 sm:p-6 mb-6" style="background: linear-gradient(135deg, var(--abu-silver), var(--abu-grey) 55%, var(--abu-gold));">
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold mb-2">Transaction History</h1>
-                    <p class="text-blue-100">View and manage all your banking activities</p>
+                    <p class="text-white/85">View and manage all your banking activities</p>
                 </div>
-                <div class="hidden md:block">
-                    <i class="fas fa-history text-4xl text-blue-200"></i>
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-history text-3xl sm:text-4xl text-white/75"></i>
+                    <button type="button" onclick="if (document.referrer && new URL(document.referrer).origin === location.origin) history.back(); else location.href = 'dashboard.html';" class="w-10 h-10 rounded-full flex items-center justify-center text-white/90 hover:bg-white/20 transition-colors" aria-label="Close transaction history" title="Close">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
                 </div>
             </div>
         </div>
