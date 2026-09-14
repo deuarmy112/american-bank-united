@@ -152,6 +152,12 @@ const transactionsAPI = {
     },
 };
 
+const notificationsAPI = {
+    async getAll() {
+        return apiClient.get('/notifications');
+    }
+};
+
 const cardsAPI = {
     async getAll() {
         return apiClient.get('/cards');

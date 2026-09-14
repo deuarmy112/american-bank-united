@@ -31,6 +31,7 @@ function loadTransactionsPage() {
             amount: transfer.amount,
             description: `${transfer.transfer_type.toUpperCase()}: ${transfer.recipient_name || 'Unknown'} ${transfer.bank_name ? '('+transfer.bank_name+')' : ''}`,
             createdAt: transfer.created_at,
+            account_id: transfer.account_id,
             isExternal: true
         }));
         
@@ -77,7 +78,7 @@ function filterTransactions() {
     filteredTransactions = allTransactions.filter(txn => {
         // Filter by account
         if (accountFilter) {
-            if (txn.fromAccountId !== accountFilter && txn.toAccountId !== accountFilter) {
+            if (txn.account_id !== accountFilter && txn.fromAccountId !== accountFilter && txn.toAccountId !== accountFilter) {
                 return false;
             }
         }
@@ -130,7 +131,7 @@ function displayTransactions() {
     const accounts = window.userAccounts || [];
     const accountIds = accounts.map(acc => acc.id);
 
-    container.innerHTML = filteredTransactions.map(txn => {
+    container.innerHTML = filteredTransactions.map((txn, index) => {
         // Determine if this is a credit or debit
         let isCredit = txn.type === 'deposit' || txn.type === 'external_in' ||
                       (txn.type === 'transfer' && accountIds.includes(txn.toAccountId));
@@ -165,9 +166,11 @@ function displayTransactions() {
                 accountInfo = `To: ${toAcc ? capitalize(toAcc.accountType) + ' (****' + toAcc.accountNumber.slice(-4) + ')' : 'External'}`;
             }
         } else {
-            const accId = txn.fromAccountId || txn.toAccountId;
-            const acc = accounts.find(acc => acc.id === accId);
-            accountInfo = acc ? `${capitalize(acc.accountType)} (****${acc.accountNumber.slice(-4)})` : '';
+            const accId = txn.account_id || txn.fromAccountId || txn.toAccountId;
+            const acc = accounts.find(account => account.id === accId);
+            const accountType = acc?.account_type || acc?.accountType;
+            const accountNumber = acc?.account_number || acc?.accountNumber;
+            accountInfo = acc ? `${capitalize(accountType)} (****${accountNumber.slice(-4)})` : '';
         }
 
         return `
@@ -185,14 +188,43 @@ function displayTransactions() {
                     </div>
                     <div class="text-right">
                         <div class="text-lg font-semibold ${isCredit ? 'text-green-600' : 'text-red-600'}">
-                            ${isCredit ? '+' : '-'}${formatCurrency(txn.amount)}
+                            ${isCredit ? '+' : '-'}${formatCurrency(Math.abs(Number(txn.amount) || 0))}
                         </div>
                         <div class="text-xs text-slate-500 capitalize">${txn.type.replace('_', ' ')}</div>
+                        <button type="button" data-receipt-index="${index}" class="receipt-button mt-2 text-xs text-blue-600 hover:text-blue-800">Receipt</button>
                     </div>
                 </div>
             </div>
         `;
     }).join('');
+    container.querySelectorAll('.receipt-button').forEach(button => {
+        button.addEventListener('click', () => showTransactionReceipt(filteredTransactions[Number(button.dataset.receiptIndex)]));
+    });
+}
+
+function showTransactionReceipt(transaction) {
+    if (!transaction) return;
+    const receiptId = transaction.receipt_id || transaction.receiptId || `TXN-${transaction.id || Date.now()}`;
+    const date = formatDate(transaction.createdAt || transaction.created_at);
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4';
+    overlay.innerHTML = `
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+            <div class="flex items-center justify-between mb-5">
+                <div><h2 class="text-lg font-semibold">Transaction Receipt</h2><p class="text-xs text-slate-500">${receiptId}</p></div>
+                <button type="button" class="close-receipt text-slate-500 text-xl" aria-label="Close">&times;</button>
+            </div>
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between gap-4"><span class="text-slate-500">Status</span><strong class="text-emerald-600">${transaction.status || 'completed'}</strong></div>
+                <div class="flex justify-between gap-4"><span class="text-slate-500">Type</span><strong>${String(transaction.type || 'transaction').replace('_', ' ')}</strong></div>
+                <div class="flex justify-between gap-4"><span class="text-slate-500">Amount</span><strong>${formatCurrency(transaction.amount)}</strong></div>
+                <div class="flex justify-between gap-4"><span class="text-slate-500">Description</span><span class="text-right">${transaction.description || 'Account activity'}</span></div>
+                <div class="flex justify-between gap-4"><span class="text-slate-500">Date</span><span>${date}</span></div>
+            </div>
+            <button type="button" class="close-receipt mt-6 w-full border border-slate-300 rounded-lg py-2 text-sm">Done</button>
+        </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelectorAll('.close-receipt').forEach(button => button.addEventListener('click', () => overlay.remove()));
 }
 
 function calculateSummary() {
@@ -207,9 +239,9 @@ function calculateSummary() {
                         (txn.type === 'transfer' && accountIds.includes(txn.toAccountId));
 
         if (isCredit) {
-            totalIncome += txn.amount;
+            totalIncome += Math.abs(Number(txn.amount) || 0);
         } else {
-            totalExpenses += txn.amount;
+            totalExpenses += Math.abs(Number(txn.amount) || 0);
         }
     });
 

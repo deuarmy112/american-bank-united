@@ -83,6 +83,14 @@ function injectSidebar() {
                     <div class="mt-8">
                         <h3 class="text-lg font-semibold text-slate-900 mb-4">Quick Actions</h3>
                         <div class="space-y-3">
+                            <button onclick="location.href='transactions.html'" class="w-full flex items-center gap-3 p-3 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
+                                <i class="fas fa-history text-slate-700"></i>
+                                <span class="text-slate-900">Transaction History</span>
+                            </button>
+                            <button onclick="location.href='notifications.html'" class="w-full flex items-center gap-3 p-3 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors">
+                                <i class="fas fa-bell text-amber-600"></i>
+                                <span class="text-slate-900">Notifications</span>
+                            </button>
                             <button onclick="location.href='deposit.html'" class="w-full flex items-center gap-3 p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
                                 <i class="fas fa-plus-circle text-green-600"></i>
                                 <span class="text-slate-900">Make a Deposit</span>
