@@ -50,6 +50,16 @@ function clean(data) {
     }));
 }
 
+function cleanCustomerTransaction(data) {
+    const cleaned = clean(data);
+    if (Array.isArray(cleaned)) return cleaned.map(item => cleanCustomerTransaction(item));
+    if (cleaned && typeof cleaned === 'object') {
+        const { balance_after, ...safeTransaction } = cleaned;
+        return safeTransaction;
+    }
+    return cleaned;
+}
+
 function makeToken(user) {
     return jwt.sign({ userId: user.id, email: user.email, role: user.role || 'customer' }, JWT_SECRET(), { expiresIn: '7d' });
 }
@@ -148,7 +158,7 @@ async function accountRoutes(method, parts, user, body) {
     if (method === 'GET' && parts[1] === 'transactions') {
         const account = await getDoc('accounts', parts[0]);
         if (!account || account.user_id !== user.userId) return { status: 404, body: { error: 'Account not found' } };
-        return { body: clean(await listDocs('transactions', 'account_id', parts[0])) };
+        return { body: cleanCustomerTransaction(await listDocs('transactions', 'account_id', parts[0])) };
     }
     if (method === 'POST' && parts.length === 0) {
         if (!['checking', 'savings', 'business'].includes(body.accountType)) return { status: 400, body: { error: 'Invalid account type' } };
@@ -185,7 +195,7 @@ async function transactionRoutes(method, parts, user, body) {
         const ids = new Set(accounts.map(account => account.id));
         const all = [];
         for (const account of ids) all.push(...await listDocs('transactions', 'account_id', account, null, 200));
-        return { body: clean(all.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).slice(0, 200)) };
+        return { body: cleanCustomerTransaction(all.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).slice(0, 200)) };
     }
     if (method !== 'POST' || parts[0] !== 'transfer') return { status: 404, body: { error: 'Route not found' } };
     const amount = Number(body.amount);
