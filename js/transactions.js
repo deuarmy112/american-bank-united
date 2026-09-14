@@ -174,7 +174,7 @@ function displayTransactions() {
         }
 
         return `
-            <div class="p-4 hover:bg-slate-50 transition-colors">
+            <div class="transaction-row p-4 hover:bg-slate-50 transition-colors cursor-pointer" role="button" tabindex="0" data-detail-index="${index}">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 ${bgColor} rounded-full flex items-center justify-center">
@@ -197,9 +197,61 @@ function displayTransactions() {
             </div>
         `;
     }).join('');
+    container.querySelectorAll('.transaction-row').forEach(row => {
+        const openDetails = () => showTransactionDetails(filteredTransactions[Number(row.dataset.detailIndex)]);
+        row.addEventListener('click', event => {
+            if (!event.target.closest('.receipt-button')) openDetails();
+        });
+        row.addEventListener('keydown', event => {
+            if ((event.key === 'Enter' || event.key === ' ') && !event.target.closest('.receipt-button')) {
+                event.preventDefault();
+                openDetails();
+            }
+        });
+    });
     container.querySelectorAll('.receipt-button').forEach(button => {
         button.addEventListener('click', () => showTransactionReceipt(filteredTransactions[Number(button.dataset.receiptIndex)]));
     });
+}
+
+function showTransactionDetails(transaction) {
+    if (!transaction) return;
+    const receiptId = transaction.receipt_id || transaction.receiptId || `TXN-${transaction.id || Date.now()}`;
+    const date = formatDate(transaction.createdAt || transaction.created_at);
+    const type = String(transaction.type || 'transaction').replace(/_/g, ' ');
+    const amount = formatCurrency(Math.abs(Number(transaction.amount) || 0));
+    const status = transaction.status || transaction.approval_status || 'completed';
+    const destination = transaction.recipient_name || transaction.wallet_platform || transaction.bank_name || transaction.recipient_identifier || '';
+    const overlay = document.createElement('div');
+    overlay.className = 'transaction-detail-overlay fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50';
+    overlay.innerHTML = `
+        <section class="transaction-detail-sheet bg-white w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl shadow-xl p-6 max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-label="Transaction details">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-slate-500">Transaction details</p>
+                    <h2 class="text-xl font-semibold text-slate-900 mt-1">${type}</h2>
+                </div>
+                <button type="button" class="close-transaction-detail text-slate-500 text-2xl" aria-label="Close">&times;</button>
+            </div>
+            <div class="rounded-xl bg-slate-50 p-4 mb-5 text-center">
+                <div class="text-xs text-slate-500">Amount</div>
+                <div class="text-3xl font-bold ${Number(transaction.amount) >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${Number(transaction.amount) >= 0 ? '+' : '-'}${amount}</div>
+                <div class="inline-flex mt-2 rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-xs capitalize">${status}</div>
+            </div>
+            <dl class="divide-y divide-slate-100 text-sm">
+                <div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Receipt</dt><dd class="font-medium text-right">${receiptId}</dd></div>
+                <div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Date</dt><dd class="text-right">${date}</dd></div>
+                <div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Description</dt><dd class="text-right">${transaction.description || 'Account activity'}</dd></div>
+                ${destination ? `<div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Destination</dt><dd class="text-right">${destination}</dd></div>` : ''}
+                ${transaction.balance_after !== undefined ? `<div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Balance after</dt><dd class="font-medium text-right">${formatCurrency(transaction.balance_after)}</dd></div>` : ''}
+            </dl>
+            <button type="button" class="close-transaction-detail mt-6 w-full border border-slate-300 rounded-lg py-3 text-sm font-medium">Close</button>
+        </section>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', event => {
+        if (event.target === overlay) overlay.remove();
+    });
+    overlay.querySelectorAll('.close-transaction-detail').forEach(button => button.addEventListener('click', () => overlay.remove()));
 }
 
 function showTransactionReceipt(transaction) {
