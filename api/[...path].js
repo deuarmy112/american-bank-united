@@ -262,6 +262,120 @@ async function externalRoutes(method, parts, user, body) {
     return { status: 404, body: { error: 'Route not found' } };
 }
 
+function normalizeName(value) {
+    return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function passesLuhn(value) {
+    let total = 0;
+    let doubleDigit = false;
+    for (let index = value.length - 1; index >= 0; index -= 1) {
+        let digit = Number(value[index]);
+        if (doubleDigit) {
+            digit *= 2;
+            if (digit > 9) digit -= 9;
+        }
+        total += digit;
+        doubleDigit = !doubleDigit;
+    }
+    return total % 10 === 0;
+}
+
+async function withdrawalRoutes(method, parts, user, body) {
+    if (method !== 'POST' || parts.length !== 0) return { status: 404, body: { error: 'Route not found' } };
+
+    const amount = Number(body.amount);
+    if (!body.fromAccountId || !Number.isFinite(amount) || amount <= 0) {
+        return { status: 400, body: { error: 'Withdrawal details are invalid' } };
+    }
+
+    const account = await getDoc('accounts', body.fromAccountId);
+    if (!account || account.user_id !== user.userId || account.status !== 'active') {
+        return { status: 404, body: { error: 'Source account not found' } };
+    }
+    if (Number(account.balance) < amount) return { status: 400, body: { error: 'Insufficient funds' } };
+
+    const profile = await userProfile(user.userId);
+    const profileName = normalizeName(`${profile?.first_name || profile?.firstName || ''} ${profile?.last_name || profile?.lastName || ''}`);
+    const destinationType = body.destinationType;
+    let transferData;
+
+    if (destinationType === 'external_card') {
+        const card = body.card || {};
+        const cardNumber = String(card.cardNumber || '').replace(/\D/g, '');
+        const cardholderName = String(card.cardholderName || '').trim();
+        const expiry = String(card.cardExpiry || '');
+        const cvv = String(card.cardCvv || '');
+        const [month, year] = expiry.split('/').map(Number);
+        const nowDate = new Date();
+        const expiryDate = new Date(2000 + year, month || 0, 1);
+        if (!/^\d{13,19}$/.test(cardNumber) || !passesLuhn(cardNumber) || !/^\d{2}\/\d{2}$/.test(expiry) || month < 1 || month > 12 || expiryDate <= new Date(nowDate.getFullYear(), nowDate.getMonth(), 1) || !/^\d{3,4}$/.test(cvv)) {
+            return { status: 400, body: { error: 'Card details are invalid or expired' } };
+        }
+        if (!profileName || normalizeName(cardholderName) !== profileName) {
+            return { status: 400, body: { error: 'Cardholder name must match your account name' } };
+        }
+        transferData = {
+            destination_type: destinationType,
+            recipient_name: cardholderName,
+            recipient_identifier: `****${cardNumber.slice(-4)}`,
+            card_last4: cardNumber.slice(-4),
+            card_expiry: expiry,
+            status: 'completed'
+        };
+    } else if (destinationType === 'crypto_wallet') {
+        const wallet = body.wallet || {};
+        if (![wallet.platform, wallet.accountName, wallet.address, wallet.network].every(value => String(value || '').trim()) || String(wallet.address).trim().length < 16) {
+            return { status: 400, body: { error: 'Wallet details are invalid' } };
+        }
+        transferData = {
+            destination_type: destinationType,
+            recipient_name: String(wallet.accountName).trim(),
+            recipient_identifier: String(wallet.address).trim(),
+            wallet_platform: String(wallet.platform).trim(),
+            wallet_network: String(wallet.network).trim(),
+            status: 'completed'
+        };
+    } else {
+        return { status: 400, body: { error: 'Select a valid withdrawal destination' } };
+    }
+
+    const transferId = randomUUID();
+    const transactionId = randomUUID();
+    const transfer = {
+        id: transferId,
+        created_at: now(),
+        updated_at: now(),
+        user_id: user.userId,
+        account_id: account.id,
+        transfer_type: destinationType === 'external_card' ? 'card_withdrawal' : 'crypto_withdrawal',
+        direction: 'outgoing',
+        amount,
+        description: body.description || 'Withdrawal',
+        ...transferData
+    };
+    const transactionRecord = {
+        id: transactionId,
+        account_id: account.id,
+        type: 'withdrawal',
+        amount: -amount,
+        description: body.description || `Withdrawal to ${destinationType === 'external_card' ? 'external card' : 'crypto wallet'}`,
+        related_transfer_id: transfer.id,
+        created_at: now()
+    };
+    await getDb().runTransaction(async transaction => {
+        const accountRef = getDb().collection('accounts').doc(account.id);
+        const currentAccount = await transaction.get(accountRef);
+        if (!currentAccount.exists || Number(currentAccount.data().balance) < amount) throw new Error('Insufficient funds');
+        const newBalance = Number((Number(currentAccount.data().balance) - amount).toFixed(2));
+        transaction.update(accountRef, { balance: newBalance, updated_at: now() });
+        transaction.set(getDb().collection('external_transfers').doc(transfer.id), transfer);
+        transaction.set(getDb().collection('transactions').doc(transactionRecord.id), { ...transactionRecord, balance_after: newBalance });
+        transfer.new_balance = newBalance;
+    });
+    return { body: { message: 'Withdrawal submitted successfully', transfer: clean(transfer), newBalance: transfer.new_balance } };
+}
+
 async function adminRoutes(method, parts, user, body, query) {
     requireAdmin(user);
 
@@ -531,6 +645,7 @@ async function route(req) {
     if (parts[0] === 'cards') return cardRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'bills') return billRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'external-transfers') return externalRoutes(method, parts.slice(1), user, body);
+    if (parts[0] === 'withdrawals') return withdrawalRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'admin') return adminRoutes(method, parts.slice(1), user, body, req.query || {});
     if (parts[0] === 'storage' && method === 'POST' && parts[1] === 'upload-url') {
         const path = `uploads/${user.userId}/${randomUUID()}-${String(body.fileName || 'file').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
