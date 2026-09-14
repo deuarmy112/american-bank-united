@@ -3,6 +3,8 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
+    if (!document.getElementById('accountsList')) return;
+
     // Check authentication
     if (!requireAuth()) return;
     
@@ -22,9 +24,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function loadAccounts() {
+    const accountsList = document.getElementById('accountsList');
+    if (!accountsList) return;
+
     const user = getCurrentUser();
     const accounts = getUserAccounts(user.id);
-    const accountsList = document.getElementById('accountsList');
     
     if (accounts.length === 0) {
         accountsList.innerHTML = `

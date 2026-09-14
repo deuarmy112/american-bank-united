@@ -163,14 +163,13 @@
     <script src="js/api.js?v=20260121.2"></script>
     <script src="js/auth.js?v=20260121.2"></script>
     <script src="js/storage.js"></script>
-    <script src="js/accounts.js?v=20260121.2"></script>
     <script>
       let currentUser = null;
       let userAccounts = [];
       
       async function populateDepositDetails() {
+        // Load the profile independently so an accounts request cannot replace it with a fallback user.
         try {
-          // Get current user
           if (typeof getCurrentUser === 'function') {
             currentUser = await getCurrentUser();
           }
@@ -179,33 +178,29 @@
             if (token) {
               const payload = JSON.parse(atob(token.split('.')[1]));
               currentUser = {
-                id: payload.userId || payload.id,
-                firstName: payload.firstName || payload.first_name || 'User',
-                lastName: payload.lastName || payload.last_name || '',
-                email: payload.email || 'user@abu.com',
-                phone: payload.phone || '+1 (555) 123-4567'
+                id: payload.userId || payload.id || payload.sub,
+                firstName: payload.firstName || payload.first_name,
+                lastName: payload.lastName || payload.last_name,
+                email: payload.email,
+                phone: payload.phone
               };
             }
           }
-          
-          // Fetch approved user accounts
+        } catch (e) {
+          console.warn('Failed to get current user:', e);
+        }
+
+        try {
           if (typeof accountsAPI !== 'undefined' && accountsAPI.getAll) {
             userAccounts = await accountsAPI.getAll() || [];
           }
-          
-          console.log('Current user:', currentUser);
-          console.log('User accounts:', userAccounts);
-        } catch (e) { 
-          console.warn('Failed to get user data or accounts:', e);
-          currentUser = {
-            id: 'fallback-user',
-            firstName: 'User',
-            lastName: '',
-            email: 'user@abu.com',
-            phone: '+1 (555) 123-4567'
-          };
+        } catch (e) {
+          console.warn('Failed to get user accounts:', e);
           userAccounts = [];
         }
+
+        console.log('Current user:', currentUser);
+        console.log('User accounts:', userAccounts);
         
         const acctTypeEl = document.getElementById('abuAccountType');
         const noAccountsMessage = document.getElementById('noAccountsMessage');
