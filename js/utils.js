@@ -14,6 +14,7 @@ function formatCurrency(amount) {
 // Format date to readable format
 function formatDate(dateString) {
     const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return 'Date unavailable';
     return date.toLocaleString('en-US', {
         year: 'numeric',
         month: 'short',

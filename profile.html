@@ -380,7 +380,7 @@
     </div>
 
     <script src="js/api.js?v=20260121.1"></script>
-    <script src="js/utils.js?v=20260121.1"></script>
+    <script src="js/utils.js?v=20260914.14"></script>
     <script src="js/auth.js?v=20260121.1"></script>
     <script>
         // Quick Actions Registry
@@ -618,6 +618,7 @@
                     amount: transfer.amount,
                     description: `${transfer.transfer_type.toUpperCase()}: ${transfer.recipient_name || 'Unknown'} ${transfer.bank_name ? '('+transfer.bank_name+')' : ''}`,
                     createdAt: transfer.created_at,
+                    created_at: transfer.created_at,
                     isExternal: true
                 }));
                 
