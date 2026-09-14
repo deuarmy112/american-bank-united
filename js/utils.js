@@ -13,6 +13,11 @@ function formatCurrency(amount) {
 
 // Format date to readable format
 function formatDate(dateString) {
+    if (dateString && typeof dateString === 'object') {
+        if (typeof dateString.toDate === 'function') dateString = dateString.toDate();
+        else if (dateString.seconds) dateString = Number(dateString.seconds) * 1000;
+    }
+    if (typeof dateString === 'number' && dateString < 100000000000) dateString *= 1000;
     const date = new Date(dateString);
     if (Number.isNaN(date.getTime())) return 'Date unavailable';
     return date.toLocaleString('en-US', {

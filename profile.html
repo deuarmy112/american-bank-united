@@ -380,7 +380,7 @@
     </div>
 
     <script src="js/api.js?v=20260121.1"></script>
-    <script src="js/utils.js?v=20260914.14"></script>
+    <script src="js/utils.js?v=20260914.15"></script>
     <script src="js/auth.js?v=20260121.1"></script>
     <script>
         // Quick Actions Registry
@@ -633,7 +633,7 @@
                         recent.forEach(i=>{
                             const li = document.createElement('li');
                             li.className = 'p-3 border rounded flex items-center justify-between';
-                            li.innerHTML = `<div><div class="font-medium">${i.title || i.description || 'Transaction'}</div><div class="text-xs text-slate-500">${formatDate(i.date||i.created_at||'')}</div></div><div class="text-sm font-medium">${formatCurrency(i.amount||0)}</div>`;
+                            li.innerHTML = `<div><div class="font-medium">${i.title || i.description || 'Transaction'}</div><div class="text-xs text-slate-500">${formatDate(i.created_at || i.createdAt || i.date || i.timestamp)}</div></div><div class="text-sm font-medium">${formatCurrency(i.amount||0)}</div>`;
                             txEl.appendChild(li);
                         });
                     }
