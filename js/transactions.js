@@ -62,9 +62,11 @@ function loadAccountsFilter() {
     filterSelect.innerHTML = '<option value="">All Accounts</option>';
     
     accounts.forEach(account => {
+        const accountType = account.account_type || account.accountType || 'Account';
+        const accountNumber = account.account_number || account.accountNumber || '';
         filterSelect.innerHTML += `
             <option value="${account.id}">
-                ${capitalize(account.accountType)} - ${account.accountNumber}
+                ${capitalize(accountType)} - ${accountNumber ? `****${accountNumber.slice(-4)}` : 'Unavailable'}
             </option>
         `;
     });
