@@ -382,7 +382,7 @@
                 accountSelect.innerHTML = accounts.map(account =>
                     `<option value="${account.id}">${account.account_type.toUpperCase()} - ${account.account_number} - ${formatCurrency(account.balance)}</option>`
                 ).join('');
-                document.getElementById('adjustBalanceType').value = 'credit';
+                document.getElementById('adjustBalanceType').value = 'deposit';
                 document.getElementById('adjustBalanceAmount').value = '';
                 document.getElementById('adjustBalanceReason').value = '';
                 document.getElementById('adjustBalanceModal').style.display = 'block';
