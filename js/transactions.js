@@ -258,25 +258,70 @@ function showTransactionReceipt(transaction) {
     if (!transaction) return;
     const receiptId = transaction.receipt_id || transaction.receiptId || `TXN-${transaction.id || Date.now()}`;
     const date = formatDate(transaction.createdAt || transaction.created_at);
+    const type = String(transaction.type || 'transaction').replace(/_/g, ' ');
+    const amount = formatCurrency(Math.abs(Number(transaction.amount) || 0));
+    const status = transaction.status || transaction.approval_status || 'completed';
+    const account = (window.userAccounts || []).find(item => item.id === transaction.account_id);
+    const accountType = account?.account_type || account?.accountType || '';
+    const accountNumber = account?.account_number || account?.accountNumber || '';
+    const destination = transaction.recipient_name || transaction.wallet_platform || transaction.bank_name || transaction.recipient_identifier || 'Account activity';
+    const direction = Number(transaction.amount) >= 0 ? 'Credit' : 'Debit';
     const overlay = document.createElement('div');
     overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4';
     overlay.innerHTML = `
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-            <div class="flex items-center justify-between mb-5">
-                <div><h2 class="text-lg font-semibold">Transaction Receipt</h2><p class="text-xs text-slate-500">${receiptId}</p></div>
-                <button type="button" class="close-receipt text-slate-500 text-xl" aria-label="Close">&times;</button>
+        <div class="receipt-modal bg-slate-100 rounded-xl shadow-xl w-full max-w-md max-h-[92vh] overflow-y-auto">
+            <div class="receipt-paper relative bg-white m-3 p-6 sm:p-8 overflow-hidden">
+                <img src="assets/abu-logo.svg" alt="" aria-hidden="true" class="absolute inset-0 m-auto w-48 opacity-[0.045] pointer-events-none">
+                <div class="relative">
+                    <div class="flex items-start justify-between border-b border-slate-200 pb-5">
+                        <div class="flex items-center gap-3">
+                            <img src="assets/abu-logo.svg" alt="American Bank United" class="w-12 h-12 object-contain">
+                            <div>
+                                <div class="text-[11px] uppercase tracking-[0.18em] text-slate-500">American Bank United</div>
+                                <h2 class="text-xl font-bold text-slate-900 mt-1">Transaction Receipt</h2>
+                            </div>
+                        </div>
+                        <button type="button" class="close-receipt text-slate-500 text-xl" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="flex items-center justify-between py-4 border-b border-dashed border-slate-300">
+                        <div><div class="text-xs text-slate-500">Reference number</div><div class="font-semibold text-sm text-slate-900">${receiptId}</div></div>
+                        <div class="text-right"><div class="text-xs text-slate-500">Status</div><span class="inline-flex mt-1 rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-xs font-semibold capitalize">${status}</span></div>
+                    </div>
+                    <div class="py-5 text-center border-b border-slate-200">
+                        <div class="text-xs uppercase tracking-wide text-slate-500">${direction} amount</div>
+                        <div class="text-3xl font-bold ${Number(transaction.amount) >= 0 ? 'text-emerald-600' : 'text-rose-600'} mt-1">${Number(transaction.amount) >= 0 ? '+' : '-'}${amount}</div>
+                        <div class="text-xs text-slate-500 mt-2 capitalize">${type}</div>
+                    </div>
+                    <dl class="divide-y divide-slate-100 text-sm">
+                        <div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Date and time</dt><dd class="text-right text-slate-900">${date}</dd></div>
+                        ${account ? `<div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Source account</dt><dd class="text-right text-slate-900">${capitalize(accountType)} ****${accountNumber.slice(-4)}</dd></div>` : ''}
+                        <div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Description</dt><dd class="text-right text-slate-900">${transaction.description || 'Account activity'}</dd></div>
+                        <div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Destination</dt><dd class="text-right text-slate-900">${destination}</dd></div>
+                        ${transaction.balance_after !== undefined ? `<div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Balance after</dt><dd class="font-semibold text-right text-slate-900">${formatCurrency(transaction.balance_after)}</dd></div>` : ''}
+                    </dl>
+                    <div class="border-t border-dashed border-slate-300 pt-4 mt-3 text-xs text-slate-500 space-y-1">
+                        <div class="flex justify-between gap-4"><span>Receipt type</span><span class="capitalize">${type}</span></div>
+                        <div class="flex justify-between gap-4"><span>Record ID</span><span>${transaction.id || '—'}</span></div>
+                    </div>
+                    <p class="text-[11px] leading-4 text-slate-400 text-center mt-6">This electronic receipt confirms the transaction recorded in your American Bank United account. Keep this reference number for support inquiries.</p>
+                </div>
             </div>
-            <div class="space-y-3 text-sm">
-                <div class="flex justify-between gap-4"><span class="text-slate-500">Status</span><strong class="text-emerald-600">${transaction.status || 'completed'}</strong></div>
-                <div class="flex justify-between gap-4"><span class="text-slate-500">Type</span><strong>${String(transaction.type || 'transaction').replace('_', ' ')}</strong></div>
-                <div class="flex justify-between gap-4"><span class="text-slate-500">Amount</span><strong>${formatCurrency(transaction.amount)}</strong></div>
-                <div class="flex justify-between gap-4"><span class="text-slate-500">Description</span><span class="text-right">${transaction.description || 'Account activity'}</span></div>
-                <div class="flex justify-between gap-4"><span class="text-slate-500">Date</span><span>${date}</span></div>
+            <div class="flex gap-3 px-3 pb-3">
+                <button type="button" class="print-receipt flex-1 bg-slate-900 text-white rounded-lg py-2 text-sm font-medium"><i class="fas fa-print mr-2"></i>Print</button>
+                <button type="button" class="close-receipt flex-1 border border-slate-300 bg-white rounded-lg py-2 text-sm font-medium">Done</button>
             </div>
-            <button type="button" class="close-receipt mt-6 w-full border border-slate-300 rounded-lg py-2 text-sm">Done</button>
         </div>`;
     document.body.appendChild(overlay);
     overlay.querySelectorAll('.close-receipt').forEach(button => button.addEventListener('click', () => overlay.remove()));
+    overlay.querySelector('.print-receipt').addEventListener('click', () => {
+        const paper = overlay.querySelector('.receipt-paper');
+        const printWindow = window.open('', '_blank', 'width=720,height=900');
+        if (!printWindow) return;
+        printWindow.document.write(`<!doctype html><html><head><title>Receipt ${receiptId}</title><link rel="stylesheet" href="css/tailwind.css"></head><body class="bg-white p-6">${paper.outerHTML}</body></html>`);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+    });
 }
 
 function calculateSummary() {
