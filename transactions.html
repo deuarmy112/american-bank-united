@@ -25,7 +25,7 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <i class="fas fa-history text-3xl sm:text-4xl text-white/75"></i>
-                    <button type="button" onclick="if (document.referrer && new URL(document.referrer).origin === location.origin) history.back(); else location.href = 'dashboard.html';" class="w-10 h-10 rounded-full flex items-center justify-center text-white/90 hover:bg-white/20 transition-colors" aria-label="Close transaction history" title="Close">
+                    <button type="button" onclick="if (document.referrer && document.referrer.startsWith(location.origin)) history.back(); else location.href = 'dashboard.html';" class="w-10 h-10 rounded-full flex items-center justify-center text-white/90 hover:bg-white/20 transition-colors" aria-label="Close transaction history" title="Close">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
@@ -111,6 +111,6 @@
     <script src="js/api.js?v=20260121.1"></script>
     <script src="js/utils.js?v=20260121.1"></script>
     <script src="js/auth.js?v=20260121.1"></script>
-    <script src="js/accounts-api.js?v=20260121.1"></script>
+    <script src="js/accounts-api.js?v=20260914.13"></script>
     <script src="js/transactions.js?v=20260914.12"></script>
     <script src="js/bottom-nav.js?v=20260121.1"></script>

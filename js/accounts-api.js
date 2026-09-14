@@ -3,6 +3,7 @@
  */
 
 document.addEventListener('DOMContentLoaded', async function() {
+    if (!document.getElementById('accountsList')) return;
     if (!requireAuth()) return;
     await displayUserName();
     await loadAccounts();
