@@ -351,7 +351,7 @@ function calculateSummary() {
     // Update net change
     const netChangeElement = document.getElementById('netChange');
     netChangeElement.textContent = (netChange >= 0 ? '+' : '') + formatCurrency(netChange);
-    netChangeElement.className = 'text-2xl font-bold';
+    netChangeElement.classList.remove('text-green-600', 'text-red-600', 'text-slate-900');
     if (netChange > 0) {
         netChangeElement.classList.add('text-green-600');
     } else if (netChange < 0) {
