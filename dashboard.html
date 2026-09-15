@@ -17,6 +17,15 @@
             body { background: #f8fafc }
             html.dashboard-data-loading #recentTransactions { visibility: hidden; }
             html.dashboard-data-loading #balanceSlides { visibility: hidden; }
+            #featureBackdrop { z-index: 49; }
+            #featureSheet { z-index: 70; bottom: 76px; max-height: calc(100dvh - 96px); overflow-y: auto; padding-bottom: 8px; }
+            #featureSheet > div { max-height: none; border: 1px solid #e5e7eb; border-radius: 20px; padding: 18px; }
+            #featureSheet .feature-sheet-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+            #featureSheet .feature-action { min-height: 74px; justify-content: center; border: 1px solid #eef0f3; border-radius: 12px; background: #f8fafc; }
+            #featureSheet .feature-action i { font-size: 18px; margin-bottom: 6px; }
+            @media (max-width: 380px) {
+                #featureSheet .feature-sheet-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            }
         </style>        <main class="max-w-md mx-auto p-4 pb-32">
             <!-- Mobile app top area -->
             <div class="flex items-center justify-between mb-4 flex-nowrap">
@@ -239,16 +248,16 @@
                     <h3 class="font-semibold">Quick Actions</h3>
                     <button onclick="closeFeatureSheet()" class="text-slate-500">Close</button>
                 </div>
-                <div class="grid grid-cols-4 gap-3 mt-4">
-                    <a href="accounts.html" class="flex flex-col items-center p-3 bg-slate-50 rounded-lg"> <i class="fas fa-wallet text-lg text-indigo-600"></i> <span class="text-xs mt-1">Accounts</span></a>
-                    <a href="trade.html" class="flex flex-col items-center p-3 bg-slate-50 rounded-lg"> <i class="fas fa-chart-line text-lg text-emerald-600"></i> <span class="text-xs mt-1">Trade</span></a>
-                    <a href="transfer.html?type=international" class="flex flex-col items-center p-3 bg-slate-50 rounded-lg"> <i class="fas fa-globe text-lg text-sky-500"></i> <span class="text-xs mt-1">Intl Transfer</span></a>
-                    <a href="transactions.html" class="flex flex-col items-center p-3 bg-slate-50 rounded-lg"> <i class="fas fa-history text-lg text-slate-700"></i> <span class="text-xs mt-1">History</span></a>
+                <div class="feature-sheet-grid grid mt-4">
+                    <a href="accounts.html" class="feature-action flex flex-col items-center p-3"> <i class="fas fa-wallet text-indigo-600"></i> <span class="text-xs">Accounts</span></a>
+                    <a href="trade.html" class="feature-action flex flex-col items-center p-3"> <i class="fas fa-chart-line text-emerald-600"></i> <span class="text-xs">Trade</span></a>
+                    <a href="transfer.html?type=international" class="feature-action flex flex-col items-center p-3"> <i class="fas fa-globe text-sky-500"></i> <span class="text-xs">Intl Transfer</span></a>
+                    <a href="transactions.html" class="feature-action flex flex-col items-center p-3"> <i class="fas fa-history text-slate-700"></i> <span class="text-xs">History</span></a>
 
-                    <a href="deposit.html" data-fullscreen="true" class="flex flex-col items-center p-3 bg-slate-50 rounded-lg"> <i class="fas fa-money-bill-wave text-lg text-green-600"></i> <span class="text-xs mt-1">Deposit</span></a>
+                    <a href="deposit.html" data-fullscreen="true" class="feature-action flex flex-col items-center p-3"> <i class="fas fa-money-bill-wave text-green-600"></i> <span class="text-xs">Deposit</span></a>
                     <!-- Withdraw removed -->
-                    <a href="bills.html" class="flex flex-col items-center p-3 bg-slate-50 rounded-lg"> <i class="fas fa-file-invoice-dollar text-lg text-yellow-600"></i> <span class="text-xs mt-1">Bill Pay</span></a>
-                    <a href="cards.html" class="flex flex-col items-center p-3 bg-slate-50 rounded-lg"> <i class="fas fa-credit-card text-lg text-indigo-500"></i> <span class="text-xs mt-1">Cards</span></a>
+                    <a href="bills.html" class="feature-action flex flex-col items-center p-3"> <i class="fas fa-file-invoice-dollar text-yellow-600"></i> <span class="text-xs">Bill Pay</span></a>
+                    <a href="cards.html" class="feature-action flex flex-col items-center p-3"> <i class="fas fa-credit-card text-indigo-500"></i> <span class="text-xs">Cards</span></a>
                 </div>
                 <div class="mt-4 text-xs text-slate-500">More: Scheduled payments, External transfers, Statements, Support</div>
             </div>
