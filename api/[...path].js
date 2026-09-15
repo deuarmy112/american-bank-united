@@ -110,6 +110,25 @@ function readBody(req) {
     return {};
 }
 
+function normalizeAccountIdentifier(value) {
+    return String(value || '').trim().replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+}
+
+function accountIdentifierMatches(account, identifier) {
+    const input = normalizeAccountIdentifier(identifier);
+    const accountNumber = normalizeAccountIdentifier(account.account_number);
+    const storedIban = normalizeAccountIdentifier(account.iban);
+    const inputDigits = input.replace(/[^0-9]/g, '');
+    const accountDigits = accountNumber.replace(/[^0-9]/g, '');
+
+    return Boolean(input) && (
+        input === accountNumber ||
+        input === storedIban ||
+        (inputDigits.length >= 10 && inputDigits.slice(-10) === accountDigits.slice(-10)) ||
+        (accountDigits.length >= 10 && input.endsWith(accountDigits.slice(-10)))
+    );
+}
+
 async function authenticate(req) {
     const header = req.headers.authorization || '';
     const token = header.startsWith('Bearer ') ? header.slice(7) : '';
@@ -193,10 +212,8 @@ async function authLogin(body) {
 async function accountRoutes(method, parts, user, body, query = {}) {
     if (method === 'GET' && parts[0] === 'lookup') {
         const identifier = String(query.identifier || '').trim();
-        const digits = identifier.replace(/\D/g, '');
-        const candidates = [identifier, digits, digits.slice(-10)].filter(Boolean);
         const snapshot = await getDb().collection('accounts').where('status', '==', 'active').limit(1000).get();
-        const accountDoc = snapshot.docs.find(doc => candidates.includes(String(doc.data().account_number || '')));
+        const accountDoc = snapshot.docs.find(doc => accountIdentifierMatches(doc.data(), identifier));
         if (!accountDoc) return { status: 404, body: { error: 'ABU account not found' } };
         const account = { id: accountDoc.id, ...accountDoc.data() };
         const profile = await userProfile(account.user_id);

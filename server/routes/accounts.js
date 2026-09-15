@@ -5,6 +5,25 @@ const { generateId, generateAccountNumber } = require('../utils/helpers');
 
 const router = express.Router();
 
+function normalizeAccountIdentifier(value) {
+    return String(value || '').trim().replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+}
+
+function accountIdentifierMatches(account, identifier) {
+    const input = normalizeAccountIdentifier(identifier);
+    const accountNumber = normalizeAccountIdentifier(account.account_number);
+    const storedIban = normalizeAccountIdentifier(account.iban);
+    const inputDigits = input.replace(/[^0-9]/g, '');
+    const accountDigits = accountNumber.replace(/[^0-9]/g, '');
+
+    return Boolean(input) && (
+        input === accountNumber ||
+        input === storedIban ||
+        (inputDigits.length >= 10 && inputDigits.slice(-10) === accountDigits.slice(-10)) ||
+        (accountDigits.length >= 10 && input.endsWith(accountDigits.slice(-10)))
+    );
+}
+
 // Get all accounts for current user
 router.get('/', authenticateToken, async (req, res) => {
     try {
@@ -25,16 +44,14 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/lookup', authenticateToken, async (req, res) => {
     try {
         const identifier = String(req.query.identifier || '').trim();
-        const digits = identifier.replace(/\D/g, '');
         const result = await pool.query(
             `SELECT a.id, a.account_number, a.account_type, u.first_name, u.last_name, u.email
              FROM accounts a JOIN users u ON u.id = a.user_id
-             WHERE a.status = 'active' AND (a.account_number = $1 OR a.account_number = $2)
-             LIMIT 1`,
-            [identifier, digits.slice(-10)]
+             WHERE a.status = 'active'
+             LIMIT 1000`
         );
-        if (result.rows.length === 0) return res.status(404).json({ error: 'ABU account not found' });
-        const account = result.rows[0];
+        const account = result.rows.find(row => accountIdentifierMatches(row, identifier));
+        if (!account) return res.status(404).json({ error: 'ABU account not found' });
         res.json({
             id: account.id,
             accountNumber: account.account_number,
