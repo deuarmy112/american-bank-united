@@ -31,6 +31,10 @@
       "destination": "/api/[...path]?path=chat/start"
     },
     {
+      "source": "/api/chat/read",
+      "destination": "/api/[...path]?path=chat/read"
+    },
+    {
       "source": "/api/chat",
       "destination": "/api/[...path]?path=chat"
     },

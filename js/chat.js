@@ -23,6 +23,11 @@
             const data = await apiClient.get('/chat');
             customerMessages = data.messages || [];
             renderChatMessages(customerMessages);
+            const unread = document.getElementById('customerUnreadCount');
+            if (unread) {
+                unread.textContent = data.unreadCount || '';
+                unread.classList.toggle('hidden', !data.unreadCount);
+            }
             if (status) status.textContent = '';
             chatLoaded = true;
         } catch (error) {
@@ -45,7 +50,30 @@
         const startButton = document.getElementById('startChatButton');
         if (startButton) startButton.disabled = false;
         if (status) status.textContent = '';
+        loadCustomerChat();
     };
+
+    async function openExistingChat() {
+        const inquiryStep = document.getElementById('chatInquiryStep');
+        const room = document.getElementById('chatRoom');
+        const status = document.getElementById('chatStatus');
+        try {
+            const data = await apiClient.get('/chat');
+            if (!data.conversation) {
+                if (status) status.textContent = 'No existing conversation yet. Select an inquiry to start one.';
+                return;
+            }
+            customerMessages = data.messages || [];
+            renderChatMessages(customerMessages);
+            await apiClient.post('/chat/read', {});
+            document.getElementById('customerUnreadCount')?.classList.add('hidden');
+            inquiryStep.classList.add('hidden');
+            room.classList.remove('hidden');
+            if (status) status.textContent = `Support chat: ${data.conversation.inquiry || 'Existing inquiry'}`;
+        } catch (error) {
+            if (status) status.textContent = error.message || 'Unable to open chat.';
+        }
+    }
 
     async function startCustomerChat() {
         const inquiry = document.getElementById('chatInquiry')?.value;
@@ -67,6 +95,8 @@
             if (progressBar) progressBar.style.width = '100%';
             customerMessages = result.messages || [];
             renderChatMessages(customerMessages);
+            await apiClient.post('/chat/read', {});
+            document.getElementById('customerUnreadCount')?.classList.add('hidden');
             inquiryStep.classList.add('hidden');
             room.classList.remove('hidden');
             if (status) status.textContent = `Support chat: ${inquiry}`;
@@ -93,6 +123,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('startChatButton')?.addEventListener('click', startCustomerChat);
+        document.getElementById('openExistingChat')?.addEventListener('click', openExistingChat);
         const form = document.getElementById('chatForm');
         if (!form) return;
         form.addEventListener('submit', async event => {

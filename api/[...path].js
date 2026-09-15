@@ -386,9 +386,15 @@ async function chatRoutes(method, parts, user, body) {
         return {
             body: {
                 conversation: conversation.exists ? clean({ id: conversation.id, ...conversation.data() }) : null,
+                unreadCount: conversation.exists ? Number(conversation.data().customer_unread_count || 0) : 0,
                 messages: messages.docs.map(doc => clean({ id: doc.id, ...doc.data() })).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))
             }
         };
+    }
+
+    if (method === 'POST' && parts[0] === 'read') {
+        if (conversation.exists) await conversationRef.set({ customer_unread_count: 0, updated_at: now() }, { merge: true });
+        return { body: { success: true } };
     }
 
     if (method === 'POST' && parts.length === 0) {
@@ -397,7 +403,7 @@ async function chatRoutes(method, parts, user, body) {
         const profile = await userProfile(user.userId);
         const timestamp = now();
         const message = { id: randomUUID(), conversation_id: user.userId, sender_id: user.userId, sender_role: 'customer', text, created_at: timestamp };
-        await conversationRef.set({ id: user.userId, user_id: user.userId, user_name: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim(), user_email: profile?.email || '', status: 'open', last_message: text, last_message_at: timestamp, updated_at: timestamp }, { merge: true });
+        await conversationRef.set({ id: user.userId, user_id: user.userId, user_name: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim(), user_email: profile?.email || '', status: 'open', last_message: text, last_message_at: timestamp, admin_unread_count: Number(conversation?.data()?.admin_unread_count || 0) + 1, updated_at: timestamp }, { merge: true });
         await conversationRef.collection('messages').doc(message.id).set(message);
         return { status: 201, body: { message: clean(message) } };
     }
@@ -605,6 +611,7 @@ async function adminRoutes(method, parts, user, body, query) {
         const conversationRef = getDb().collection('chat_conversations').doc(parts[1]);
         if (method === 'GET' && parts.length === 2) {
             const messages = await conversationRef.collection('messages').get();
+            await conversationRef.set({ admin_unread_count: 0, updated_at: now() }, { merge: true });
             return { body: { messages: clean(messages.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))) } };
         }
         if (method === 'POST' && parts.length === 2) {
@@ -612,7 +619,8 @@ async function adminRoutes(method, parts, user, body, query) {
             if (!text || text.length > 2000) return { status: 400, body: { error: 'Message must be between 1 and 2000 characters' } };
             const timestamp = now();
             const message = { id: randomUUID(), conversation_id: parts[1], sender_id: user.userId, sender_role: 'admin', text, created_at: timestamp };
-            await conversationRef.set({ status: 'open', last_message: text, last_message_at: timestamp, updated_at: timestamp }, { merge: true });
+            const current = await conversationRef.get();
+            await conversationRef.set({ status: 'open', last_message: text, last_message_at: timestamp, customer_unread_count: Number(current.data()?.customer_unread_count || 0) + 1, updated_at: timestamp }, { merge: true });
             await conversationRef.collection('messages').doc(message.id).set(message);
             return { status: 201, body: { message: clean(message) } };
         }
