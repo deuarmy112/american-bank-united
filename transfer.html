@@ -486,19 +486,14 @@
         }
 
         function populateAccountDropdowns() {
-            userAccounts = (userAccounts || []).filter(account => {
-                const status = String(account.status || '').toLowerCase();
-                const approvalStatus = String(account.approval_status || 'approved').toLowerCase();
-                return ['active', 'approved'].includes(status) && approvalStatus === 'approved';
-            });
             if (userAccounts.length === 0) {
                 showAlert('No accounts found. Please create an account first.', 'error');
                 return;
             }
 
             const accountOptions = userAccounts.map(acc => `
-                <option value="${acc.id}" data-balance="${acc.balance}">
-                    ${(acc.account_type || acc.type || 'Account').toUpperCase()} • ****${(acc.account_number || '0000').slice(-4)} - $${parseFloat(acc.balance || 0).toFixed(2)}
+                <option value="${acc.id}" data-balance="${acc.balance}" ${isUnavailableTransferAccount(acc) ? 'disabled' : ''}>
+                    ${(acc.account_type || acc.type || 'Account').toUpperCase()} • ****${(acc.account_number || '0000').slice(-4)} - $${parseFloat(acc.balance || 0).toFixed(2)}${isUnavailableTransferAccount(acc) ? ' (Pending approval)' : ''}
                 </option>
             `).join('');
 
@@ -520,6 +515,12 @@
             ['internalToAccount'].forEach(id => {
                 document.getElementById(id).addEventListener('change', updateToBalanceDisplay);
             });
+        }
+
+        function isUnavailableTransferAccount(account) {
+            const status = String(account.status || '').toLowerCase();
+            const approvalStatus = String(account.approval_status || 'approved').toLowerCase();
+            return ['inactive', 'closed', 'rejected', 'suspended'].includes(status) || ['pending', 'rejected'].includes(approvalStatus);
         }
 
         function populateCountries() {

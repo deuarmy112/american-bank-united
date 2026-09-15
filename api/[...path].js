@@ -131,7 +131,7 @@ function accountIdentifierMatches(account, identifier) {
 
 function isTransferableAccount(account) {
     const status = String(account?.status || '').toLowerCase();
-    return ['active', 'approved'].includes(status) && String(account?.approval_status || 'approved').toLowerCase() === 'approved';
+    return (!status || ['active', 'approved'].includes(status)) && String(account?.approval_status || 'approved').toLowerCase() === 'approved';
 }
 
 async function authenticate(req) {
