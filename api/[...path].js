@@ -354,6 +354,35 @@ async function notificationRoutes(method, parts, user) {
     return { body: notifications.slice(0, 100) };
 }
 
+async function chatRoutes(method, parts, user, body) {
+    const db = getDb();
+    const conversationRef = db.collection('chat_conversations').doc(user.userId);
+    const conversation = await conversationRef.get();
+
+    if (method === 'GET' && parts.length === 0) {
+        const messages = conversation.exists ? await conversationRef.collection('messages').get() : { docs: [] };
+        return {
+            body: {
+                conversation: conversation.exists ? clean({ id: conversation.id, ...conversation.data() }) : null,
+                messages: messages.docs.map(doc => clean({ id: doc.id, ...doc.data() })).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))
+            }
+        };
+    }
+
+    if (method === 'POST' && parts.length === 0) {
+        const text = String(body.text || '').trim();
+        if (!text || text.length > 2000) return { status: 400, body: { error: 'Message must be between 1 and 2000 characters' } };
+        const profile = await userProfile(user.userId);
+        const timestamp = now();
+        const message = { id: randomUUID(), conversation_id: user.userId, sender_id: user.userId, sender_role: 'customer', text, created_at: timestamp };
+        await conversationRef.set({ id: user.userId, user_id: user.userId, user_name: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim(), user_email: profile?.email || '', status: 'open', last_message: text, last_message_at: timestamp, updated_at: timestamp }, { merge: true });
+        await conversationRef.collection('messages').doc(message.id).set(message);
+        return { status: 201, body: { message: clean(message) } };
+    }
+
+    return { status: 404, body: { error: 'Chat route not found' } };
+}
+
 async function cardRoutes(method, parts, user, body) {
     if (method === 'GET' && parts[0] === 'requests') return { body: clean(await listDocs('card_requests', 'user_id', user.userId, 'created_at', 100)) };
     if (method === 'GET') return { body: clean(await listDocs('cards', 'user_id', user.userId)) };
@@ -543,6 +572,29 @@ async function withdrawalRoutes(method, parts, user, body) {
 
 async function adminRoutes(method, parts, user, body, query) {
     requireAdmin(user);
+
+    if (method === 'GET' && parts[0] === 'chat' && parts.length === 1) {
+        const snapshot = await getDb().collection('chat_conversations').get();
+        const conversations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => String(b.last_message_at || '').localeCompare(String(a.last_message_at || '')));
+        return { body: { conversations: clean(conversations) } };
+    }
+
+    if (parts[0] === 'chat' && parts[1]) {
+        const conversationRef = getDb().collection('chat_conversations').doc(parts[1]);
+        if (method === 'GET' && parts.length === 2) {
+            const messages = await conversationRef.collection('messages').get();
+            return { body: { messages: clean(messages.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))) } };
+        }
+        if (method === 'POST' && parts.length === 2) {
+            const text = String(body.text || '').trim();
+            if (!text || text.length > 2000) return { status: 400, body: { error: 'Message must be between 1 and 2000 characters' } };
+            const timestamp = now();
+            const message = { id: randomUUID(), conversation_id: parts[1], sender_id: user.userId, sender_role: 'admin', text, created_at: timestamp };
+            await conversationRef.set({ status: 'open', last_message: text, last_message_at: timestamp, updated_at: timestamp }, { merge: true });
+            await conversationRef.collection('messages').doc(message.id).set(message);
+            return { status: 201, body: { message: clean(message) } };
+        }
+    }
 
     if (method === 'GET' && parts[0] === 'card-requests') {
         const requests = await listDocs('card_requests', 'status', 'pending', 'created_at', 500);
@@ -807,6 +859,7 @@ async function route(req) {
     const user = await authenticate(req);
     await ensureGuest();
     if (parts[0] === 'accounts') return accountRoutes(method, parts.slice(1), user, body, req.query || {});
+    if (parts[0] === 'chat') return chatRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'transactions') return transactionRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'notifications') return notificationRoutes(method, parts.slice(1), user);
     if (parts[0] === 'cards') return cardRoutes(method, parts.slice(1), user, body);

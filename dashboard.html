@@ -32,8 +32,8 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <button aria-label="Contact support" title="Contact support" onclick="openCustomerServiceModal()" class="p-2 rounded-full hover:bg-slate-100">
-                        <i class="fas fa-headphones text-slate-700"></i>
+                    <button aria-label="Open bank chat" title="Bank chat" onclick="openCustomerServiceModal()" class="p-2 rounded-full hover:bg-slate-100">
+                        <i class="fas fa-comments text-slate-700"></i>
                     </button>
                     <button aria-label="Notifications" title="Notifications" onclick="location.href='notifications.html'" class="p-2 rounded-full hover:bg-slate-100 relative">
                         <i class="fas fa-bell text-slate-700"></i>
@@ -160,6 +160,7 @@
         <script src="js/auth.js?v=20260914.2"></script>
         <script src="js/dashboard-api.js?v=20260914.2"></script>
         <script src="js/features.js?v=20260914.2"></script>
+        <script src="js/chat.js?v=20260915.1"></script>
         <script src="js/ui.js?v=20260914.2"></script>
         <script src="js/balance-slides.js?v=20260914.2"></script>
         <script>
@@ -265,13 +266,14 @@
                     <h3 class="text-lg font-semibold">Customer Support</h3>
                     <button onclick="closeCustomerServiceModal()" class="text-slate-500">Close</button>
                 </div>
-                <div class="mt-3 text-sm text-slate-600">
-                    <p>Need help? Call <strong>+1-800-ABU-HELP</strong> or send us a message.</p>
-                    <p class="mt-2">Or start a chat (demo) — our agents will respond shortly.</p>
-                </div>
-                <div class="mt-4 flex gap-2">
-                    <a href="tel:+18002284435" class="flex-1 bg-indigo-600 text-white py-2 rounded text-center">Call Support</a>
-                        <span class="text-xs">Transfer</span>
+                <div id="chatMessages" class="mt-3 h-64 overflow-y-auto space-y-2 bg-slate-50 rounded p-3 text-sm"></div>
+                <form id="chatForm" class="mt-3 flex gap-2">
+                    <input id="chatInput" class="flex-1 border rounded px-3 py-2" maxlength="2000" placeholder="Write a message..." required>
+                    <button class="bg-slate-800 text-white px-4 py-2 rounded" type="submit">Send</button>
+                </form>
+                <div id="chatStatus" class="mt-2 text-xs text-slate-500"></div>
+                <div class="mt-3">
+                    <a href="tel:+18002284435" class="text-xs text-slate-500">Call support instead</a>
                 </div>
             </div>
         </div>

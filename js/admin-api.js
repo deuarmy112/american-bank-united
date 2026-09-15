@@ -27,6 +27,18 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
     : '/api';
 
 const adminAPI = {
+    async getChatConversations() {
+        return adminRequest(`${API_URL}/admin/chat`);
+    },
+
+    async sendChatMessage(conversationId, text) {
+        return adminRequest(`${API_URL}/admin/chat/${encodeURIComponent(conversationId)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text })
+        });
+    },
+
     // Get dashboard statistics
     async getDashboard() {
         return adminRequest(`${API_URL}/admin/dashboard`);

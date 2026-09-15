@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Chat - American Bank United</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .chat-layout { display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
+        .chat-list, .chat-window { background: #fff; border-radius: 12px; box-shadow: 0 4px 16px rgba(15, 23, 42, .08); }
+        .chat-list { min-height: 560px; }
+        .chat-window { min-height: 560px; display: flex; flex-direction: column; }
+        .conversation { padding: 14px 16px; border-bottom: 1px solid #eef0f3; cursor: pointer; }
+        .conversation.active, .conversation:hover { background: #f5f7fa; }
+        .chat-messages { flex: 1; min-height: 400px; overflow-y: auto; padding: 20px; background: #f8fafc; }
+        .chat-message { max-width: 75%; margin-bottom: 12px; }
+        .chat-message.customer { margin-right: auto; }
+        .chat-message.admin { margin-left: auto; text-align: right; }
+        .chat-message span { display: inline-block; padding: 10px 12px; border-radius: 10px; text-align: left; }
+        .chat-message.customer span { background: #fff; border: 1px solid #e5e7eb; }
+        .chat-message.admin span { background: #1f2937; color: #fff; }
+        @media (max-width: 760px) { .chat-layout { grid-template-columns: 1fr; } .chat-list { min-height: auto; max-height: 240px; overflow-y: auto; } .chat-window { min-height: 500px; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar"><div class="container navbar-container"><div class="navbar-brand"><h2><i class="fas fa-shield-alt"></i> Admin Portal</h2></div><div class="navbar-menu">
+        <a href="admin-dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="admin-users.html" class="nav-link"><i class="fas fa-users"></i> Users</a>
+        <a href="admin-accounts.html" class="nav-link"><i class="fas fa-wallet"></i> Accounts</a>
+        <a href="admin-approvals.html" class="nav-link"><i class="fas fa-check-circle"></i> Approvals</a>
+        <a href="admin-transactions.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Transactions</a>
+        <a href="admin-chat.html" class="nav-link active"><i class="fas fa-comments"></i> Chat</a>
+        <a href="admin-audit.html" class="nav-link"><i class="fas fa-history"></i> Audit Log</a>
+        <div class="navbar-user"><span id="adminName"><i class="fas fa-user-shield"></i> Admin</span></div>
+    </div></div></nav>
+    <main class="container main-content"><div class="dashboard-header"><h1><i class="fas fa-comments"></i> Customer Chat</h1><p class="subtitle">Respond to customer support conversations</p></div>
+        <div class="chat-layout"><section class="chat-list" id="conversationList"><p style="padding:20px;color:#6b7280">Loading conversations...</p></section><section class="chat-window"><div id="chatHeader" style="padding:16px;border-bottom:1px solid #eef0f3;color:#6b7280">Select a conversation</div><div id="adminChatMessages" class="chat-messages"><p style="text-align:center;color:#9ca3af">Choose a customer to view messages.</p></div><form id="adminChatForm" style="display:flex;gap:10px;padding:16px;border-top:1px solid #eef0f3"><input id="adminChatInput" class="form-control" maxlength="2000" placeholder="Reply to customer..." required disabled><button class="btn btn-primary" type="submit" disabled id="adminChatSend"><i class="fas fa-paper-plane"></i> Send</button></form></section></div>
+    </main>
+    <script src="js/utils.js"></script><script src="js/admin-api.js"></script>
+    <script>
+        let selectedConversation = null;
+        const escapeText = value => String(value || '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character]));
+        function checkAuth() { const token = localStorage.getItem('adminAuthToken'); const admin = JSON.parse(localStorage.getItem('adminUser') || '{}'); if (!token || !['admin','super_admin'].includes(admin.role)) { location.href = 'admin-login.html'; return false; } document.getElementById('adminName').innerHTML = `<i class="fas fa-user-shield"></i> ${escapeText(admin.firstName || admin.first_name || 'Admin')}`; return true; }
+        function renderConversations(conversations) { const list = document.getElementById('conversationList'); list.innerHTML = conversations.length ? conversations.map(item => `<div class="conversation ${selectedConversation === item.id ? 'active' : ''}" data-id="${item.id}"><strong>${escapeText(item.user_name || item.user_email || 'Customer')}</strong><div style="font-size:12px;color:#6b7280;margin-top:5px">${escapeText(item.last_message || 'No messages yet')}</div></div>`).join('') : '<p style="padding:20px;color:#6b7280">No customer conversations yet.</p>'; list.querySelectorAll('.conversation').forEach(item => item.addEventListener('click', () => selectConversation(item.dataset.id, conversations.find(conversation => conversation.id === item.dataset.id)))); }
+        function renderMessages(messages) { const box = document.getElementById('adminChatMessages'); box.innerHTML = messages.length ? messages.map(message => `<div class="chat-message ${message.sender_role}"><span>${escapeText(message.text)}</span><div style="font-size:10px;color:#9ca3af;margin-top:3px">${message.sender_role === 'admin' ? 'You' : 'Customer'}</div></div>`).join('') : '<p style="text-align:center;color:#9ca3af">No messages yet.</p>'; box.scrollTop = box.scrollHeight; }
+        async function selectConversation(id, conversation) { selectedConversation = id; document.getElementById('chatHeader').textContent = `${conversation.user_name || 'Customer'} ${conversation.user_email ? `(${conversation.user_email})` : ''}`; document.getElementById('adminChatInput').disabled = false; document.getElementById('adminChatSend').disabled = false; const data = await adminRequest(`${API_URL}/admin/chat/${encodeURIComponent(id)}`); renderMessages(data.messages || []); loadConversations(); }
+        async function loadConversations() { const data = await adminAPI.getChatConversations(); renderConversations(data.conversations || []); }
+        document.getElementById('adminChatForm').addEventListener('submit', async event => { event.preventDefault(); if (!selectedConversation) return; const input = document.getElementById('adminChatInput'); const text = input.value.trim(); if (!text) return; input.disabled = true; try { await adminAPI.sendChatMessage(selectedConversation, text); input.value = ''; await selectConversation(selectedConversation, { user_name: document.getElementById('chatHeader').textContent }); } catch (error) { alert(error.message || 'Unable to send reply'); } finally { input.disabled = false; } });
+        (async function init() { if (!checkAuth()) return; try { await loadConversations(); } catch (error) { document.getElementById('conversationList').innerHTML = `<p style="padding:20px;color:#b91c1c">${escapeText(error.message)}</p>`; } })();
+    </script>
+</body>
+</html>
