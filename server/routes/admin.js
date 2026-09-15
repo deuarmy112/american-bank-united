@@ -268,11 +268,8 @@ router.post('/accounts/:id/reject',
             const { reason } = req.body;
 
             const result = await client.query(
-                `UPDATE accounts 
-                 SET approval_status = 'rejected', approved_by = $1, approved_at = CURRENT_TIMESTAMP, status = 'closed'
-                 WHERE id = $2
-                 RETURNING *`,
-                [req.user.userId, id]
+                `DELETE FROM accounts WHERE id = $1 RETURNING *`,
+                [id]
             );
 
             if (result.rows.length === 0) {
@@ -283,7 +280,7 @@ router.post('/accounts/:id/reject',
             await logAdminAction(
                 req.user.userId,
                 'ACCOUNT_REJECTED',
-                `Rejected account ${result.rows[0].account_number}: ${reason}`,
+                `Rejected and removed account ${result.rows[0].account_number}: ${reason}`,
                 { accountId: id, userId: result.rows[0].user_id, reason }
             );
 

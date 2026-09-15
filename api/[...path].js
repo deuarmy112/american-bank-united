@@ -869,18 +869,20 @@ async function adminRoutes(method, parts, user, body, query) {
         if (!account) return { status: 404, body: { error: 'Account not found' } };
 
         const reason = body.reason || 'Rejected by admin';
-        await getDb().collection('accounts').doc(accountId).set({
-            approval_status: 'rejected',
-            status: 'closed',
-            rejection_reason: reason,
-            approved_by: user.userId,
-            approved_at: now(),
-            updated_at: now()
-        }, { merge: true });
+        const db = getDb();
+        for (const [collection, field] of [['transactions', 'account_id'], ['cards', 'linked_account_id'], ['external_transfers', 'account_id']]) {
+            const related = await db.collection(collection).where(field, '==', accountId).get();
+            if (!related.empty) {
+                const batch = db.batch();
+                related.docs.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+            }
+        }
+        await db.collection('accounts').doc(accountId).delete();
 
         return {
             body: {
-                message: 'Account rejected successfully',
+                message: 'Account rejected and removed successfully',
                 reason
             }
         };
