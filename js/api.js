@@ -39,14 +39,15 @@ window.apiClient = window.apiClient || {
 
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-            
-            // Handle unauthorized (expired token)
-            if (response.status === 401) {
-                this.removeToken();
-                throw new Error('Session expired. Please login again.');
-            }
+            const data = await response.json().catch(() => ({}));
 
-            const data = await response.json();
+            // Login/register 401 responses are credential errors, not expired sessions.
+            if (response.status === 401 && !endpoint.startsWith('/auth/')) {
+                this.removeToken();
+                const sessionError = new Error('Session expired. Please login again.');
+                sessionError.status = 401;
+                throw sessionError;
+            }
 
             if (!response.ok) {
                 const error = new Error(data.error || `HTTP error! status: ${response.status}`);
