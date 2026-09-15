@@ -103,7 +103,7 @@ function openCustomerServiceModal() {
   if (!m) return;
   m.classList.remove('hidden');
   document.body.classList.add('overflow-hidden');
-  if (window.loadCustomerChat) window.loadCustomerChat();
+  if (window.prepareCustomerChat) window.prepareCustomerChat();
 }
 
 function closeCustomerServiceModal() {

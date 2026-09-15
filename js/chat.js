@@ -1,5 +1,6 @@
 (function () {
     let chatLoaded = false;
+    let chatStarting = false;
     let customerMessages = [];
 
     function escapeChatText(value) {
@@ -31,11 +32,59 @@
 
     window.loadCustomerChat = loadCustomerChat;
 
+    window.prepareCustomerChat = function () {
+        const inquiryStep = document.getElementById('chatInquiryStep');
+        const room = document.getElementById('chatRoom');
+        const status = document.getElementById('chatStatus');
+        if (!inquiryStep || !room || chatStarting) return;
+        inquiryStep.classList.remove('hidden');
+        room.classList.add('hidden');
+        document.getElementById('chatProgress')?.classList.add('hidden');
+        const progressBar = document.getElementById('chatProgressBar');
+        if (progressBar) progressBar.style.width = '0%';
+        const startButton = document.getElementById('startChatButton');
+        if (startButton) startButton.disabled = false;
+        if (status) status.textContent = '';
+    };
+
+    async function startCustomerChat() {
+        const inquiry = document.getElementById('chatInquiry')?.value;
+        const progress = document.getElementById('chatProgress');
+        const progressBar = document.getElementById('chatProgressBar');
+        const status = document.getElementById('chatStatus');
+        const inquiryStep = document.getElementById('chatInquiryStep');
+        const room = document.getElementById('chatRoom');
+        if (!inquiry) {
+            if (status) status.textContent = 'Select an inquiry to continue.';
+            return;
+        }
+        chatStarting = true;
+        document.getElementById('startChatButton').disabled = true;
+        progress?.classList.remove('hidden');
+        if (progressBar) progressBar.style.width = '35%';
+        try {
+            const result = await apiClient.post('/chat/start', { inquiry });
+            if (progressBar) progressBar.style.width = '100%';
+            customerMessages = result.messages || [];
+            renderChatMessages(customerMessages);
+            inquiryStep.classList.add('hidden');
+            room.classList.remove('hidden');
+            if (status) status.textContent = `Support chat: ${inquiry}`;
+            chatLoaded = true;
+        } catch (error) {
+            if (status) status.textContent = error.message || 'Unable to open chat.';
+            progress?.classList.add('hidden');
+            document.getElementById('startChatButton').disabled = false;
+        } finally {
+            chatStarting = false;
+        }
+    }
+
     window.openCustomerServiceModal = function () {
         const modal = document.getElementById('modal-cs');
         if (!modal) return;
         modal.classList.remove('hidden');
-        if (!chatLoaded) loadCustomerChat();
+        prepareCustomerChat();
     };
 
     window.closeCustomerServiceModal = function () {
@@ -43,6 +92,7 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('startChatButton')?.addEventListener('click', startCustomerChat);
         const form = document.getElementById('chatForm');
         if (!form) return;
         form.addEventListener('submit', async event => {

@@ -32,8 +32,8 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <button aria-label="Open bank chat" title="Bank chat" onclick="openCustomerServiceModal()" class="p-2 rounded-full hover:bg-slate-100">
-                        <i class="fas fa-comments text-slate-700"></i>
+                    <button aria-label="Open support chat" title="Support chat" onclick="openCustomerServiceModal()" class="p-2 rounded-full hover:bg-slate-100">
+                        <i class="fas fa-headphones text-slate-700"></i>
                     </button>
                     <button aria-label="Notifications" title="Notifications" onclick="location.href='notifications.html'" class="p-2 rounded-full hover:bg-slate-100 relative">
                         <i class="fas fa-bell text-slate-700"></i>
@@ -266,11 +266,30 @@
                     <h3 class="text-lg font-semibold">Customer Support</h3>
                     <button onclick="closeCustomerServiceModal()" class="text-slate-500">Close</button>
                 </div>
-                <div id="chatMessages" class="mt-3 h-64 overflow-y-auto space-y-2 bg-slate-50 rounded p-3 text-sm"></div>
-                <form id="chatForm" class="mt-3 flex gap-2">
-                    <input id="chatInput" class="flex-1 border rounded px-3 py-2" maxlength="2000" placeholder="Write a message..." required>
-                    <button class="bg-slate-800 text-white px-4 py-2 rounded" type="submit">Send</button>
-                </form>
+                <div id="chatInquiryStep">
+                    <p class="mt-3 text-sm text-slate-600">Choose what you need help with to begin a saved support chat.</p>
+                    <select id="chatInquiry" class="mt-3 w-full border rounded px-3 py-2" aria-label="Select inquiry type">
+                        <option value="">Select an inquiry</option>
+                        <option>Account access</option>
+                        <option>Transfer issue</option>
+                        <option>Deposit or withdrawal</option>
+                        <option>Card support</option>
+                        <option>Fraud or suspicious activity</option>
+                        <option>Other question</option>
+                    </select>
+                    <button id="startChatButton" type="button" class="mt-3 w-full bg-slate-800 text-white py-2 rounded">Continue to chat</button>
+                    <div id="chatProgress" class="hidden mt-4">
+                        <div class="h-2 rounded-full bg-slate-200 overflow-hidden"><div id="chatProgressBar" class="h-full w-0 bg-gradient-to-r from-slate-500 via-slate-700 to-amber-500 transition-all duration-500"></div></div>
+                        <p class="mt-2 text-xs text-slate-500">Opening your secure support room...</p>
+                    </div>
+                </div>
+                <div id="chatRoom" class="hidden">
+                    <div id="chatMessages" class="mt-3 h-64 overflow-y-auto space-y-2 bg-slate-50 rounded p-3 text-sm"></div>
+                    <form id="chatForm" class="mt-3 flex gap-2">
+                        <input id="chatInput" class="flex-1 border rounded px-3 py-2" maxlength="2000" placeholder="Write a message..." required>
+                        <button class="bg-slate-800 text-white px-4 py-2 rounded" type="submit">Send</button>
+                    </form>
+                </div>
                 <div id="chatStatus" class="mt-2 text-xs text-slate-500"></div>
                 <div class="mt-3">
                     <a href="tel:+18002284435" class="text-xs text-slate-500">Call support instead</a>

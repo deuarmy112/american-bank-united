@@ -359,6 +359,17 @@ async function chatRoutes(method, parts, user, body) {
     const conversationRef = db.collection('chat_conversations').doc(user.userId);
     const conversation = await conversationRef.get();
 
+    if (method === 'POST' && parts[0] === 'start') {
+        const inquiry = String(body.inquiry || '').trim();
+        const allowedInquiries = ['Account access', 'Transfer issue', 'Deposit or withdrawal', 'Card support', 'Fraud or suspicious activity', 'Other question'];
+        if (!allowedInquiries.includes(inquiry)) return { status: 400, body: { error: 'Select a valid inquiry type' } };
+        const profile = await userProfile(user.userId);
+        const timestamp = now();
+        await conversationRef.set({ id: user.userId, user_id: user.userId, user_name: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim(), user_email: profile?.email || '', inquiry, status: 'open', updated_at: timestamp }, { merge: true });
+        const messages = await conversationRef.collection('messages').get();
+        return { body: { conversation: clean({ id: user.userId, ...((await conversationRef.get()).data()) }), messages: clean(messages.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))) } };
+    }
+
     if (method === 'GET' && parts.length === 0) {
         const messages = conversation.exists ? await conversationRef.collection('messages').get() : { docs: [] };
         return {
