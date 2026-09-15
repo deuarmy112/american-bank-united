@@ -103,12 +103,12 @@ router.post('/transfer', authenticateToken, transferValidation, validate, async 
             const identifier = String(toAccountNumber || toIban).replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
             const inputDigits = identifier.replace(/[^0-9]/g, '');
             const activeAccounts = await client.query('SELECT * FROM accounts WHERE status = $1', ['active']);
-            const match = activeAccounts.rows.find(account => {
+            const matches = activeAccounts.rows.filter(account => {
                 const accountNumber = String(account.account_number || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
                 const accountDigits = accountNumber.replace(/[^0-9]/g, '');
-                return identifier === accountNumber || (inputDigits.length >= 10 && inputDigits.slice(-10) === accountDigits.slice(-10));
+                return identifier === accountNumber || (inputDigits.length >= 10 && inputDigits.slice(-10) === accountDigits.slice(-10)) || (inputDigits.length >= 6 && accountDigits.endsWith(inputDigits));
             });
-            if (match) toResult = { rows: [match] };
+            if (matches.length === 1) toResult = { rows: [matches[0]] };
         }
 
         if (toResult.rows.length === 0) {

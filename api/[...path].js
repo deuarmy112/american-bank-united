@@ -125,7 +125,7 @@ function accountIdentifierMatches(account, identifier) {
         input === accountNumber ||
         input === storedIban ||
         (inputDigits.length >= 10 && inputDigits.slice(-10) === accountDigits.slice(-10)) ||
-        (accountDigits.length >= 10 && input.endsWith(accountDigits.slice(-10)))
+        (inputDigits.length >= 6 && accountDigits.endsWith(inputDigits))
     );
 }
 
@@ -213,7 +213,8 @@ async function accountRoutes(method, parts, user, body, query = {}) {
     if (method === 'GET' && parts[0] === 'lookup') {
         const identifier = String(query.identifier || '').trim();
         const snapshot = await getDb().collection('accounts').where('status', '==', 'active').limit(1000).get();
-        const accountDoc = snapshot.docs.find(doc => accountIdentifierMatches(doc.data(), identifier));
+        const matches = snapshot.docs.filter(doc => accountIdentifierMatches(doc.data(), identifier));
+        const accountDoc = matches.length === 1 ? matches[0] : null;
         if (!accountDoc) return { status: 404, body: { error: 'ABU account not found' } };
         const account = { id: accountDoc.id, ...accountDoc.data() };
         const profile = await userProfile(account.user_id);
@@ -296,7 +297,8 @@ async function transactionRoutes(method, parts, user, body) {
         let toSnap = await transaction.get(toRef);
         if (!toSnap.exists) {
             const candidates = await db.collection('accounts').where('status', '==', 'active').limit(1000).get();
-            const match = candidates.docs.find(doc => accountIdentifierMatches(doc.data(), body.toAccountId || body.toAccountNumber || body.toIban));
+            const matches = candidates.docs.filter(doc => accountIdentifierMatches(doc.data(), body.toAccountId || body.toAccountNumber || body.toIban));
+            const match = matches.length === 1 ? matches[0] : null;
             if (match) {
                 toRef = match.ref;
                 toSnap = await transaction.get(toRef);

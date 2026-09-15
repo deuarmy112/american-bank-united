@@ -20,7 +20,7 @@ function accountIdentifierMatches(account, identifier) {
         input === accountNumber ||
         input === storedIban ||
         (inputDigits.length >= 10 && inputDigits.slice(-10) === accountDigits.slice(-10)) ||
-        (accountDigits.length >= 10 && input.endsWith(accountDigits.slice(-10)))
+        (inputDigits.length >= 6 && accountDigits.endsWith(inputDigits))
     );
 }
 
@@ -50,7 +50,8 @@ router.get('/lookup', authenticateToken, async (req, res) => {
              WHERE a.status = 'active'
              LIMIT 1000`
         );
-        const account = result.rows.find(row => accountIdentifierMatches(row, identifier));
+        const matches = result.rows.filter(row => accountIdentifierMatches(row, identifier));
+        const account = matches.length === 1 ? matches[0] : null;
         if (!account) return res.status(404).json({ error: 'ABU account not found' });
         res.json({
             id: account.id,

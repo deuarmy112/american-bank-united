@@ -551,7 +551,13 @@
             const status = document.getElementById('otherAbuLookupStatus');
             const nameInput = document.getElementById('otherAbuRecipientName');
             const identifier = input.value.trim();
-            if (identifier.length < 6) return;
+                const normalizedIdentifier = identifier.replace(/\s+/g, '');
+                const isIban = /^[A-Za-z]{2}/.test(normalizedIdentifier);
+                const minimumLength = isIban ? 12 : 6;
+                if (normalizedIdentifier.length < minimumLength) {
+                    status.textContent = '';
+                    return;
+                }
             status.textContent = 'Verifying ABU account...';
             status.className = 'text-xs text-slate-500 mt-2';
             try {
