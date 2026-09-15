@@ -290,8 +290,19 @@ async function transactionRoutes(method, parts, user, body) {
     const db = getDb();
     const result = await db.runTransaction(async transaction => {
         const fromRef = db.collection('accounts').doc(body.fromAccountId);
-        const fromSnap = await transaction.get(fromRef);
-        if (!fromSnap.exists || fromSnap.data().user_id !== user.userId || fromSnap.data().status !== 'active') throw new Error('Source account not found');
+        let fromSnap = await transaction.get(fromRef);
+        if (!fromSnap.exists) {
+            const sourceCandidates = await db.collection('accounts').where('user_id', '==', user.userId).limit(1000).get();
+            const sourceMatches = sourceCandidates.docs.filter(doc => doc.data().status === 'active' && accountIdentifierMatches(doc.data(), body.fromAccountId));
+            if (sourceMatches.length === 1) {
+                fromSnap = await transaction.get(sourceMatches[0].ref);
+            }
+        }
+        if (!fromSnap.exists || fromSnap.data().user_id !== user.userId || fromSnap.data().status !== 'active') {
+            const error = new Error('Source account is not active or was not found');
+            error.status = 400;
+            throw error;
+        }
 
         let toRef = db.collection('accounts').doc(body.toAccountId);
         let toSnap = await transaction.get(toRef);
@@ -304,7 +315,11 @@ async function transactionRoutes(method, parts, user, body) {
                 toSnap = await transaction.get(toRef);
             }
         }
-        if (!toSnap.exists || toSnap.data().status !== 'active') throw new Error('Destination account not found');
+        if (!toSnap.exists || toSnap.data().status !== 'active') {
+            const error = new Error('Destination account is not active or was not found');
+            error.status = 400;
+            throw error;
+        }
         const from = { id: fromSnap.id, ...fromSnap.data() };
         const to = { id: toSnap.id, ...toSnap.data() };
         if (from.id === to.id) throw new Error('Cannot transfer to the same account');
