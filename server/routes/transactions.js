@@ -71,7 +71,7 @@ router.post('/transfer', authenticateToken, transferValidation, validate, async 
     try {
         await client.query('BEGIN');
 
-        const { fromAccountId, toAccountId, amount, description } = req.body;
+        const { fromAccountId, toAccountId, toAccountNumber, toIban, amount, description } = req.body;
 
         if (fromAccountId === toAccountId) {
             throw new Error('Cannot transfer to the same account');
@@ -94,10 +94,22 @@ router.post('/transfer', authenticateToken, transferValidation, validate, async 
         }
 
         // Verify to account exists
-        const toResult = await client.query(
+        let toResult = await client.query(
             'SELECT * FROM accounts WHERE id = $1 AND status = $2',
             [toAccountId, 'active']
         );
+
+        if (toResult.rows.length === 0 && (toAccountNumber || toIban)) {
+            const identifier = String(toAccountNumber || toIban).replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+            const inputDigits = identifier.replace(/[^0-9]/g, '');
+            const activeAccounts = await client.query('SELECT * FROM accounts WHERE status = $1', ['active']);
+            const match = activeAccounts.rows.find(account => {
+                const accountNumber = String(account.account_number || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                const accountDigits = accountNumber.replace(/[^0-9]/g, '');
+                return identifier === accountNumber || (inputDigits.length >= 10 && inputDigits.slice(-10) === accountDigits.slice(-10));
+            });
+            if (match) toResult = { rows: [match] };
+        }
 
         if (toResult.rows.length === 0) {
             throw new Error('Destination account not found');

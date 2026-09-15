@@ -289,12 +289,23 @@ async function transactionRoutes(method, parts, user, body) {
     const db = getDb();
     const result = await db.runTransaction(async transaction => {
         const fromRef = db.collection('accounts').doc(body.fromAccountId);
-        const toRef = db.collection('accounts').doc(body.toAccountId);
-        const [fromSnap, toSnap] = await Promise.all([transaction.get(fromRef), transaction.get(toRef)]);
+        const fromSnap = await transaction.get(fromRef);
         if (!fromSnap.exists || fromSnap.data().user_id !== user.userId || fromSnap.data().status !== 'active') throw new Error('Source account not found');
+
+        let toRef = db.collection('accounts').doc(body.toAccountId);
+        let toSnap = await transaction.get(toRef);
+        if (!toSnap.exists) {
+            const candidates = await db.collection('accounts').where('status', '==', 'active').limit(1000).get();
+            const match = candidates.docs.find(doc => accountIdentifierMatches(doc.data(), body.toAccountId || body.toAccountNumber || body.toIban));
+            if (match) {
+                toRef = match.ref;
+                toSnap = await transaction.get(toRef);
+            }
+        }
         if (!toSnap.exists || toSnap.data().status !== 'active') throw new Error('Destination account not found');
         const from = { id: fromSnap.id, ...fromSnap.data() };
         const to = { id: toSnap.id, ...toSnap.data() };
+        if (from.id === to.id) throw new Error('Cannot transfer to the same account');
         if (Number(from.balance) < amount) throw new Error('Insufficient funds');
         const fromBalance = Number((Number(from.balance) - amount).toFixed(2));
         const toBalance = Number((Number(to.balance) + amount).toFixed(2));

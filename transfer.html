@@ -739,6 +739,7 @@
                 await apiClient.post('/transactions/transfer', {
                     fromAccountId: fromAccount,
                     toAccountId: destinationAccountId,
+                    toAccountNumber: currentAbuMode === 'myAccounts' ? '' : accountNumber,
                     amount,
                     description: currentAbuMode === 'myAccounts' ? 'Transfer between ABU accounts' : 'Transfer to ABU account'
                 });
