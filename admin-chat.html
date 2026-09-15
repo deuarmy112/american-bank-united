@@ -43,6 +43,7 @@
         let selectedConversation = null;
         let selectedUser = null;
         let conversations = [];
+        let chatRefreshBusy = false;
         const escapeText = value => String(value || '').replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[character]));
         function checkAuth() { const token = localStorage.getItem('adminAuthToken'); const admin = JSON.parse(localStorage.getItem('adminUser') || '{}'); if (!token || !['admin','super_admin'].includes(admin.role)) { location.href = 'admin-login.html'; return false; } document.getElementById('adminName').innerHTML = `<i class="fas fa-user-shield"></i> ${escapeText(admin.firstName || admin.first_name || 'Admin')}`; return true; }
         function renderConversations(users) { const list = document.getElementById('conversationList'); list.innerHTML = users.length ? users.map(user => { const conversation = conversations.find(item => item.id === user.id); return `<div class="conversation ${selectedConversation === user.id ? 'active' : ''}" data-id="${user.id}"><strong>${escapeText(`${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email)}</strong><div style="font-size:12px;color:#6b7280;margin-top:5px">${escapeText(conversation?.inquiry ? `${conversation.inquiry} - ` : '')}${escapeText(conversation?.last_message || user.email || 'Start a new chat')}</div></div>`; }).join('') : '<p style="padding:20px;color:#6b7280">No customers match this filter.</p>'; list.querySelectorAll('.conversation').forEach(item => item.addEventListener('click', () => { const user = users.find(customer => customer.id === item.dataset.id); const conversation = conversations.find(item => item.id === user.id); selectConversation(user.id, conversation || { id: user.id, user_name: `${user.first_name || ''} ${user.last_name || ''}`.trim(), user_email: user.email }); })); }
@@ -50,10 +51,25 @@
         async function selectConversation(id, conversation) { selectedConversation = id; selectedUser = conversation; document.getElementById('chatHeader').textContent = `${conversation.user_name || 'Customer'} ${conversation.user_email ? `(${conversation.user_email})` : ''}`; document.getElementById('adminChatInput').disabled = false; document.getElementById('adminChatSend').disabled = false; const data = await adminRequest(`${API_URL}/admin/chat/${encodeURIComponent(id)}`); renderMessages(data.messages || []); renderConversations(await loadUsers()); }
         async function loadUsers() { const data = await adminAPI.getUsers({ role: 'customer', status: document.getElementById('userStatus').value, search: document.getElementById('userSearch').value.trim(), limit: 200 }); return data.users || []; }
         async function loadConversations() { const data = await adminAPI.getChatConversations(); conversations = data.conversations || []; const users = await loadUsers(); renderConversations(users); }
+        async function refreshChat() {
+            if (chatRefreshBusy || document.visibilityState !== 'visible') return;
+            chatRefreshBusy = true;
+            try {
+                await loadConversations();
+                if (selectedConversation) {
+                    const data = await adminRequest(`${API_URL}/admin/chat/${encodeURIComponent(selectedConversation)}`);
+                    renderMessages(data.messages || []);
+                }
+            } catch (error) {
+                console.warn('Chat refresh failed:', error);
+            } finally {
+                chatRefreshBusy = false;
+            }
+        }
         document.getElementById('userSearch').addEventListener('input', loadConversations);
         document.getElementById('userStatus').addEventListener('change', loadConversations);
         document.getElementById('adminChatForm').addEventListener('submit', async event => { event.preventDefault(); if (!selectedConversation) return; const input = document.getElementById('adminChatInput'); const text = input.value.trim(); if (!text) return; input.disabled = true; try { await adminAPI.sendChatMessage(selectedConversation, text); input.value = ''; await loadConversations(); await selectConversation(selectedConversation, selectedUser); } catch (error) { alert(error.message || 'Unable to send reply'); } finally { input.disabled = false; } });
-        (async function init() { if (!checkAuth()) return; try { await loadConversations(); } catch (error) { document.getElementById('conversationList').innerHTML = `<p style="padding:20px;color:#b91c1c">${escapeText(error.message)}</p>`; } })();
+        (async function init() { if (!checkAuth()) return; try { await loadConversations(); window.setInterval(refreshChat, 5000); } catch (error) { document.getElementById('conversationList').innerHTML = `<p style="padding:20px;color:#b91c1c">${escapeText(error.message)}</p>`; } })();
     </script>
 </body>
 </html>
