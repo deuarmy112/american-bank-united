@@ -17,15 +17,6 @@
             body { background: #f8fafc }
             html.dashboard-data-loading #recentTransactions { visibility: hidden; }
             html.dashboard-data-loading #balanceSlides { visibility: hidden; }
-            #featureBackdrop { z-index: 49; }
-            #featureSheet { z-index: 70; bottom: 76px; max-height: calc(100dvh - 96px); overflow-y: auto; padding-bottom: 8px; }
-            #featureSheet > div { max-height: none; border: 1px solid #e5e7eb; border-radius: 20px; padding: 18px; }
-            #featureSheet .feature-sheet-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-            #featureSheet .feature-action { min-height: 74px; justify-content: center; border: 1px solid #eef0f3; border-radius: 12px; background: #f8fafc; }
-            #featureSheet .feature-action i { font-size: 18px; margin-bottom: 6px; }
-            @media (max-width: 380px) {
-                #featureSheet .feature-sheet-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-            }
         </style>        <main class="max-w-md mx-auto p-4 pb-32">
             <!-- Mobile app top area -->
             <div class="flex items-center justify-between mb-4 flex-nowrap">
@@ -79,11 +70,28 @@
                         { id: 'beneficiaries', label: 'Beneficiaries', icon: 'fas fa-users', color: 'text-indigo-600', href: 'javascript:openBeneficiariesModal()' },
                         { id: 'quicksafe', label: 'Quick Safe', icon: 'fas fa-savings', color: 'text-fuchsia-600', href: 'save.html' },
                     ];
+                    const MORE_ACTIONS = [
+                        { id: 'accounts', label: 'Accounts', icon: 'fas fa-wallet', color: 'text-indigo-600', href: 'accounts.html' },
+                        { id: 'trade-more', label: 'Trade', icon: 'fas fa-chart-line', color: 'text-emerald-600', href: 'trade.html' },
+                        { id: 'international', label: 'Intl Transfer', icon: 'fas fa-globe', color: 'text-sky-500', href: 'transfer.html?type=international' },
+                        { id: 'history', label: 'History', icon: 'fas fa-history', color: 'text-slate-700', href: 'transactions.html' },
+                        { id: 'deposit', label: 'Deposit', icon: 'fas fa-money-bill-wave', color: 'text-green-600', href: 'deposit.html' },
+                        { id: 'cards', label: 'Cards', icon: 'fas fa-credit-card', color: 'text-indigo-500', href: 'cards.html' }
+                    ];
 
                     const QUICK_CONFIG_KEY = 'abu_quick_actions';
                     function loadQuickConfig(){ try{ const raw = localStorage.getItem(QUICK_CONFIG_KEY); if(!raw) return null; return JSON.parse(raw); }catch(e){return null;} }
 
                     function findById(id){ return QUICK_ACTIONS_REGISTRY.find(a=>a.id===id); }
+
+                    function createAction(action) {
+                        const el = document.createElement(action.href && action.href.startsWith('javascript:') ? 'button' : 'a');
+                        if (action.href && !action.href.startsWith('javascript:')) el.href = action.href;
+                        el.className = 'flex flex-col items-center p-2';
+                        el.innerHTML = `<div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="${action.icon} ${action.color}"></i></div><span class="text-xs">${action.label}</span>`;
+                        if (action.href && action.href.startsWith('javascript:')) el.addEventListener('click', () => { try { eval(action.href); } catch (e) { console.warn(e); } });
+                        return el;
+                    }
 
                     function render(){
                         const grid = document.getElementById('homeQuickActionsGrid'); if(!grid) return;
@@ -93,18 +101,22 @@
                         list.forEach(id=>{
                             const act = findById(id);
                             if(!act) return;
-                            const el = document.createElement(act.href && act.href.startsWith('javascript:')? 'button':'a');
-                            if(act.href && !act.href.startsWith('javascript:')) el.href = act.href;
-                            el.className = 'flex flex-col items-center p-2';
-                            el.innerHTML = `<div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="${act.icon} ${act.color}"></i></div><span class="text-xs">${act.label}</span>`;
-                            if(act.href && act.href.startsWith('javascript:')){
-                                el.addEventListener('click', ()=>{ try{ eval(act.href); }catch(e){ console.warn(e);} });
-                            }
-                            grid.appendChild(el);
+                            grid.appendChild(createAction(act));
                         });
-                        // append More... button if not present
-                        const more = document.createElement('button'); more.id='moreToggle'; more.type='button'; more.className='flex flex-col items-center p-2'; more.innerHTML = `<div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-ellipsis-h text-slate-700"></i></div><span class="text-xs">More...</span>`;
-                        more.addEventListener('click', ()=> toggleFeatureSheet());
+                        const more = document.createElement('button');
+                        more.id = 'moreToggle';
+                        more.type = 'button';
+                        more.className = 'flex flex-col items-center p-2';
+                        more.innerHTML = `<div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-ellipsis-h text-slate-700"></i></div><span class="text-xs">More...</span>`;
+                        more.addEventListener('click', () => {
+                            if (more.dataset.expanded === 'true') return;
+                            more.dataset.expanded = 'true';
+                            more.querySelector('span').textContent = 'Less';
+                            more.querySelector('i').className = 'fas fa-chevron-up text-slate-700';
+                            const expandedActions = document.createDocumentFragment();
+                            MORE_ACTIONS.forEach(action => expandedActions.appendChild(createAction(action)));
+                            grid.insertBefore(expandedActions, more.nextSibling);
+                        });
                         grid.appendChild(more);
                     }
 
@@ -190,22 +202,6 @@
                     // expose small helper for beneficiaries open from quick actions
                     async function openBeneficiariesModal() { if (window.openFeatureModal) { openFeatureModal('beneficiaries'); await loadBeneficiaries(); } }
 
-                    // Toggle the More... menu that contains additional quick actions
-                    function toggleMoreMenu() {
-                        const menu = document.getElementById('moreMenu');
-                        const btn = document.getElementById('moreToggle');
-                        if (!menu) return;
-                        const hidden = menu.classList.contains('hidden');
-                        if (hidden) {
-                            menu.classList.remove('hidden');
-                            btn.setAttribute('aria-expanded', 'true');
-                            // scroll into view on small screens
-                            menu.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        } else {
-                            menu.classList.add('hidden');
-                            btn.setAttribute('aria-expanded', 'false');
-                        }
-                    }
                 </script>
 
                     <script>
@@ -239,31 +235,6 @@
                             setInterval(()=>{ idx = (idx+1) % slides.length; update(); }, 5000);
                         })();
                     </script>
-
-        <!-- Feature sheet + bottom nav -->
-        <div id="featureBackdrop" onclick="featureBackdropClick(event)" class="hidden fixed inset-0 bg-black/40 z-40"></div>
-        <div id="featureSheet" class="hidden fixed bottom-0 left-0 right-0 z-50 transform translate-y-full transition-transform duration-300">
-            <div class="max-w-3xl mx-auto bg-white rounded-t-2xl shadow-lg p-4">
-                <div class="flex items-center justify-between">
-                    <h3 class="font-semibold">Quick Actions</h3>
-                    <button onclick="closeFeatureSheet()" class="text-slate-500">Close</button>
-                </div>
-                <div class="feature-sheet-grid grid mt-4">
-                    <a href="accounts.html" class="feature-action flex flex-col items-center p-3"> <i class="fas fa-wallet text-indigo-600"></i> <span class="text-xs">Accounts</span></a>
-                    <a href="trade.html" class="feature-action flex flex-col items-center p-3"> <i class="fas fa-chart-line text-emerald-600"></i> <span class="text-xs">Trade</span></a>
-                    <a href="transfer.html?type=international" class="feature-action flex flex-col items-center p-3"> <i class="fas fa-globe text-sky-500"></i> <span class="text-xs">Intl Transfer</span></a>
-                    <a href="transactions.html" class="feature-action flex flex-col items-center p-3"> <i class="fas fa-history text-slate-700"></i> <span class="text-xs">History</span></a>
-
-                    <a href="deposit.html" data-fullscreen="true" class="feature-action flex flex-col items-center p-3"> <i class="fas fa-money-bill-wave text-green-600"></i> <span class="text-xs">Deposit</span></a>
-                    <!-- Withdraw removed -->
-                    <a href="bills.html" class="feature-action flex flex-col items-center p-3"> <i class="fas fa-file-invoice-dollar text-yellow-600"></i> <span class="text-xs">Bill Pay</span></a>
-                    <a href="cards.html" class="feature-action flex flex-col items-center p-3"> <i class="fas fa-credit-card text-indigo-500"></i> <span class="text-xs">Cards</span></a>
-                </div>
-                <div class="mt-4 text-xs text-slate-500">More: Scheduled payments, External transfers, Statements, Support</div>
-            </div>
-        </div>
-
-        <!-- bottom nav removed to consolidate profile's bottom nav as app-wide control -->
 
         <!-- Feature Modals -->
         <div id="modalBackdrop" class="hidden fixed inset-0 bg-black/40 z-40"></div>
