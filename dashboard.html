@@ -94,8 +94,8 @@
                             grid.appendChild(el);
                         });
                         // append More... button if not present
-                        const more = document.createElement('button'); more.id='moreToggle'; more.className='flex flex-col items-center p-2'; more.innerHTML = `<div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-ellipsis-h text-slate-700"></i></div><span class="text-xs">More...</span>`;
-                        more.addEventListener('click', ()=> toggleMoreMenu());
+                        const more = document.createElement('button'); more.id='moreToggle'; more.type='button'; more.className='flex flex-col items-center p-2'; more.innerHTML = `<div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow"><i class="fas fa-ellipsis-h text-slate-700"></i></div><span class="text-xs">More...</span>`;
+                        more.addEventListener('click', ()=> toggleFeatureSheet());
                         grid.appendChild(more);
                     }
 
