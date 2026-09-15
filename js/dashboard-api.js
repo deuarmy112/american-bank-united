@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     await loadDashboardData();
 });
 
+function revealDashboardData() {
+    document.documentElement.classList.remove('dashboard-data-loading');
+}
+
 async function loadDashboardData() {
     try {
         const [accounts, transactions, externalTransfers] = await Promise.all([
@@ -84,10 +88,11 @@ async function loadDashboardData() {
 
         // Load recent transactions (last 6)
         loadRecentTransactions(allTransactions.slice(0, 6));
-        
+        revealDashboardData();
     } catch (error) {
         console.error('Failed to load dashboard data:', error);
         showAlert('Failed to load dashboard data', 'error');
+        revealDashboardData();
     }
 }
 
