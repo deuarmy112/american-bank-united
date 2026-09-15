@@ -8,7 +8,7 @@
   "rewrites": [
     {
       "source": "/favicon.ico",
-      "destination": "/assets/favicon.svg"
+      "destination": "/assets/abu-logo.png"
     },
     {
       "source": "/api/accounts/lookup",

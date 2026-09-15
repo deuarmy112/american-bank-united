@@ -272,11 +272,11 @@ function showTransactionReceipt(transaction) {
     overlay.innerHTML = `
         <div class="receipt-modal bg-slate-100 rounded-xl shadow-xl w-full max-w-md max-h-[92vh] overflow-y-auto">
             <div class="receipt-paper relative bg-white m-3 p-6 sm:p-8 overflow-hidden">
-                <img src="assets/abu-logo.svg" alt="" aria-hidden="true" class="absolute inset-0 m-auto w-48 opacity-[0.11] pointer-events-none">
+                <img src="assets/abu-logo.png" alt="" aria-hidden="true" class="absolute inset-0 m-auto w-48 pointer-events-none">
                 <div class="relative">
                     <div class="flex items-start justify-between border-b border-slate-200 pb-5">
                         <div class="flex items-center gap-3">
-                            <img src="assets/abu-logo.svg" alt="American Bank United" class="w-12 h-12 object-contain">
+                            <img src="assets/abu-logo.png" alt="American Bank United" class="w-24 h-auto">
                             <div>
                                 <div class="text-[11px] uppercase tracking-[0.18em] text-slate-500">American Bank United</div>
                                 <h2 class="text-xl font-bold text-slate-900 mt-1">Transaction Receipt</h2>

@@ -2,8 +2,7 @@
 
 ## Firestore Admin Setup
 
-The active application uses Firebase Firestore through the Vercel API. The legacy
-PostgreSQL migration files under `server/` are not used by the deployed app.
+The active application uses Firebase Firestore through the Vercel API.
 
 1. Pull the Vercel production variables into `.env.local`:
 ```bash
