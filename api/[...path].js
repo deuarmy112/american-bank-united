@@ -182,6 +182,14 @@ async function ensureGuest() {
         await ref.set({ id: GUEST_ID, email: 'guest@americanbankunited.local', first_name: 'Guest', last_name: 'User', role: 'customer', status: 'active', created_at: now() });
     }
 
+    const approvedAccounts = await getDb().collection('accounts').where('approval_status', '==', 'approved').get();
+    const updates = approvedAccounts.docs.filter(doc => String(doc.data().status || '').toLowerCase() !== 'active');
+    if (updates.length) {
+        const batch = getDb().batch();
+        updates.forEach(doc => batch.set(doc.ref, { status: 'active', updated_at: now() }, { merge: true }));
+        await batch.commit();
+    }
+
     // Do not recreate a default guest account after it has been manually deleted.
     // The app should only create real accounts when the user explicitly requests one.
 }
@@ -671,6 +679,47 @@ async function adminRoutes(method, parts, user, body, query) {
         if (!request || request.status !== 'pending') return { status: 404, body: { error: 'Pending card request not found' } };
         await getDb().collection('card_requests').doc(request.id).set({ status: 'rejected', processed_by: user.userId, processed_at: now(), rejection_reason: body.reason || 'Request rejected by admin' }, { merge: true });
         return { body: { message: 'Card request rejected' } };
+    }
+
+    if (method === 'GET' && parts[0] === 'transactions' && parts[1] === 'pending') {
+        const snapshot = await getDb().collection('transactions').where('approval_status', '==', 'pending').limit(500).get();
+        const transactions = await Promise.all(snapshot.docs.map(async doc => {
+            const transaction = { id: doc.id, ...doc.data() };
+            const account = await getDoc('accounts', transaction.account_id);
+            const customer = account ? await getDoc('users', account.user_id) : null;
+            return clean({ ...transaction, account_number: account?.account_number || '', account_type: account?.account_type || '', first_name: customer?.first_name || '', last_name: customer?.last_name || '', email: customer?.email || '' });
+        }));
+        return { body: { transactions } };
+    }
+
+    if (method === 'POST' && parts[0] === 'transactions' && parts[1] && parts[2] === 'approve') {
+        const transaction = await getDoc('transactions', parts[1]);
+        if (!transaction || transaction.approval_status !== 'pending') return { status: 404, body: { error: 'Pending transaction not found' } };
+        await getDb().collection('transactions').doc(parts[1]).set({ approval_status: 'approved', approved_by: user.userId, approved_at: now(), updated_at: now() }, { merge: true });
+        return { body: { message: 'Transaction approved successfully' } };
+    }
+
+    if (method === 'POST' && parts[0] === 'transactions' && parts[1] && parts[2] === 'reject') {
+        const transaction = await getDoc('transactions', parts[1]);
+        if (!transaction || transaction.approval_status !== 'pending') return { status: 404, body: { error: 'Pending transaction not found' } };
+        await getDb().collection('transactions').doc(parts[1]).set({ approval_status: 'rejected', rejection_reason: body.reason || 'Rejected by admin', rejected_by: user.userId, rejected_at: now(), updated_at: now() }, { merge: true });
+        return { body: { message: 'Transaction rejected successfully' } };
+    }
+
+    if (method === 'GET' && parts[0] === 'settings' && parts[1] === 'approval-thresholds') {
+        const settings = await getDoc('settings', 'approval-thresholds');
+        return { body: { settings: Object.entries(settings?.values || { withdrawal_threshold: '1000', transfer_threshold: '5000', require_all_approvals: 'false' }).map(([setting_name, setting_value]) => ({ setting_name, setting_value })) } };
+    }
+
+    if (method === 'PUT' && parts[0] === 'settings' && parts[1] === 'approval-thresholds') {
+        const requestedSettings = body.settings || body;
+        const values = {
+            withdrawal_threshold: String(requestedSettings.withdrawal_threshold || 1000),
+            transfer_threshold: String(requestedSettings.transfer_threshold || 5000),
+            require_all_approvals: String(Boolean(requestedSettings.require_all_approvals))
+        };
+        await getDb().collection('settings').doc('approval-thresholds').set({ values, updated_at: now(), updated_by: user.userId }, { merge: true });
+        return { body: { message: 'Approval settings updated successfully', settings: Object.entries(values).map(([setting_name, setting_value]) => ({ setting_name, setting_value })) } };
     }
 
     if (method === 'GET' && parts[0] === 'dashboard') {

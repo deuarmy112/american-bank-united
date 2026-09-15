@@ -47,6 +47,18 @@
       "destination": "/api/[...path]?path=admin/chat"
     },
     {
+      "source": "/api/admin/transactions/:transactionId/:action",
+      "destination": "/api/[...path]?path=admin/transactions/:transactionId/:action"
+    },
+    {
+      "source": "/api/admin/transactions/:action",
+      "destination": "/api/[...path]?path=admin/transactions/:action"
+    },
+    {
+      "source": "/api/admin/settings/:setting",
+      "destination": "/api/[...path]?path=admin/settings/:setting"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/:path*"
     }
