@@ -711,6 +711,7 @@
 
             let toInfo = '';
             let destinationAccountId = '';
+            let accountNumber = '';
 
             if (currentAbuMode === 'myAccounts') {
                 const toAccount = document.getElementById('internalToAccount').value;
@@ -728,7 +729,7 @@
                 destinationAccountId = toAccount;
                 toInfo = `${(to.account_type || 'Account').toUpperCase()} - ****${(to.account_number || '0000').slice(-4)}`;
             } else {
-                const accountNumber = document.getElementById('otherAbuAccountNumber').value.trim();
+                accountNumber = document.getElementById('otherAbuAccountNumber').value.trim();
                 const recipientNameInput = document.getElementById('otherAbuRecipientName');
                 const recipientName = recipientNameInput.value.trim();
                 destinationAccountId = recipientNameInput.dataset.accountId || '';
