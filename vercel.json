@@ -27,6 +27,22 @@
       "destination": "/api/[...path]?path=cards/:id/status"
     },
     {
+      "source": "/api/chat/start",
+      "destination": "/api/[...path]?path=chat/start"
+    },
+    {
+      "source": "/api/chat",
+      "destination": "/api/[...path]?path=chat"
+    },
+    {
+      "source": "/api/admin/chat/:conversationId",
+      "destination": "/api/[...path]?path=admin/chat/:conversationId"
+    },
+    {
+      "source": "/api/admin/chat",
+      "destination": "/api/[...path]?path=admin/chat"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/:path*"
     }
