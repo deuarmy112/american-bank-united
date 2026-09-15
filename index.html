@@ -62,27 +62,6 @@
     <script src="js/auth.js?v=20260915.1"></script>
     <script src="js/login.js?v=20260915.1"></script>
         <script src="js/ui.js?v=20260121.1"></script>
-        <!-- Bottom feature sheet -->
-        <div id="featureBackdrop" onclick="featureBackdropClick(event)" class="hidden fixed inset-0 bg-black/40 z-40"></div>
-        <div id="featureSheet" class="hidden fixed bottom-0 left-0 right-0 z-50 transform translate-y-full transition-transform duration-300">
-            <div class="max-w-md mx-auto bg-white rounded-t-2xl shadow-lg p-4">
-                <div class="flex items-center justify-between">
-                    <h3 class="font-semibold">Quick Actions</h3>
-                    <button onclick="closeFeatureSheet()" class="text-slate-500">Close</button>
-                </div>
-                <div class="grid grid-cols-3 gap-3 mt-4">
-                    <a href="transfer.html" class="flex flex-col items-center p-3 bg-slate-50 rounded-lg"> <i class="fas fa-exchange-alt text-lg text-indigo-600"></i> <span class="text-xs mt-1">Transfer</span></a>
-                    <a href="deposit.html" data-fullscreen="true" class="flex flex-col items-center p-3 bg-slate-50 rounded-lg"> <i class="fas fa-money-bill-wave text-lg text-green-600"></i> <span class="text-xs mt-1">Deposit</span></a>
-                    <!-- Withdraw removed -->
-                    <a href="bills.html" class="flex flex-col items-center p-3 bg-slate-50 rounded-lg"> <i class="fas fa-file-invoice-dollar text-lg text-yellow-600"></i> <span class="text-xs mt-1">Bill Pay</span></a>
-                    <a href="cards.html" class="flex flex-col items-center p-3 bg-slate-50 rounded-lg"> <i class="fas fa-credit-card text-lg text-indigo-500"></i> <span class="text-xs mt-1">Cards</span></a>
-                    <a href="transactions.html" class="flex flex-col items-center p-3 bg-slate-50 rounded-lg"> <i class="fas fa-receipt text-lg text-slate-700"></i> <span class="text-xs mt-1">History</span></a>
-                </div>
-                <div class="mt-4 text-xs text-slate-500">More: Scheduled payments, External transfers, Statements, Support</div>
-            </div>
-        </div>
-
-        <!-- bottom nav removed to consolidate profile's bottom nav as app-wide control -->
     <script>
         // Toggle password visibility
         function togglePassword() {
@@ -100,7 +79,5 @@
             }
         }
     </script>
-    <script src="js/bottom-nav.js?v=20260121.1"></script>
 </body>
 </html>
-*** End Patch
