@@ -7,6 +7,12 @@
         return String(value || '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
     }
 
+    function formatChatDate(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? '' : date.toLocaleString();
+    }
+
     function renderChatMessages(messages) {
         const container = document.getElementById('chatMessages');
         if (!container) return;
@@ -44,6 +50,7 @@
         if (!inquiryStep || !room || chatStarting) return;
         inquiryStep.classList.remove('hidden');
         room.classList.add('hidden');
+        document.getElementById('existingChatPicker')?.classList.add('hidden');
         document.getElementById('chatProgress')?.classList.add('hidden');
         const progressBar = document.getElementById('chatProgressBar');
         if (progressBar) progressBar.style.width = '0%';
@@ -54,8 +61,8 @@
     };
 
     async function openExistingChat() {
-        const inquiryStep = document.getElementById('chatInquiryStep');
-        const room = document.getElementById('chatRoom');
+        const picker = document.getElementById('existingChatPicker');
+        const list = document.getElementById('existingChatList');
         const status = document.getElementById('chatStatus');
         try {
             const data = await apiClient.get('/chat');
@@ -63,13 +70,22 @@
                 if (status) status.textContent = 'No existing conversation yet. Select an inquiry to start one.';
                 return;
             }
-            customerMessages = data.messages || [];
-            renderChatMessages(customerMessages);
-            await apiClient.post('/chat/read', {});
-            document.getElementById('customerUnreadCount')?.classList.add('hidden');
-            inquiryStep.classList.add('hidden');
-            room.classList.remove('hidden');
-            if (status) status.textContent = `Support chat: ${data.conversation.inquiry || 'Existing inquiry'}`;
+            const conversation = data.conversation;
+            list.innerHTML = `<button type="button" id="savedChatChoice" class="w-full text-left border rounded p-3 hover:bg-slate-50"><div class="font-medium">${escapeChatText(conversation.inquiry || 'Support inquiry')}</div><div class="text-xs text-slate-500 mt-1">${escapeChatText(conversation.last_message || 'No messages yet')}</div><div class="text-[10px] text-slate-400 mt-1">${formatChatDate(conversation.last_message_at || conversation.updated_at)}${data.unreadCount ? ` · ${data.unreadCount} unread` : ''}</div></button>`;
+            picker.classList.remove('hidden');
+            document.getElementById('savedChatChoice').addEventListener('click', async () => {
+                const inquiryStep = document.getElementById('chatInquiryStep');
+                const room = document.getElementById('chatRoom');
+                customerMessages = data.messages || [];
+                renderChatMessages(customerMessages);
+                await apiClient.post('/chat/read', {});
+                document.getElementById('customerUnreadCount')?.classList.add('hidden');
+                picker.classList.add('hidden');
+                inquiryStep.classList.add('hidden');
+                room.classList.remove('hidden');
+                if (status) status.textContent = `Support chat: ${conversation.inquiry || 'Existing inquiry'}`;
+            });
+            if (status) status.textContent = 'Select a saved chat to continue.';
         } catch (error) {
             if (status) status.textContent = error.message || 'Unable to open chat.';
         }
