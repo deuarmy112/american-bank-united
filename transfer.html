@@ -486,7 +486,11 @@
         }
 
         function populateAccountDropdowns() {
-            userAccounts = (userAccounts || []).filter(account => account.status === 'active' && (account.approval_status === undefined || account.approval_status === 'approved'));
+            userAccounts = (userAccounts || []).filter(account => {
+                const status = String(account.status || '').toLowerCase();
+                const approvalStatus = String(account.approval_status || 'approved').toLowerCase();
+                return ['active', 'approved'].includes(status) && approvalStatus === 'approved';
+            });
             if (userAccounts.length === 0) {
                 showAlert('No accounts found. Please create an account first.', 'error');
                 return;

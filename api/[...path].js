@@ -129,6 +129,11 @@ function accountIdentifierMatches(account, identifier) {
     );
 }
 
+function isTransferableAccount(account) {
+    const status = String(account?.status || '').toLowerCase();
+    return ['active', 'approved'].includes(status) && String(account?.approval_status || 'approved').toLowerCase() === 'approved';
+}
+
 async function authenticate(req) {
     const header = req.headers.authorization || '';
     const token = header.startsWith('Bearer ') ? header.slice(7) : '';
@@ -293,12 +298,12 @@ async function transactionRoutes(method, parts, user, body) {
         let fromSnap = await transaction.get(fromRef);
         if (!fromSnap.exists) {
             const sourceCandidates = await db.collection('accounts').where('user_id', '==', user.userId).limit(1000).get();
-            const sourceMatches = sourceCandidates.docs.filter(doc => doc.data().status === 'active' && accountIdentifierMatches(doc.data(), body.fromAccountId));
+            const sourceMatches = sourceCandidates.docs.filter(doc => isTransferableAccount(doc.data()) && accountIdentifierMatches(doc.data(), body.fromAccountId));
             if (sourceMatches.length === 1) {
                 fromSnap = await transaction.get(sourceMatches[0].ref);
             }
         }
-        if (!fromSnap.exists || fromSnap.data().user_id !== user.userId || fromSnap.data().status !== 'active') {
+        if (!fromSnap.exists || fromSnap.data().user_id !== user.userId || !isTransferableAccount(fromSnap.data())) {
             const error = new Error('Source account is not active or was not found');
             error.status = 400;
             throw error;
@@ -307,7 +312,7 @@ async function transactionRoutes(method, parts, user, body) {
         let toRef = db.collection('accounts').doc(body.toAccountId);
         let toSnap = await transaction.get(toRef);
         if (!toSnap.exists) {
-            const candidates = await db.collection('accounts').where('status', '==', 'active').limit(1000).get();
+            const candidates = await db.collection('accounts').limit(1000).get();
             const matches = candidates.docs.filter(doc => accountIdentifierMatches(doc.data(), body.toAccountId || body.toAccountNumber || body.toIban));
             const match = matches.length === 1 ? matches[0] : null;
             if (match) {
@@ -315,7 +320,7 @@ async function transactionRoutes(method, parts, user, body) {
                 toSnap = await transaction.get(toRef);
             }
         }
-        if (!toSnap.exists || toSnap.data().status !== 'active') {
+        if (!toSnap.exists || !isTransferableAccount(toSnap.data())) {
             const error = new Error('Destination account is not active or was not found');
             error.status = 400;
             throw error;
