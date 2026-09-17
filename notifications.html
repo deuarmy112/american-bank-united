@@ -35,6 +35,9 @@
             </div>
           </article>
         `).join('') : '<div class="bg-white border border-slate-200 rounded-xl p-6 text-sm text-slate-500">No account activity yet.</div>';
+        const readIds = new Set(JSON.parse(localStorage.getItem('abu_read_notifications') || '[]'));
+        notifications.forEach(item => { if (item.id) readIds.add(String(item.id)); });
+        localStorage.setItem('abu_read_notifications', JSON.stringify([...readIds].slice(-500)));
       } catch (error) {
         list.innerHTML = '<div class="text-sm text-rose-600">Unable to load notifications.</div>';
       }

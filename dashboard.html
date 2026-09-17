@@ -210,9 +210,13 @@
                 try {
                     const notifications = await notificationsAPI.getAll();
                     const badge = document.getElementById('notifBadge');
-                    if (badge && notifications.length) {
-                        badge.textContent = notifications.length > 99 ? '99+' : notifications.length;
+                    const readIds = new Set(JSON.parse(localStorage.getItem('abu_read_notifications') || '[]'));
+                    const unreadCount = notifications.filter(item => item.id && !readIds.has(String(item.id))).length;
+                    if (badge && unreadCount) {
+                        badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
                         badge.classList.remove('hidden');
+                    } else if (badge) {
+                        badge.classList.add('hidden');
                     }
                 } catch (error) {
                     console.warn('Unable to load notification badge:', error);
