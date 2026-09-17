@@ -62,9 +62,9 @@
 
   document.addEventListener('DOMContentLoaded', ()=>{
     document.body.appendChild(nav);
-    // allow forcing visible on specific pages (profile, cards)
+    // Keep the bottom navigation visible on the cards page only.
     const filename = window.location.pathname.replace(/\\/g,'/').split('/').pop() || '';
-    if (['profile.html','cards.html'].includes(filename)) nav.classList.add('force-visible');
+    if (filename === 'cards.html') nav.classList.add('force-visible');
     markActive();
     // handle history changes
     window.addEventListener('popstate', markActive);
