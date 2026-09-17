@@ -218,14 +218,14 @@ function displayTransactions() {
         `;
     }).join('');
     container.querySelectorAll('.transaction-row').forEach(row => {
-        const openDetails = () => showTransactionDetails(filteredTransactions[Number(row.dataset.detailIndex)]);
+        const openReceipt = () => showTransactionReceipt(filteredTransactions[Number(row.dataset.detailIndex)]);
         row.addEventListener('click', event => {
-            if (!event.target.closest('.receipt-button')) openDetails();
+            if (!event.target.closest('.receipt-button')) openReceipt();
         });
         row.addEventListener('keydown', event => {
             if ((event.key === 'Enter' || event.key === ' ') && !event.target.closest('.receipt-button')) {
                 event.preventDefault();
-                openDetails();
+                openReceipt();
             }
         });
     });
