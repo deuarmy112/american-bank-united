@@ -273,6 +273,33 @@ function showTransactionDetails(transaction) {
     overlay.querySelectorAll('.close-transaction-detail').forEach(button => button.addEventListener('click', () => overlay.remove()));
 }
 
+function buildHistoryReceiptMarkup(receipt, transaction, values) {
+    const { receiptId, date, amount, amountValue, recipientName, recipientBank, recipientAccount, recipientSwift, receiptKind, direction, account, accountType, accountNumber } = values;
+    if (receipt.type === 'International Transfer') {
+        return `
+            <div class="international-receipt -m-4 p-4 sm:p-5 text-xs">
+                <div class="receipt-brand flex items-start justify-between gap-4"><img src="assets/abu-logo.png" alt="American Bank United"><div class="text-right"><div class="font-bold text-slate-900">INTERNATIONAL TRANSFER</div><div class="text-slate-500 mt-1">Status: Submitted</div></div></div>
+                <div class="grid grid-cols-2 gap-4 py-3 border-b border-slate-300"><div><div class="text-slate-500">Current date</div><strong>${receipt.date || date}</strong></div><div class="text-right"><div class="text-slate-500">Transaction number</div><strong>${receipt.reference || receiptId}</strong></div></div>
+                <div class="mt-4"><div class="receipt-section-title">Ordering institution</div><div class="receipt-row"><span>Account holder</span><strong>${receipt.senderName || 'Account holder'}</strong></div><div class="receipt-row"><span>Bank name</span><strong>American Bank United</strong></div><div class="receipt-row"><span>SWIFT / BIC</span><strong>ABUUS768</strong></div><div class="receipt-row"><span>Debit account</span><strong>${receipt.senderAccountNumber || receipt.from || 'Not available'}</strong></div><div class="receipt-row"><span>Sender phone</span><span>${receipt.senderPhone || 'Not provided'}</span></div><div class="receipt-row"><span>Send advice by e-mail</span><span>${receipt.email || 'Not provided'}</span></div></div>
+                <div class="mt-4"><div class="receipt-section-title">Beneficiary details</div><div class="receipt-row"><span>Beneficiary name</span><strong>${receipt.to || recipientName}</strong></div><div class="receipt-row"><span>Account number / IBAN</span><strong>${receipt.accountNumber || recipientAccount}</strong></div><div class="receipt-row"><span>Bank name</span><span>${receipt.bank || recipientBank}</span></div><div class="receipt-row"><span>Country</span><span>${receipt.country || 'Not provided'}</span></div><div class="receipt-row"><span>SWIFT / BIC</span><strong>${receipt.swift || recipientSwift || 'Not provided'}</strong></div><div class="receipt-row"><span>Recipient e-mail</span><span>${receipt.email || 'Not provided'}</span></div><div class="receipt-row"><span>Recipient phone</span><span>${receipt.phone || 'Not provided'}</span></div></div>
+                <div class="mt-4"><div class="receipt-section-title">Transfer details</div><div class="receipt-row"><span>Transfer type</span><span>International bank transfer</span></div><div class="receipt-row"><span>Value date</span><span>${String(receipt.date || date).split(',')[0]}</span></div><div class="receipt-row"><span>Transfer information</span><span>${receipt.description || 'International transfer'}</span></div></div>
+                <div class="mt-4"><div class="receipt-section-title">Charges</div><div class="receipt-row"><span>Conversion fee (5%)</span><strong>$${receipt.fee || '0.00'} USD</strong></div><div class="receipt-total mt-2"><div class="receipt-row"><span>Amount sent</span><strong>$${Number(receipt.amountSent ?? amountValue).toFixed(2)} USD</strong></div><div class="receipt-row"><span>Amount received</span><strong>${receipt.currencySymbol || ''}${receipt.convertedAmount || amount} ${receipt.currency || 'USD'}</strong></div></div></div>
+                <div class="receipt-disclaimer mt-5 pt-3">This electronic receipt confirms that the transfer instruction was submitted through American Bank United. Final execution timing and any additional intermediary-bank charges may vary. Keep the transaction number for your records.</div>
+            </div>`;
+    }
+
+    const isBankTransfer = receipt.type === 'External Transfer';
+    return `
+        <div class="compact-abu-receipt -m-4 p-4 sm:p-5 text-xs">
+            <div class="receipt-brand flex items-center gap-3 pb-4"><img src="assets/abu-logo.png" alt="American Bank United"><div class="ml-auto text-right"><div class="text-slate-500">${isBankTransfer ? 'BANK TRANSFER' : 'ABU ACCOUNT TRANSFER'}</div><div class="font-bold text-slate-900">Status: Successful</div></div></div>
+            <div class="text-center py-4 receipt-dashed"><div class="receipt-amount">$${Number(amountValue).toFixed(2)}</div><div class="receipt-success mt-1">Successful Transaction</div><div class="text-slate-400 mt-1">${receipt.date || date}</div></div>
+            <div class="receipt-dashed pt-4 mt-2"><div class="receipt-section-title">Recipient</div><div class="receipt-row"><span>Name</span><strong>${receipt.recipientName || recipientName}</strong></div><div class="receipt-row"><span>Bank</span><strong>${receipt.recipientBank || receipt.bank || recipientBank}</strong></div><div class="receipt-row"><span>Account number</span><strong>${receipt.recipientAccountNumber || recipientAccount}</strong></div>${isBankTransfer ? `<div class="receipt-row"><span>SWIFT / routing code</span><strong>${receipt.swift || recipientSwift}</strong></div><div class="receipt-row"><span>E-mail</span><span>${receipt.email || 'Not provided'}</span></div><div class="receipt-row"><span>Phone</span><span>${receipt.phone || 'Not provided'}</span></div>` : ''}</div>
+            <div class="receipt-dashed pt-4 mt-4"><div class="receipt-section-title">Sender</div><div class="receipt-row"><span>Name</span><strong>${receipt.senderName || 'Account holder'}</strong></div><div class="receipt-row"><span>American Bank United account</span><strong>${receipt.senderAccountNumber || (account ? `${capitalize(accountType)} ****${accountNumber.slice(-4)}` : 'Account activity')}</strong></div><div class="receipt-row"><span>SWIFT / BIC</span><strong>ABUUS768</strong></div><div class="receipt-row"><span>Phone</span><span>${receipt.senderPhone || 'Not provided'}</span></div></div>
+            <div class="receipt-dashed pt-4 mt-4"><div class="receipt-section-title">Transaction information</div><div class="receipt-row"><span>Transaction type</span><strong>${isBankTransfer ? 'Bank transfer' : receipt.type}</strong></div><div class="receipt-row"><span>Transaction ID</span><strong>${receipt.reference || receiptId}</strong></div><div class="receipt-row"><span>Amount</span><strong>$${Number(amountValue).toFixed(2)} USD</strong></div><div class="receipt-row"><span>Fees</span><strong>$${Number(receipt.fee || 0).toFixed(2)} USD</strong></div>${(receipt.description || transaction.description) ? `<div class="receipt-row"><span>Purpose</span><span>${receipt.description || transaction.description}</span></div>` : ''}</div>
+            <div class="receipt-disclaimer mt-5 pt-3">This electronic receipt confirms the transaction recorded by American Bank United. Keep the transaction ID for your records.</div>
+        </div>`;
+}
+
 function showTransactionReceipt(transaction) {
     if (!transaction) return;
     const savedReceipt = transaction.receipt_data || transaction.receiptData || null;
@@ -294,44 +321,12 @@ function showTransactionReceipt(transaction) {
     const recipientSwift = receipt.swift || transaction.swift || transaction.routing_number || '';
     const isExternal = Boolean(receipt.type === 'External Transfer' || receipt.type === 'International Transfer' || transaction.isExternal || transaction.type === 'external_out' || transaction.type === 'external_in');
     const receiptKind = isExternal ? 'Bank transfer' : type;
+    const receiptMarkup = buildHistoryReceiptMarkup(receipt, transaction, { receiptId, date, amount, amountValue, recipientName, recipientBank, recipientAccount, recipientSwift, receiptKind, direction, account, accountType, accountNumber });
     const overlay = document.createElement('div');
     overlay.className = 'fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/50 p-4 pb-28 overflow-y-auto';
     overlay.innerHTML = `
         <div class="receipt-modal bg-slate-100 rounded-xl shadow-xl w-full max-w-2xl max-h-[calc(100vh-7rem)] flex flex-col overflow-hidden">
-            <div class="receipt-paper compact-abu-receipt bg-white m-3 p-4 sm:p-5 overflow-y-auto flex-1 min-h-0 pb-8">
-                <div class="flex items-center gap-3 pb-4">
-                    <img src="assets/abu-logo.png" alt="American Bank United" class="w-32 h-auto">
-                    <div class="ml-auto text-right"><div class="text-xs text-slate-500 uppercase">${receiptKind}</div><div class="font-bold text-slate-900">Status: Successful</div></div>
-                </div>
-                <div class="text-center py-4 receipt-dashed">
-                    <div class="receipt-amount">${amount}</div>
-                    <div class="receipt-success mt-1">Successful Transaction</div>
-                    <div class="text-xs text-slate-400 mt-1">${date}</div>
-                </div>
-                <div class="receipt-dashed pt-4 mt-2">
-                    <div class="receipt-section-title">Recipient</div>
-                    <div class="receipt-row"><span>Name</span><strong>${recipientName}</strong></div>
-                    <div class="receipt-row"><span>Bank</span><strong>${recipientBank}</strong></div>
-                    <div class="receipt-row"><span>Account number</span><strong>${recipientAccount}</strong></div>
-                    ${recipientSwift ? `<div class="receipt-row"><span>SWIFT / routing code</span><strong>${recipientSwift}</strong></div>` : ''}
-                    ${(receipt.email || transaction.recipient_email) ? `<div class="receipt-row"><span>E-mail</span><span>${receipt.email || transaction.recipient_email}</span></div>` : ''}
-                    ${(receipt.phone || transaction.recipient_phone) ? `<div class="receipt-row"><span>Phone</span><span>${receipt.phone || transaction.recipient_phone}</span></div>` : ''}
-                </div>
-                <div class="receipt-dashed pt-4 mt-4">
-                    <div class="receipt-section-title">Sender</div>
-                    <div class="receipt-row"><span>Bank</span><strong>American Bank United</strong></div>
-                    <div class="receipt-row"><span>Account</span><strong>${receipt.senderAccountNumber || (account ? `${capitalize(accountType)} ****${accountNumber.slice(-4)}` : 'Account activity')}</strong></div>
-                    <div class="receipt-row"><span>SWIFT / BIC</span><strong>ABUUS768</strong></div>
-                </div>
-                <div class="receipt-dashed pt-4 mt-4">
-                    <div class="receipt-section-title">Transaction information</div>
-                    <div class="receipt-row"><span>Transaction type</span><strong>${receiptKind}</strong></div>
-                    <div class="receipt-row"><span>Transaction ID</span><strong>${receiptId}</strong></div>
-                    <div class="receipt-row"><span>Direction</span><strong>${direction}</strong></div>
-                    <div class="receipt-row"><span>Purpose</span><span>${receipt.description || transaction.description || 'Account activity'}</span></div>
-                </div>
-                <p class="receipt-disclaimer pt-3 mt-5 text-center">This electronic receipt confirms the transaction recorded by American Bank United. Keep the transaction ID for your records.</p>
-            </div>
+            <div class="receipt-paper bg-white m-3 overflow-y-auto flex-1 min-h-0 pb-8">${receiptMarkup}</div>
             <div class="flex gap-3 px-3 pb-3 pt-2 shrink-0 bg-white sticky bottom-0">
                 <button type="button" class="print-receipt flex-1 bg-slate-900 text-white rounded-lg py-2 text-sm font-medium"><i class="fas fa-print mr-2"></i>Print</button>
                 <button type="button" class="close-receipt flex-1 border border-slate-300 bg-white rounded-lg py-2 text-sm font-medium">Done</button>
