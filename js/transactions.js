@@ -24,18 +24,7 @@ function loadTransactionsPage() {
             headers: { 'Authorization': `Bearer ${apiClient.getToken()}` }
         }).then(r => r.json()).catch(() => [])
     ]).then(([transactions, accounts, externalTransfers]) => {
-        // Merge transactions with external transfers
-        const externalTxs = (externalTransfers || []).map(transfer => ({
-            ...transfer,
-            type: transfer.direction === 'outgoing' ? 'external_out' : 'external_in',
-            amount: transfer.amount,
-            description: `${transfer.transfer_type.toUpperCase()}: ${transfer.recipient_name || 'Unknown'} ${transfer.bank_name ? '('+transfer.bank_name+')' : ''}`,
-            createdAt: transfer.created_at,
-            account_id: transfer.account_id,
-            isExternal: true
-        }));
-        
-        allTransactions = [...transactions, ...externalTxs].sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
+        allTransactions = mergeTransactionsWithReceipts(transactions, externalTransfers);
         filteredTransactions = [...allTransactions];
         
         // Store accounts for later use
@@ -53,6 +42,35 @@ function loadTransactionsPage() {
         console.error('Error loading data:', error);
         document.getElementById('transactionsList').innerHTML = '<p class="text-center text-slate-500 py-4">Unable to load transactions</p>';
     });
+}
+
+function mergeTransactionsWithReceipts(transactions, externalTransfers) {
+    const externalTxs = (externalTransfers || []).map(transfer => ({
+        ...transfer,
+        type: transfer.direction === 'outgoing' ? 'external_out' : 'external_in',
+        amount: transfer.amount,
+        description: `${String(transfer.transfer_type || 'external').toUpperCase()}: ${transfer.recipient_name || 'Unknown'} ${transfer.bank_name ? '(' + transfer.bank_name + ')' : ''}`,
+        createdAt: transfer.created_at,
+        account_id: transfer.account_id,
+        isExternal: true
+    }));
+    const merged = new Map();
+
+    (transactions || []).forEach((transaction, index) => {
+        const receiptId = transaction.receipt_id || transaction.receiptId;
+        merged.set(receiptId ? `receipt:${receiptId}` : `transaction:${transaction.id || index}`, transaction);
+    });
+
+    externalTxs.forEach((transfer, index) => {
+        const receiptId = transfer.receipt_id || transfer.receiptId;
+        const key = receiptId ? `receipt:${receiptId}` : `external:${transfer.id || index}`;
+        // External records contain the beneficiary and bank fields used by receipt details.
+        merged.set(key, transfer);
+    });
+
+    return [...merged.values()].sort((a, b) =>
+        new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at)
+    );
 }
 
 function loadAccountsFilter() {

@@ -63,18 +63,19 @@
 
             <script>
                 (function(){
+                    const TRANSACTIONS_ROUTE = 'transactions.html';
                     const QUICK_ACTIONS_REGISTRY = [
-                        { id: 'trade', label: 'Invest', icon: 'fas fa-chart-line', color: 'text-emerald-600', href: 'investment.html' },
-                        { id: 'billpay', label: 'Pay Bills', icon: 'fas fa-file-invoice-dollar', color: 'text-yellow-600', href: "javascript:openFeatureModal('bill')" },
+                        { id: 'trade', label: 'Invest', icon: 'fas fa-chart-line', color: 'text-emerald-600', href: 'investments.html' },
+                        { id: 'billpay', label: 'Pay Bills', icon: 'fas fa-file-invoice-dollar', color: 'text-yellow-600', action: () => openFeatureModal('bill') },
                         { id: 'qr', label: 'QR Pay', icon: 'fas fa-qrcode', color: 'text-slate-700', href: 'qr.html' },
-                        { id: 'beneficiaries', label: 'Beneficiaries', icon: 'fas fa-users', color: 'text-indigo-600', href: 'javascript:openBeneficiariesModal()' },
+                        { id: 'beneficiaries', label: 'Beneficiaries', icon: 'fas fa-users', color: 'text-indigo-600', action: () => openBeneficiariesModal() },
                         { id: 'quicksafe', label: 'Quick Safe', icon: 'fas fa-piggy-bank', svg: '<svg viewBox="0 0 24 24" aria-hidden="true" class="w-6 h-6"><path d="M5 9.5V8a3 3 0 0 1 3-3h6.5A4.5 4.5 0 0 1 19 9.5V13a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V10a.5.5 0 0 1 1 0v3a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V9.5A3.5 3.5 0 0 0 14.5 6H8a2 2 0 0 0-2 2v1.5H5Z" fill="currentColor"/><path d="M19 10h1.5a1.5 1.5 0 0 1 0 3H19v-1h1.5a.5.5 0 0 0 0-1H19v-1ZM9 10.5a1 1 0 1 0 0 2 1 1 0 0 0-1-2Zm5 0a1 1 0 1 0 0 2 1 1 0 0 0-1-2Z" fill="currentColor"/></svg>', color: 'text-slate-700', href: 'wallet.html' },
                     ];
                     const MORE_ACTIONS = [
                         { id: 'accounts', label: 'Accounts', icon: 'fas fa-wallet', color: 'text-indigo-600', href: 'accounts.html' },
                         { id: 'trade-more', label: 'Trade', icon: 'fas fa-chart-line', color: 'text-emerald-600', href: 'trade.html' },
                         { id: 'international', label: 'Intl Transfer', icon: 'fas fa-globe', color: 'text-sky-500', href: 'transfer.html?type=international' },
-                        { id: 'history', label: 'History', icon: 'fas fa-history', color: 'text-slate-700', href: 'transactions.html' },
+                        { id: 'history', label: 'History', icon: 'fas fa-history', color: 'text-slate-700', href: TRANSACTIONS_ROUTE },
                         { id: 'deposit', label: 'Deposit', icon: 'fas fa-money-bill-wave', color: 'text-green-600', href: 'deposit.html' },
                         { id: 'cards', label: 'Cards', icon: 'fas fa-credit-card', color: 'text-indigo-500', href: 'cards.html' }
                     ];
@@ -85,12 +86,13 @@
                     function findById(id){ return QUICK_ACTIONS_REGISTRY.find(a=>a.id===id); }
 
                     function createAction(action) {
-                        const el = document.createElement(action.href && action.href.startsWith('javascript:') ? 'button' : 'a');
-                        if (action.href && !action.href.startsWith('javascript:')) el.href = action.href;
+                        const el = document.createElement(action.action ? 'button' : 'a');
+                        if (action.action) el.type = 'button';
+                        if (action.href) el.href = action.href;
                         el.className = 'flex flex-col items-center p-2';
                         const icon = action.svg || `<i class="${action.icon} ${action.color}"></i>`;
                         el.innerHTML = `<div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow ${action.color}">${icon}</div><span class="text-xs">${action.label}</span>`;
-                        if (action.href && action.href.startsWith('javascript:')) el.addEventListener('click', () => { try { eval(action.href); } catch (e) { console.warn(e); } });
+                        if (action.action) el.addEventListener('click', action.action);
                         return el;
                     }
 

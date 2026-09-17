@@ -137,7 +137,7 @@ function renderRecentTransactions(transactions, containerEl) {
                     </div>
                     <div>
                         <div class="text-sm font-medium">${txn.description || capitalize(txn.type)}</div>
-                        <div class="text-xs text-slate-500">${formatDate(txn.createdAt)}</div>
+                        <div class="text-xs text-slate-500">${formatDate(txn.createdAt || txn.created_at || txn.date || txn.timestamp)}</div>
                     </div>
                 </div>
                 <div class="text-right">
