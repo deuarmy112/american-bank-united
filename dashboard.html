@@ -82,17 +82,22 @@
 
                     const QUICK_CONFIG_KEY = 'abu_quick_actions';
                     function loadQuickConfig(){ try{ const raw = localStorage.getItem(QUICK_CONFIG_KEY); if(!raw) return null; return JSON.parse(raw); }catch(e){return null;} }
+                    function navigateInApp(route) {
+                        const url = new URL(route, window.location.href);
+                        if (url.origin !== window.location.origin) return;
+                        window.location.assign(url.pathname + url.search + url.hash);
+                    }
 
                     function findById(id){ return QUICK_ACTIONS_REGISTRY.find(a=>a.id===id); }
 
                     function createAction(action) {
-                        const el = document.createElement(action.action ? 'button' : 'a');
-                        if (action.action) el.type = 'button';
-                        if (action.href) el.href = action.href;
+                        const el = document.createElement('button');
+                        el.type = 'button';
                         el.className = 'flex flex-col items-center p-2';
                         const icon = action.svg || `<i class="${action.icon} ${action.color}"></i>`;
                         el.innerHTML = `<div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow ${action.color}">${icon}</div><span class="text-xs">${action.label}</span>`;
                         if (action.action) el.addEventListener('click', action.action);
+                        else if (action.href) el.addEventListener('click', () => navigateInApp(action.href));
                         return el;
                     }
 

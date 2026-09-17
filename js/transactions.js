@@ -285,44 +285,49 @@ function showTransactionReceipt(transaction) {
     const accountNumber = account?.account_number || account?.accountNumber || '';
     const destination = transaction.recipient_name || transaction.wallet_platform || transaction.bank_name || transaction.recipient_identifier || 'Account activity';
     const direction = Number(transaction.amount) >= 0 ? 'Credit' : 'Debit';
+    const recipientName = transaction.recipient_name || destination;
+    const recipientBank = transaction.bank_name || (transaction.isExternal ? 'External bank' : 'American Bank United');
+    const recipientAccount = transaction.recipient_identifier || transaction.recipient_account_number || 'Not available';
+    const recipientSwift = transaction.swift || transaction.routing_number || '';
+    const isExternal = Boolean(transaction.isExternal || transaction.type === 'external_out' || transaction.type === 'external_in');
+    const receiptKind = isExternal ? 'Bank transfer' : type;
     const overlay = document.createElement('div');
     overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4';
     overlay.innerHTML = `
         <div class="receipt-modal bg-slate-100 rounded-xl shadow-xl w-full max-w-md max-h-[92vh] overflow-y-auto">
-            <div class="receipt-paper relative bg-white m-3 p-6 sm:p-8 overflow-hidden">
-                <img src="assets/abu-logo.png" alt="" aria-hidden="true" class="absolute inset-0 m-auto w-48 pointer-events-none">
-                <div class="relative">
-                    <div class="flex items-start justify-between border-b border-slate-200 pb-5">
-                        <div class="flex items-center gap-3">
-                            <img src="assets/abu-logo.png" alt="American Bank United" class="w-24 h-auto">
-                            <div>
-                                <div class="text-[11px] uppercase tracking-[0.18em] text-slate-500">American Bank United</div>
-                                <h2 class="text-xl font-bold text-slate-900 mt-1">Transaction Receipt</h2>
-                            </div>
-                        </div>
-                        <button type="button" class="close-receipt text-slate-500 text-xl" aria-label="Close">&times;</button>
-                    </div>
-                    <div class="flex items-center justify-between py-4 border-b border-dashed border-slate-300">
-                        <div><div class="text-xs text-slate-500">Reference number</div><div class="font-semibold text-sm text-slate-900">${receiptId}</div></div>
-                        <div class="text-right"><div class="text-xs text-slate-500">Status</div><span class="inline-flex mt-1 rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-xs font-semibold capitalize">${status}</span></div>
-                    </div>
-                    <div class="py-5 text-center border-b border-slate-200">
-                        <div class="text-xs uppercase tracking-wide text-slate-500">${direction} amount</div>
-                        <div class="text-3xl font-bold ${Number(transaction.amount) >= 0 ? 'text-emerald-600' : 'text-rose-600'} mt-1">${Number(transaction.amount) >= 0 ? '+' : '-'}${amount}</div>
-                        <div class="text-xs text-slate-500 mt-2 capitalize">${type}</div>
-                    </div>
-                    <dl class="divide-y divide-slate-100 text-sm">
-                        <div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Date and time</dt><dd class="text-right text-slate-900">${date}</dd></div>
-                        ${account ? `<div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Source account</dt><dd class="text-right text-slate-900">${capitalize(accountType)} ****${accountNumber.slice(-4)}</dd></div>` : ''}
-                        <div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Description</dt><dd class="text-right text-slate-900">${transaction.description || 'Account activity'}</dd></div>
-                        <div class="flex justify-between gap-4 py-3"><dt class="text-slate-500">Destination</dt><dd class="text-right text-slate-900">${destination}</dd></div>
-                    </dl>
-                    <div class="border-t border-dashed border-slate-300 pt-4 mt-3 text-xs text-slate-500 space-y-1">
-                        <div class="flex justify-between gap-4"><span>Receipt type</span><span class="capitalize">${type}</span></div>
-                        <div class="flex justify-between gap-4"><span>Record ID</span><span>${transaction.id || '—'}</span></div>
-                    </div>
-                    <p class="text-[11px] leading-4 text-slate-400 text-center mt-6">This electronic receipt confirms the transaction recorded in your American Bank United account. Keep this reference number for support inquiries.</p>
+            <div class="receipt-paper compact-abu-receipt bg-white m-3 p-6 sm:p-8 overflow-hidden border-t-4 border-slate-900">
+                <div class="flex items-center gap-3 pb-4 border-b border-slate-200">
+                    <img src="assets/abu-logo.png" alt="American Bank United" class="w-32 h-auto">
+                    <div class="ml-auto text-right"><div class="text-xs text-slate-500 uppercase">${receiptKind}</div><div class="font-bold text-slate-900">Status: ${status}</div></div>
                 </div>
+                <div class="text-center py-5 border-b border-dashed border-slate-300">
+                    <div class="text-4xl font-extrabold tracking-wide text-violet-700">${amount}</div>
+                    <div class="text-xl font-bold text-slate-900 mt-1">Successful Transaction</div>
+                    <div class="text-xs text-slate-400 mt-1">${date}</div>
+                </div>
+                <div class="pt-4 mt-3 border-t border-dashed border-slate-300">
+                    <div class="text-xs font-bold uppercase text-slate-800 border-b border-slate-700 pb-1">Recipient</div>
+                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Name</span><strong class="text-right">${recipientName}</strong></div>
+                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Bank</span><strong class="text-right">${recipientBank}</strong></div>
+                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Account number</span><strong class="text-right">${recipientAccount}</strong></div>
+                    ${recipientSwift ? `<div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">SWIFT / routing code</span><strong class="text-right">${recipientSwift}</strong></div>` : ''}
+                    ${transaction.recipient_email ? `<div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">E-mail</span><span class="text-right">${transaction.recipient_email}</span></div>` : ''}
+                    ${transaction.recipient_phone ? `<div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Phone</span><span class="text-right">${transaction.recipient_phone}</span></div>` : ''}
+                </div>
+                <div class="pt-4 mt-4 border-t border-dashed border-slate-300">
+                    <div class="text-xs font-bold uppercase text-slate-800 border-b border-slate-700 pb-1">Sender</div>
+                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Bank</span><strong class="text-right">American Bank United</strong></div>
+                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Account</span><strong class="text-right">${account ? `${capitalize(accountType)} ****${accountNumber.slice(-4)}` : 'Account activity'}</strong></div>
+                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">SWIFT / BIC</span><strong class="text-right">ABUUS768</strong></div>
+                </div>
+                <div class="pt-4 mt-4 border-t border-dashed border-slate-300">
+                    <div class="text-xs font-bold uppercase text-slate-800 border-b border-slate-700 pb-1">Transaction information</div>
+                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Transaction type</span><strong class="text-right capitalize">${receiptKind}</strong></div>
+                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Transaction ID</span><strong class="text-right">${receiptId}</strong></div>
+                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Direction</span><strong class="text-right">${direction}</strong></div>
+                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Purpose</span><span class="text-right">${transaction.description || 'Account activity'}</span></div>
+                </div>
+                <p class="border-t border-slate-300 pt-3 mt-5 text-[11px] leading-4 text-slate-400 text-center">This electronic receipt confirms the transaction recorded by American Bank United. Keep the transaction ID for your records.</p>
             </div>
             <div class="flex gap-3 px-3 pb-3">
                 <button type="button" class="print-receipt flex-1 bg-slate-900 text-white rounded-lg py-2 text-sm font-medium"><i class="fas fa-print mr-2"></i>Print</button>

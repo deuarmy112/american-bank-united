@@ -411,6 +411,11 @@
         }
         function saveQuickConfig(arr) { localStorage.setItem(QUICK_CONFIG_KEY, JSON.stringify(arr)); }
         function findActionById(id) { return QUICK_ACTIONS_REGISTRY.find(a => a.id === id); }
+        function navigateInApp(route) {
+            const url = new URL(route, window.location.href);
+            if (url.origin !== window.location.origin) return;
+            window.location.assign(url.pathname + url.search + url.hash);
+        }
 
         function renderQuickActions() {
             const grid = document.getElementById('quickActionsGrid');
@@ -428,10 +433,11 @@
                 }
                 const act = findActionById(id);
                 if (!act) return;
-                const btn = document.createElement(act.href ? 'a' : 'button');
-                if (act.href) btn.href = act.href;
+                const btn = document.createElement('button');
+                btn.type = 'button';
                 btn.className = 'flex flex-col items-center p-3 bg-slate-50 rounded-lg';
                 btn.innerHTML = `<i class="${act.icon} text-lg ${act.color} mb-1"></i><span class="text-xs mt-1">${act.label}</span>`;
+                if (act.href) btn.addEventListener('click', () => navigateInApp(act.href));
                 grid.appendChild(btn);
             });
         }
