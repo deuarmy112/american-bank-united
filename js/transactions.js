@@ -292,44 +292,44 @@ function showTransactionReceipt(transaction) {
     const isExternal = Boolean(transaction.isExternal || transaction.type === 'external_out' || transaction.type === 'external_in');
     const receiptKind = isExternal ? 'Bank transfer' : type;
     const overlay = document.createElement('div');
-    overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4';
+    overlay.className = 'fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/50 p-4 pb-28 overflow-y-auto';
     overlay.innerHTML = `
-        <div class="receipt-modal bg-slate-100 rounded-xl shadow-xl w-full max-w-md max-h-[92vh] overflow-y-auto">
-            <div class="receipt-paper compact-abu-receipt bg-white m-3 p-6 sm:p-8 overflow-hidden border-t-4 border-slate-900">
-                <div class="flex items-center gap-3 pb-4 border-b border-slate-200">
+        <div class="receipt-modal bg-slate-100 rounded-xl shadow-xl w-full max-w-2xl max-h-[calc(100vh-7rem)] flex flex-col overflow-hidden">
+            <div class="receipt-paper compact-abu-receipt bg-white m-3 p-4 sm:p-5 overflow-y-auto flex-1 min-h-0 pb-8">
+                <div class="flex items-center gap-3 pb-4">
                     <img src="assets/abu-logo.png" alt="American Bank United" class="w-32 h-auto">
-                    <div class="ml-auto text-right"><div class="text-xs text-slate-500 uppercase">${receiptKind}</div><div class="font-bold text-slate-900">Status: ${status}</div></div>
+                    <div class="ml-auto text-right"><div class="text-xs text-slate-500 uppercase">${receiptKind}</div><div class="font-bold text-slate-900">Status: Successful</div></div>
                 </div>
-                <div class="text-center py-5 border-b border-dashed border-slate-300">
-                    <div class="text-4xl font-extrabold tracking-wide text-violet-700">${amount}</div>
-                    <div class="text-xl font-bold text-slate-900 mt-1">Successful Transaction</div>
+                <div class="text-center py-4 receipt-dashed">
+                    <div class="receipt-amount">${amount}</div>
+                    <div class="receipt-success mt-1">Successful Transaction</div>
                     <div class="text-xs text-slate-400 mt-1">${date}</div>
                 </div>
-                <div class="pt-4 mt-3 border-t border-dashed border-slate-300">
-                    <div class="text-xs font-bold uppercase text-slate-800 border-b border-slate-700 pb-1">Recipient</div>
-                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Name</span><strong class="text-right">${recipientName}</strong></div>
-                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Bank</span><strong class="text-right">${recipientBank}</strong></div>
-                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Account number</span><strong class="text-right">${recipientAccount}</strong></div>
-                    ${recipientSwift ? `<div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">SWIFT / routing code</span><strong class="text-right">${recipientSwift}</strong></div>` : ''}
-                    ${transaction.recipient_email ? `<div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">E-mail</span><span class="text-right">${transaction.recipient_email}</span></div>` : ''}
-                    ${transaction.recipient_phone ? `<div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Phone</span><span class="text-right">${transaction.recipient_phone}</span></div>` : ''}
+                <div class="receipt-dashed pt-4 mt-2">
+                    <div class="receipt-section-title">Recipient</div>
+                    <div class="receipt-row"><span>Name</span><strong>${recipientName}</strong></div>
+                    <div class="receipt-row"><span>Bank</span><strong>${recipientBank}</strong></div>
+                    <div class="receipt-row"><span>Account number</span><strong>${recipientAccount}</strong></div>
+                    ${recipientSwift ? `<div class="receipt-row"><span>SWIFT / routing code</span><strong>${recipientSwift}</strong></div>` : ''}
+                    ${transaction.recipient_email ? `<div class="receipt-row"><span>E-mail</span><span>${transaction.recipient_email}</span></div>` : ''}
+                    ${transaction.recipient_phone ? `<div class="receipt-row"><span>Phone</span><span>${transaction.recipient_phone}</span></div>` : ''}
                 </div>
-                <div class="pt-4 mt-4 border-t border-dashed border-slate-300">
-                    <div class="text-xs font-bold uppercase text-slate-800 border-b border-slate-700 pb-1">Sender</div>
-                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Bank</span><strong class="text-right">American Bank United</strong></div>
-                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Account</span><strong class="text-right">${account ? `${capitalize(accountType)} ****${accountNumber.slice(-4)}` : 'Account activity'}</strong></div>
-                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">SWIFT / BIC</span><strong class="text-right">ABUUS768</strong></div>
+                <div class="receipt-dashed pt-4 mt-4">
+                    <div class="receipt-section-title">Sender</div>
+                    <div class="receipt-row"><span>Bank</span><strong>American Bank United</strong></div>
+                    <div class="receipt-row"><span>Account</span><strong>${account ? `${capitalize(accountType)} ****${accountNumber.slice(-4)}` : 'Account activity'}</strong></div>
+                    <div class="receipt-row"><span>SWIFT / BIC</span><strong>ABUUS768</strong></div>
                 </div>
-                <div class="pt-4 mt-4 border-t border-dashed border-slate-300">
-                    <div class="text-xs font-bold uppercase text-slate-800 border-b border-slate-700 pb-1">Transaction information</div>
-                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Transaction type</span><strong class="text-right capitalize">${receiptKind}</strong></div>
-                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Transaction ID</span><strong class="text-right">${receiptId}</strong></div>
-                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Direction</span><strong class="text-right">${direction}</strong></div>
-                    <div class="flex justify-between gap-4 py-2 text-xs"><span class="text-slate-500">Purpose</span><span class="text-right">${transaction.description || 'Account activity'}</span></div>
+                <div class="receipt-dashed pt-4 mt-4">
+                    <div class="receipt-section-title">Transaction information</div>
+                    <div class="receipt-row"><span>Transaction type</span><strong>${receiptKind}</strong></div>
+                    <div class="receipt-row"><span>Transaction ID</span><strong>${receiptId}</strong></div>
+                    <div class="receipt-row"><span>Direction</span><strong>${direction}</strong></div>
+                    <div class="receipt-row"><span>Purpose</span><span>${transaction.description || 'Account activity'}</span></div>
                 </div>
-                <p class="border-t border-slate-300 pt-3 mt-5 text-[11px] leading-4 text-slate-400 text-center">This electronic receipt confirms the transaction recorded by American Bank United. Keep the transaction ID for your records.</p>
+                <p class="receipt-disclaimer pt-3 mt-5 text-center">This electronic receipt confirms the transaction recorded by American Bank United. Keep the transaction ID for your records.</p>
             </div>
-            <div class="flex gap-3 px-3 pb-3">
+            <div class="flex gap-3 px-3 pb-3 pt-2 shrink-0 bg-white sticky bottom-0">
                 <button type="button" class="print-receipt flex-1 bg-slate-900 text-white rounded-lg py-2 text-sm font-medium"><i class="fas fa-print mr-2"></i>Print</button>
                 <button type="button" class="close-receipt flex-1 border border-slate-300 bg-white rounded-lg py-2 text-sm font-medium">Done</button>
             </div>

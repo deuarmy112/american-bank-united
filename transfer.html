@@ -128,7 +128,7 @@
         .compact-abu-receipt .receipt-brand { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; }
         .compact-abu-receipt .receipt-brand img { width: 128px; height: auto; }
         .compact-abu-receipt .receipt-success { color: #0b2c5f; font-weight: 700; font-size: 1.35rem; }
-        .compact-abu-receipt .receipt-amount { color: #5b21b6; font-size: 2.25rem; font-weight: 800; letter-spacing: 0.04em; }
+        .compact-abu-receipt .receipt-amount { color: #0b2c5f; font-size: 2.25rem; font-weight: 800; letter-spacing: 0.04em; }
         .compact-abu-receipt .receipt-dashed { border-top: 1px dashed #cbd5e1; }
         .compact-abu-receipt .receipt-section-title { color: #0b2c5f; border-bottom: 1px solid #334155; padding-bottom: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
         .compact-abu-receipt .receipt-row { display: flex; justify-content: space-between; gap: 18px; padding: 5px 0; font-size: 0.75rem; }
@@ -420,8 +420,8 @@
     </main>
 
     <!-- Success Modal with Receipt -->
-    <div id="successModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-2xl p-4 sm:p-6 max-w-2xl w-full mx-4 max-h-[92vh] overflow-y-auto">
+    <div id="successModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto px-4 py-4 pb-28 sm:items-center sm:py-6 sm:pb-28">
+        <div class="bg-white rounded-lg shadow-2xl p-4 sm:p-6 max-w-2xl w-full mx-0 max-h-[calc(100vh-7rem)] flex flex-col overflow-hidden">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
@@ -438,11 +438,11 @@
             </div>
 
             <!-- Receipt Details -->
-            <div id="receiptContent" class="space-y-3 mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200 text-sm">
+            <div id="receiptContent" class="space-y-3 mb-4 p-4 bg-slate-50 rounded-lg border border-slate-200 text-sm flex-1 min-h-0 overflow-y-auto pb-8">
                 <!-- Populated dynamically -->
             </div>
 
-            <div class="flex gap-3">
+            <div class="flex gap-3 shrink-0 bg-white pt-2 sticky bottom-0">
                 <button onclick="printReceipt()" class="flex-1 border border-slate-300 text-slate-700 font-medium py-2 px-4 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
                     <i class="fas fa-print"></i>
                     Print Receipt
@@ -1128,7 +1128,7 @@
                         .compact-abu-receipt { border-top: 5px solid #0b2c5f; max-width: 760px; margin: 0 auto; padding: 24px; }
                         .compact-abu-receipt img { width: 128px; height: auto; }
                         .compact-abu-receipt .receipt-success { color: #0b2c5f; font-weight: 700; font-size: 22px; }
-                        .compact-abu-receipt .receipt-amount { color: #5b21b6; font-size: 36px; font-weight: 800; letter-spacing: 0.04em; }
+                        .compact-abu-receipt .receipt-amount { color: #0b2c5f; font-size: 36px; font-weight: 800; letter-spacing: 0.04em; }
                         .compact-abu-receipt .receipt-dashed { border-top: 1px dashed #cbd5e1; }
                         .compact-abu-receipt .receipt-section-title { color: #0b2c5f; border-bottom: 1px solid #334155; padding-bottom: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
                         .compact-abu-receipt .receipt-row { display: flex; justify-content: space-between; gap: 18px; padding: 5px 0; font-size: 12px; }

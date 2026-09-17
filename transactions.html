@@ -8,6 +8,17 @@
     <link rel="stylesheet" href="css/tailwind.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/opay.css">
+    <style>
+        .compact-abu-receipt { font-family: Arial, sans-serif; color: #172033; background: #fff; border-top: 5px solid #0b2c5f; }
+        .compact-abu-receipt .receipt-amount { color: #0b2c5f; font-size: 2.25rem; font-weight: 800; letter-spacing: 0.04em; }
+        .compact-abu-receipt .receipt-success { color: #0b2c5f; font-weight: 700; font-size: 1.35rem; }
+        .compact-abu-receipt .receipt-dashed { border-top: 1px dashed #cbd5e1; }
+        .compact-abu-receipt .receipt-section-title { color: #0b2c5f; border-bottom: 1px solid #334155; padding-bottom: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .compact-abu-receipt .receipt-row { display: flex; justify-content: space-between; gap: 18px; padding: 5px 0; font-size: 0.75rem; }
+        .compact-abu-receipt .receipt-row > span:first-child { color: #64748b; }
+        .compact-abu-receipt .receipt-row > span:last-child, .compact-abu-receipt .receipt-row strong { text-align: right; overflow-wrap: anywhere; }
+        .compact-abu-receipt .receipt-disclaimer { border-top: 1px solid #cbd5e1; color: #64748b; font-size: 0.65rem; line-height: 1.45; }
+    </style>
     <script>
         if (!localStorage.getItem('authToken')) {
             localStorage.setItem('authToken', 'guest-token');
