@@ -43,6 +43,12 @@
 
     window.loadCustomerChat = loadCustomerChat;
 
+    function enterFullScreenChat(inquiry) {
+        document.body.classList.add('support-chat-fullscreen');
+        const purpose = document.getElementById('activeChatPurpose');
+        if (purpose) purpose.textContent = inquiry || 'Support conversation';
+    }
+
     window.prepareCustomerChat = function () {
         const inquiryStep = document.getElementById('chatInquiryStep');
         const room = document.getElementById('chatRoom');
@@ -82,6 +88,7 @@
                 document.getElementById('customerUnreadCount')?.classList.add('hidden');
                 picker.classList.add('hidden');
                 inquiryStep.classList.add('hidden');
+                enterFullScreenChat(conversation.inquiry || 'Support conversation');
                 room.classList.remove('hidden');
                 if (status) status.textContent = `Support chat: ${conversation.inquiry || 'Existing inquiry'}`;
             });
@@ -109,10 +116,7 @@
         try {
             const result = await apiClient.post('/chat/start', { inquiry });
             if (progressBar) progressBar.style.width = '100%';
-            const modal = document.getElementById('modal-cs');
-            const panel = modal?.firstElementChild;
-            if (modal) modal.classList.add('items-stretch');
-            if (panel) panel.classList.add('fixed', 'inset-0', 'w-full', 'max-w-none', 'h-full', 'rounded-none', 'p-6', 'overflow-y-auto');
+            enterFullScreenChat(inquiry);
             customerMessages = result.messages || [];
             renderChatMessages(customerMessages);
             await apiClient.post('/chat/read', {});
@@ -139,11 +143,13 @@
 
     window.closeCustomerServiceModal = function () {
         document.getElementById('modal-cs')?.classList.add('hidden');
+        document.body.classList.remove('support-chat-fullscreen');
     };
 
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('startChatButton')?.addEventListener('click', startCustomerChat);
         document.getElementById('openExistingChat')?.addEventListener('click', openExistingChat);
+        document.getElementById('openExistingChatTop')?.addEventListener('click', openExistingChat);
         const form = document.getElementById('chatForm');
         if (!form) return;
         form.addEventListener('submit', async event => {
