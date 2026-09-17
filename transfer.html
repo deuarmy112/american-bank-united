@@ -808,21 +808,7 @@
                 toInfo = `${recipientName} (${accountNumber})`;
             }
 
-            try {
-                await apiClient.post('/transactions/transfer', {
-                    fromAccountId: fromAccount,
-                    toAccountId: destinationAccountId,
-                    toAccountNumber: currentAbuMode === 'myAccounts' ? '' : accountNumber,
-                    amount,
-                    description: currentAbuMode === 'myAccounts' ? 'Transfer between ABU accounts' : 'Transfer to ABU account'
-                });
-            } catch (error) {
-                showAlert(error.message || 'Transfer failed. No funds were deducted.', 'error');
-                return;
-            }
-
-            // Create receipt
-            lastTransferReceipt = {
+            const receiptData = {
                 type: currentAbuMode === 'myAccounts' ? 'Internal Transfer' : 'ABU Account Transfer',
                 reference: `ABU-${Date.now().toString().slice(-10)}`,
                 date: new Date().toLocaleString(),
@@ -833,11 +819,28 @@
                 to: toInfo,
                 recipientAccountNumber,
                 recipientBank: 'American Bank United',
-                amount: amount,
+                amount,
                 currency: 'USD',
                 fee: 0,
                 total: amount
             };
+
+            try {
+                await apiClient.post('/transactions/transfer', {
+                    fromAccountId: fromAccount,
+                    toAccountId: destinationAccountId,
+                    toAccountNumber: currentAbuMode === 'myAccounts' ? '' : accountNumber,
+                    amount,
+                    description: currentAbuMode === 'myAccounts' ? 'Transfer between ABU accounts' : 'Transfer to ABU account',
+                    receiptData
+                });
+            } catch (error) {
+                showAlert(error.message || 'Transfer failed. No funds were deducted.', 'error');
+                return;
+            }
+
+            // Create receipt
+            lastTransferReceipt = receiptData;
 
             showSuccessModal();
             document.getElementById('internalAmount').value = '';
@@ -877,25 +880,7 @@
                 return;
             }
 
-            try {
-                await apiClient.post('/external-transfers/send-to-bank', {
-                    fromAccountId: fromAccount,
-                    bankName: 'Other bank',
-                    accountNumber,
-                    routingNumber: swiftCode,
-                    accountHolderName: accountName,
-                    recipientEmail: email,
-                    recipientPhone: phone,
-                    amount,
-                    description,
-                    transferType: 'ach'
-                });
-            } catch (error) {
-                showAlert(error.message || 'Unable to initialize transfer', 'error');
-                return;
-            }
-
-            lastTransferReceipt = {
+            const receiptData = {
                 type: 'External Transfer',
                 reference: `ABU-BANK-${Date.now().toString().slice(-10)}`,
                 date: new Date().toLocaleString(),
@@ -907,15 +892,36 @@
                 recipientName: accountName,
                 recipientAccountNumber: accountNumber,
                 bank: 'Other bank',
-                email: email,
-                phone: phone,
+                email,
+                phone,
                 swift: swiftCode,
-                amount: amount,
+                amount,
                 currency: 'USD',
                 fee: 0,
-                description: description,
+                description,
                 total: amount
             };
+
+            try {
+                await apiClient.post('/external-transfers/send-to-bank', {
+                    fromAccountId: fromAccount,
+                    bankName: 'Other bank',
+                    accountNumber,
+                    routingNumber: swiftCode,
+                    accountHolderName: accountName,
+                    recipientEmail: email,
+                    recipientPhone: phone,
+                    amount,
+                    description,
+                    transferType: 'ach',
+                    receiptData
+                });
+            } catch (error) {
+                showAlert(error.message || 'Unable to initialize transfer', 'error');
+                return;
+            }
+
+            lastTransferReceipt = receiptData;
 
             showSuccessModal();
             document.getElementById('extAmount').value = '';
@@ -960,6 +966,29 @@
             const netAmount = amount - fee;
             const convertedAmount = netAmount * currency.rate;
 
+            const receiptData = {
+                type: 'International Transfer',
+                reference: `ABU-INT-${Date.now().toString().slice(-10)}`,
+                date: new Date().toLocaleString(),
+                senderName: `${currentUser?.firstName || currentUser?.first_name || ''} ${currentUser?.lastName || currentUser?.last_name || ''}`.trim() || 'Account holder',
+                from: `${(from.account_type || 'Account').toUpperCase()} - ****${(from.account_number || '0000').slice(-4)}`,
+                senderAccountNumber: from.account_number || '',
+                senderPhone: currentUser?.phone || '',
+                to: `${accountName}`,
+                bank: bankName,
+                country,
+                accountNumber,
+                swift: swiftCode,
+                email,
+                phone,
+                amountSent: amount,
+                fee: fee.toFixed(2),
+                currency: currency.code,
+                currencySymbol: currency.symbol,
+                convertedAmount: convertedAmount.toFixed(2),
+                description
+            };
+
             try {
                 await apiClient.post('/external-transfers/send-to-bank', {
                     fromAccountId: fromAccount,
@@ -971,35 +1000,15 @@
                     recipientPhone: phone,
                     amount,
                     description,
-                    transferType: 'international'
+                    transferType: 'international',
+                    receiptData
                 });
             } catch (error) {
                 showAlert(error.message || 'Unable to initialize transfer', 'error');
                 return;
             }
 
-            lastTransferReceipt = {
-                type: 'International Transfer',
-                reference: `ABU-INT-${Date.now().toString().slice(-10)}`,
-                date: new Date().toLocaleString(),
-                senderName: `${currentUser?.firstName || currentUser?.first_name || ''} ${currentUser?.lastName || currentUser?.last_name || ''}`.trim() || 'Account holder',
-                from: `${(from.account_type || 'Account').toUpperCase()} - ****${(from.account_number || '0000').slice(-4)}`,
-                senderAccountNumber: from.account_number || '',
-                senderPhone: currentUser?.phone || '',
-                to: `${accountName}`,
-                bank: bankName,
-                country: country,
-                accountNumber: accountNumber,
-                swift: swiftCode,
-                email: email,
-                phone: phone,
-                amountSent: amount,
-                fee: fee.toFixed(2),
-                currency: currency.code,
-                currencySymbol: currency.symbol,
-                convertedAmount: convertedAmount.toFixed(2),
-                description: description
-            };
+            lastTransferReceipt = receiptData;
 
             showSuccessModal();
             document.getElementById('intlAmountUSD').value = '';

@@ -275,21 +275,24 @@ function showTransactionDetails(transaction) {
 
 function showTransactionReceipt(transaction) {
     if (!transaction) return;
-    const receiptId = transaction.receipt_id || transaction.receiptId || `TXN-${transaction.id || Date.now()}`;
-    const date = formatDate(transaction.createdAt || transaction.created_at);
-    const type = String(transaction.type || 'transaction').replace(/_/g, ' ');
-    const amount = formatCurrency(Math.abs(Number(transaction.amount) || 0));
+    const savedReceipt = transaction.receipt_data || transaction.receiptData || null;
+    const receipt = savedReceipt || transaction;
+    const receiptId = receipt.reference || transaction.receipt_id || transaction.receiptId || `TXN-${transaction.id || Date.now()}`;
+    const date = formatDate(receipt.date || transaction.createdAt || transaction.created_at);
+    const type = String(receipt.type || transaction.type || 'transaction').replace(/_/g, ' ');
+    const amountValue = Number(receipt.amount ?? receipt.amountSent ?? transaction.amount) || 0;
+    const amount = formatCurrency(Math.abs(amountValue));
     const status = transaction.status || transaction.approval_status || 'completed';
     const account = (window.userAccounts || []).find(item => item.id === transaction.account_id);
     const accountType = account?.account_type || account?.accountType || '';
     const accountNumber = account?.account_number || account?.accountNumber || '';
-    const destination = transaction.recipient_name || transaction.wallet_platform || transaction.bank_name || transaction.recipient_identifier || 'Account activity';
-    const direction = Number(transaction.amount) >= 0 ? 'Credit' : 'Debit';
-    const recipientName = transaction.recipient_name || destination;
-    const recipientBank = transaction.bank_name || (transaction.isExternal ? 'External bank' : 'American Bank United');
-    const recipientAccount = transaction.recipient_identifier || transaction.recipient_account_number || 'Not available';
-    const recipientSwift = transaction.swift || transaction.routing_number || '';
-    const isExternal = Boolean(transaction.isExternal || transaction.type === 'external_out' || transaction.type === 'external_in');
+    const destination = receipt.recipientName || receipt.to || transaction.recipient_name || transaction.wallet_platform || transaction.bank_name || transaction.recipient_identifier || 'Account activity';
+    const direction = amountValue >= 0 ? 'Credit' : 'Debit';
+    const recipientName = receipt.recipientName || receipt.to || transaction.recipient_name || destination;
+    const recipientBank = receipt.recipientBank || receipt.bank || transaction.bank_name || (transaction.isExternal ? 'External bank' : 'American Bank United');
+    const recipientAccount = receipt.recipientAccountNumber || receipt.accountNumber || transaction.recipient_identifier || transaction.recipient_account_number || 'Not available';
+    const recipientSwift = receipt.swift || transaction.swift || transaction.routing_number || '';
+    const isExternal = Boolean(receipt.type === 'External Transfer' || receipt.type === 'International Transfer' || transaction.isExternal || transaction.type === 'external_out' || transaction.type === 'external_in');
     const receiptKind = isExternal ? 'Bank transfer' : type;
     const overlay = document.createElement('div');
     overlay.className = 'fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/50 p-4 pb-28 overflow-y-auto';
@@ -311,13 +314,13 @@ function showTransactionReceipt(transaction) {
                     <div class="receipt-row"><span>Bank</span><strong>${recipientBank}</strong></div>
                     <div class="receipt-row"><span>Account number</span><strong>${recipientAccount}</strong></div>
                     ${recipientSwift ? `<div class="receipt-row"><span>SWIFT / routing code</span><strong>${recipientSwift}</strong></div>` : ''}
-                    ${transaction.recipient_email ? `<div class="receipt-row"><span>E-mail</span><span>${transaction.recipient_email}</span></div>` : ''}
-                    ${transaction.recipient_phone ? `<div class="receipt-row"><span>Phone</span><span>${transaction.recipient_phone}</span></div>` : ''}
+                    ${(receipt.email || transaction.recipient_email) ? `<div class="receipt-row"><span>E-mail</span><span>${receipt.email || transaction.recipient_email}</span></div>` : ''}
+                    ${(receipt.phone || transaction.recipient_phone) ? `<div class="receipt-row"><span>Phone</span><span>${receipt.phone || transaction.recipient_phone}</span></div>` : ''}
                 </div>
                 <div class="receipt-dashed pt-4 mt-4">
                     <div class="receipt-section-title">Sender</div>
                     <div class="receipt-row"><span>Bank</span><strong>American Bank United</strong></div>
-                    <div class="receipt-row"><span>Account</span><strong>${account ? `${capitalize(accountType)} ****${accountNumber.slice(-4)}` : 'Account activity'}</strong></div>
+                    <div class="receipt-row"><span>Account</span><strong>${receipt.senderAccountNumber || (account ? `${capitalize(accountType)} ****${accountNumber.slice(-4)}` : 'Account activity')}</strong></div>
                     <div class="receipt-row"><span>SWIFT / BIC</span><strong>ABUUS768</strong></div>
                 </div>
                 <div class="receipt-dashed pt-4 mt-4">
@@ -325,7 +328,7 @@ function showTransactionReceipt(transaction) {
                     <div class="receipt-row"><span>Transaction type</span><strong>${receiptKind}</strong></div>
                     <div class="receipt-row"><span>Transaction ID</span><strong>${receiptId}</strong></div>
                     <div class="receipt-row"><span>Direction</span><strong>${direction}</strong></div>
-                    <div class="receipt-row"><span>Purpose</span><span>${transaction.description || 'Account activity'}</span></div>
+                    <div class="receipt-row"><span>Purpose</span><span>${receipt.description || transaction.description || 'Account activity'}</span></div>
                 </div>
                 <p class="receipt-disclaimer pt-3 mt-5 text-center">This electronic receipt confirms the transaction recorded by American Bank United. Keep the transaction ID for your records.</p>
             </div>

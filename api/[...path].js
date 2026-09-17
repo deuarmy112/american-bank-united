@@ -343,7 +343,7 @@ async function transactionRoutes(method, parts, user, body) {
         transaction.update(toRef, { balance: toBalance, updated_at: now() });
         const withdrawalId = randomUUID();
         const depositId = randomUUID();
-        transaction.set(db.collection('transactions').doc(withdrawalId), { id: withdrawalId, receipt_id: `RCPT-${Date.now()}-${withdrawalId.slice(0, 8).toUpperCase()}`, account_id: from.id, type: 'transfer', amount: -amount, description: body.description || 'Transfer out', related_account_id: to.id, balance_after: fromBalance, status: 'completed', approval_status: 'approved', created_at: now() });
+        transaction.set(db.collection('transactions').doc(withdrawalId), { id: withdrawalId, receipt_id: `RCPT-${Date.now()}-${withdrawalId.slice(0, 8).toUpperCase()}`, receipt_data: body.receiptData || null, account_id: from.id, type: 'transfer', amount: -amount, description: body.description || 'Transfer out', related_account_id: to.id, balance_after: fromBalance, status: 'completed', approval_status: 'approved', created_at: now() });
         transaction.set(db.collection('transactions').doc(depositId), { id: depositId, receipt_id: `RCPT-${Date.now()}-${depositId.slice(0, 8).toUpperCase()}`, account_id: to.id, type: 'deposit', amount, description: body.description || 'Transfer in', related_account_id: from.id, balance_after: toBalance, status: 'completed', approval_status: 'approved', created_at: now() });
         return { withdrawalId, depositId, fromBalance, recipientUserId: to.user_id };
     });
@@ -504,8 +504,8 @@ async function externalRoutes(method, parts, user, body) {
         const transferType = parts[0] === 'send-to-user' ? 'p2p' : (body.transferType || 'ach');
         const notification = await sendTransferNotifications({ email: body.recipientEmail, phone: body.recipientPhone, recipientName: body.accountHolderName, amount, transferType, bankName: body.bankName, accountNumber: body.accountNumber, description: body.description });
         const receiptId = `RCPT-${Date.now()}-${randomUUID().slice(0, 8).toUpperCase()}`;
-        const transfer = await save('external_transfers', { user_id: user.userId, account_id: account.id, transfer_type: transferType, direction: 'outgoing', amount, recipient_name: body.accountHolderName || body.recipientEmail || '', recipient_identifier: body.accountNumber || body.recipientEmail || '', recipient_email: body.recipientEmail || null, recipient_phone: body.recipientPhone || null, bank_name: body.bankName || null, status: 'completed', receipt_id: receiptId, description: body.description || 'External transfer', notification_status: notification });
-        await save('transactions', { account_id: account.id, type: 'withdrawal', amount: -amount, receipt_id: receiptId, status: 'completed', description: transfer.description, balance_after: newBalance });
+        const transfer = await save('external_transfers', { user_id: user.userId, account_id: account.id, transfer_type: transferType, direction: 'outgoing', amount, recipient_name: body.accountHolderName || body.recipientEmail || '', recipient_identifier: body.accountNumber || body.recipientEmail || '', recipient_email: body.recipientEmail || null, recipient_phone: body.recipientPhone || null, bank_name: body.bankName || null, status: 'completed', receipt_id: receiptId, receipt_data: body.receiptData || null, description: body.description || 'External transfer', notification_status: notification });
+        await save('transactions', { account_id: account.id, type: 'withdrawal', amount: -amount, receipt_id: receiptId, receipt_data: body.receiptData || null, status: 'completed', description: transfer.description, balance_after: newBalance });
         return { body: { success: true, message: 'Transfer completed successfully', transfer: { id: transfer.id, amount, status: 'completed', newBalance, notification } } };
     }
     return { status: 404, body: { error: 'Route not found' } };
