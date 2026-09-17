@@ -109,6 +109,10 @@
         try {
             const result = await apiClient.post('/chat/start', { inquiry });
             if (progressBar) progressBar.style.width = '100%';
+            const modal = document.getElementById('modal-cs');
+            const panel = modal?.firstElementChild;
+            if (modal) modal.classList.add('items-stretch');
+            if (panel) panel.classList.add('fixed', 'inset-0', 'w-full', 'max-w-none', 'h-full', 'rounded-none', 'p-6', 'overflow-y-auto');
             customerMessages = result.messages || [];
             renderChatMessages(customerMessages);
             await apiClient.post('/chat/read', {});
