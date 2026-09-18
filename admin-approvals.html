@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .verification-card { border: 1px solid #dbe3ec; padding: 20px; margin-bottom: 15px; border-radius: 10px; background: white; }
+        .verification-doc { display: inline-flex; align-items: center; gap: 7px; padding: 9px 11px; border: 1px solid #dbe3ec; border-radius: 7px; color: #1d4ed8; text-decoration: none; font-size: 13px; margin: 5px 6px 0 0; }
+        .verification-meta { color: #64748b; font-size: 13px; margin: 5px 0; }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
@@ -78,6 +83,13 @@
                 <h2><i class="fas fa-clock"></i> Pending Transactions (<span id="pendingCount">0</span>)</h2>
             </div>
             <div id="pendingTransactionsList"></div>
+        </div>
+        <div class="section">
+            <div class="section-header">
+                <h2><i class="fas fa-id-card"></i> Account Verification (<span id="verificationCount">0</span>)</h2>
+                <small style="color:#64748b;">Review identity documents before approving upgrades</small>
+            </div>
+            <div id="verificationRequestsList"></div>
         </div>
     </div>
 
@@ -243,6 +255,55 @@
             }
         }
 
+        async function loadVerificationRequests() {
+            if (!checkAuth()) return;
+            try {
+                const data = await adminAPI.getVerificationRequests();
+                document.getElementById('verificationCount').textContent = data.requests.length;
+                const container = document.getElementById('verificationRequestsList');
+                if (!data.requests.length) {
+                    container.innerHTML = '<p style="text-align:center;padding:20px;color:#64748b;">No account verification requests</p>';
+                    return;
+                }
+                container.innerHTML = data.requests.map(request => `
+                    <article class="verification-card">
+                        <div style="display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap;">
+                            <div style="flex:1;min-width:240px;">
+                                <h3 style="margin:0 0 8px;color:#0f172a;"><i class="fas fa-shield-halved" style="color:#9b8350;"></i> ${request.tier.toUpperCase()} upgrade</h3>
+                                <p class="verification-meta"><strong>Customer:</strong> ${request.user?.first_name || ''} ${request.user?.last_name || ''} (${request.user?.email || 'Unknown'})</p>
+                                <p class="verification-meta"><strong>Identity method:</strong> ${request.identity_type.replaceAll('_', ' ')}</p>
+                                <p class="verification-meta"><strong>Submitted:</strong> ${formatDate(request.created_at)} · <strong>Review window:</strong> up to 48 hours</p>
+                                <div>
+                                    ${request.documents?.identity ? `<a class="verification-doc" href="${request.documents.identity}" target="_blank" rel="noopener"><i class="fas fa-file-lines"></i> View identity document</a>` : ''}
+                                    ${request.documents?.address ? `<a class="verification-doc" href="${request.documents.address}" target="_blank" rel="noopener"><i class="fas fa-house"></i> View residential proof</a>` : ''}
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                <button onclick="approveVerification('${request.id}')" class="btn btn-success"><i class="fas fa-check"></i> Approve tier</button>
+                                <button onclick="rejectVerification('${request.id}')" class="btn btn-danger"><i class="fas fa-times"></i> Reject</button>
+                            </div>
+                        </div>
+                    </article>
+                `).join('');
+            } catch (error) {
+                console.error('Load verification requests error:', error);
+                showAlert('Failed to load account verification requests', 'error');
+            }
+        }
+
+        async function approveVerification(requestId) {
+            if (!confirm('Confirm that the documents have been reviewed and this tier should be approved?')) return;
+            try { await adminAPI.approveVerification(requestId); showAlert('Account tier approved successfully', 'success'); loadVerificationRequests(); }
+            catch (error) { showAlert(error.message || 'Failed to approve verification', 'error'); }
+        }
+
+        async function rejectVerification(requestId) {
+            const reason = prompt('Reason for rejection:');
+            if (reason === null) return;
+            try { await adminAPI.rejectVerification(requestId, reason); showAlert('Verification request rejected', 'success'); loadVerificationRequests(); }
+            catch (error) { showAlert(error.message || 'Failed to reject verification', 'error'); }
+        }
+
         function showRejectModal(transactionId) {
             document.getElementById('rejectTransactionId').value = transactionId;
             document.getElementById('rejectReason').value = '';
@@ -304,9 +365,11 @@
         // Load data on page load
         loadSettings();
         loadPendingTransactions();
+        loadVerificationRequests();
 
         // Auto-refresh every 30 seconds
         setInterval(loadPendingTransactions, 30000);
+        setInterval(loadVerificationRequests, 30000);
     </script>
 </body>
 </html>

@@ -212,6 +212,28 @@
             font-size: 0.85rem;
             font-weight: 600;
         }
+        .tier-card {
+            margin-top: 18px;
+            padding: 18px;
+            background: linear-gradient(135deg, #111827, #26364a);
+            color: #fff;
+            border-radius: 14px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, .16);
+        }
+        .tier-card-head, .tier-option-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .tier-kicker { color: #cbd5e1; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
+        .tier-current { margin: 4px 0; font-size: 1.25rem; font-weight: 800; }
+        .tier-status { color: #dbeafe; font-size: .82rem; line-height: 1.45; }
+        .tier-upgrade-btn { margin-top: 14px; width: 100%; min-height: 42px; border: 0; border-radius: 9px; background: #d5b86a; color: #172033; font-weight: 800; }
+        .tier-options { display: grid; gap: 10px; margin: 14px 0 18px; }
+        .tier-option { display: block; padding: 14px; border: 1px solid #dbe3ec; border-radius: 10px; cursor: pointer; }
+        .tier-option:has(input:checked) { border-color: #9b8350; background: #fffbeb; box-shadow: 0 0 0 2px rgba(155,131,80,.15); }
+        .tier-option input { accent-color: #8d763e; }
+        .tier-option-title { font-weight: 800; color: #0f172a; }
+        .tier-option-copy { margin-top: 7px; color: #64748b; font-size: .82rem; line-height: 1.45; }
+        .verification-file { width: 100%; padding: 10px; border: 1px dashed #cbd5e1; border-radius: 8px; background: #f8fafc; font-size: .82rem; }
+        .verification-label { display: block; margin: 12px 0 6px; color: #334155; font-size: .8rem; font-weight: 700; }
+        .verification-note { padding: 10px 12px; border-radius: 8px; background: #eff6ff; color: #1e40af; font-size: .8rem; line-height: 1.45; }
         @media (max-width: 480px) {
             .profile-shell {
                 padding-left: 12px;
@@ -247,6 +269,18 @@
                 <div class="profile-balance-label">Total Balance</div>
                 <div id="balance" class="profile-balance-value">$0.00</div>
             </div>
+
+            <section class="tier-card" aria-labelledby="tierTitle">
+                <div class="tier-card-head">
+                    <div>
+                        <div class="tier-kicker">Account verification</div>
+                        <div id="tierTitle" class="tier-current">Tier 1 · Essential</div>
+                    </div>
+                    <i class="fas fa-shield-halved" style="font-size:1.55rem;color:#d5b86a;"></i>
+                </div>
+                <div id="tierStatus" class="tier-status">Upgrade your verification level for higher limits and more account benefits.</div>
+                <button id="upgradeAccountBtn" type="button" class="tier-upgrade-btn">Upgrade account</button>
+            </section>
 
             <div class="profile-manage">Manage Cards</div>
 
@@ -318,6 +352,33 @@
             <form id="editProfileForm" class="space-y-3">
                 <div class="grid grid-cols-2 gap-2">
                     <div>
+
+                    <!-- Account Upgrade Modal -->
+                    <div id="upgradeAccountModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4" style="z-index:40;">
+                        <div class="bg-white max-w-lg w-full rounded-xl p-5 max-h-[90vh] overflow-y-auto">
+                            <div class="flex items-start justify-between gap-4">
+                                <div><p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Secure verification</p><h3 class="text-xl font-bold text-slate-900">Upgrade your account</h3></div>
+                                <button type="button" class="text-slate-500" onclick="closeUpgradeModal()" aria-label="Close"><i class="fas fa-xmark"></i></button>
+                            </div>
+                            <p class="text-sm text-slate-600 mt-2">Choose a tier, then upload clear documents. A bank specialist will verify your identity before approval.</p>
+                            <div id="tierOptions" class="tier-options">
+                                <label class="tier-option"><div class="tier-option-head"><span class="tier-option-title">Tier 1 · Essential</span><input type="radio" name="upgradeTier" value="tier1" checked></div><div class="tier-option-copy">National ID card. Daily transfers up to $2,500 and balances up to $10,000.</div></label>
+                                <label class="tier-option"><div class="tier-option-head"><span class="tier-option-title">Tier 2 · Plus</span><input type="radio" name="upgradeTier" value="tier2"></div><div class="tier-option-copy">Driver's license or SSN proof. Daily transfers up to $25,000 and balances up to $100,000.</div></label>
+                                <label class="tier-option"><div class="tier-option-head"><span class="tier-option-title">Tier 3 · Premier</span><input type="radio" name="upgradeTier" value="tier3"></div><div class="tier-option-copy">International passport. Unlimited account access, priority support, and our highest benefits.</div></label>
+                            </div>
+                            <form id="upgradeAccountForm">
+                                <label class="verification-label" for="identityType">Identity document</label>
+                                <select id="identityType" class="w-full border rounded px-3 py-2 text-sm" required></select>
+                                <label class="verification-label" for="identityFile">Upload identity document</label>
+                                <input id="identityFile" class="verification-file" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" required>
+                                <label class="verification-label" for="addressFile">Upload residential proof</label>
+                                <input id="addressFile" class="verification-file" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" required>
+                                <div class="verification-note mt-3"><i class="fas fa-clock mr-1"></i> Bank verification can take up to 48 hours. Your account tier changes only after approval.</div>
+                                <p id="upgradeError" class="hidden text-sm text-red-600 mt-3"></p>
+                                <div class="flex justify-end gap-2 mt-4"><button type="button" class="border px-3 py-2 rounded" onclick="closeUpgradeModal()">Cancel</button><button id="submitUpgradeBtn" type="submit" class="opay-btn">Submit for verification</button></div>
+                            </form>
+                        </div>
+                    </div>
                         <label class="text-xs text-slate-600">First name</label>
                         <input id="editFirstName" class="w-full border rounded px-3 py-2" />
                     </div>
@@ -562,6 +623,7 @@
                 // Balance calculation moved to enhanceProfile after accounts are loaded
                 window.__currentUser = user || {};
                 try{ enhanceProfile(window.__currentUser); }catch(e){}
+                loadVerificationStatus(window.__currentUser);
             } catch (err) {
                 console.error('Failed to load profile', err);
             }
@@ -677,6 +739,50 @@
             m.classList.remove('flex');
         }
 
+        const tierLabels = { tier1: 'Tier 1 · Essential', tier2: 'Tier 2 · Plus', tier3: 'Tier 3 · Premier' };
+        const identityOptions = { tier1: [['national_id', 'National ID card']], tier2: [['drivers_license', "Driver's license"], ['ssn_proof', 'SSN proof']], tier3: [['international_passport', 'International passport']] };
+
+        function renderTierStatus(user, requests = []) {
+            const tier = user.account_tier || 'tier1';
+            const title = document.getElementById('tierTitle');
+            const status = document.getElementById('tierStatus');
+            const button = document.getElementById('upgradeAccountBtn');
+            const pending = requests.some(request => request.status === 'pending');
+            if (title) title.textContent = tierLabels[tier] || tierLabels.tier1;
+            if (status) status.textContent = pending ? 'Documents received. Bank verification is in progress and may take up to 48 hours.' : (user.verification_status === 'verified' ? 'Verified account. Your current tier benefits are active.' : 'Upgrade your verification level for higher limits and more account benefits.');
+            if (button) { button.disabled = pending || tier === 'tier3'; button.textContent = pending ? 'Verification in progress' : (tier === 'tier3' ? 'Highest tier reached' : 'Upgrade account'); }
+        }
+
+        function updateIdentityOptions() {
+            const tier = document.querySelector('input[name="upgradeTier"]:checked')?.value || 'tier1';
+            const select = document.getElementById('identityType');
+            if (select) select.innerHTML = identityOptions[tier].map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
+        }
+
+        function openUpgradeModal() {
+            const modal = document.getElementById('upgradeAccountModal');
+            if (!modal || document.getElementById('upgradeAccountBtn')?.disabled) return;
+            modal.classList.remove('hidden');
+            updateIdentityOptions();
+        }
+
+        function closeUpgradeModal() {
+            document.getElementById('upgradeAccountModal')?.classList.add('hidden');
+        }
+
+        async function uploadVerificationFile(file) {
+            if (!file || file.size > 10 * 1024 * 1024) throw new Error('Each document must be 10 MB or smaller');
+            const upload = await verificationAPI.getUploadUrl(file.name, file.type);
+            const response = await fetch(upload.uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+            if (!response.ok) throw new Error(`Could not upload ${file.name}`);
+            return upload.path;
+        }
+
+        async function loadVerificationStatus(user) {
+            try { renderTierStatus(user, await verificationAPI.getStatus()); }
+            catch (error) { renderTierStatus(user); console.warn('Verification status unavailable', error); }
+        }
+
         // Event listeners
         document.addEventListener('DOMContentLoaded', () => {
             renderQuickActions();
@@ -691,6 +797,31 @@
 
             const editBtn = document.getElementById('editProfileBtn');
             if (editBtn) editBtn.addEventListener('click', openEditModal);
+
+            document.querySelectorAll('input[name="upgradeTier"]').forEach(input => input.addEventListener('change', updateIdentityOptions));
+            document.getElementById('upgradeAccountBtn')?.addEventListener('click', openUpgradeModal);
+            document.getElementById('upgradeAccountForm')?.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const errorEl = document.getElementById('upgradeError');
+                const submitBtn = document.getElementById('submitUpgradeBtn');
+                errorEl?.classList.add('hidden');
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Uploading documents...'; }
+                try {
+                    const identityFile = document.getElementById('identityFile').files[0];
+                    const addressFile = document.getElementById('addressFile').files[0];
+                    const [identity, address] = await Promise.all([uploadVerificationFile(identityFile), uploadVerificationFile(addressFile)]);
+                    await verificationAPI.submit({ tier: document.querySelector('input[name="upgradeTier"]:checked').value, identityType: document.getElementById('identityType').value, documents: { identity, address } });
+                    showToast('Documents submitted. Verification may take up to 48 hours.');
+                    closeUpgradeModal();
+                    renderTierStatus(window.__currentUser || {}, [{ status: 'pending' }]);
+                    event.target.reset();
+                    updateIdentityOptions();
+                } catch (error) {
+                    if (errorEl) { errorEl.textContent = error.message || 'Could not submit verification'; errorEl.classList.remove('hidden'); }
+                } finally {
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit for verification'; }
+                }
+            });
 
             const editForm = document.getElementById('editProfileForm');
             if (editForm) editForm.addEventListener('submit', async function (e) {

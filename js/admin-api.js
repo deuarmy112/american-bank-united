@@ -27,6 +27,20 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
     : '/api';
 
 const adminAPI = {
+    async getVerificationRequests() {
+        return adminRequest(`${API_URL}/admin/verification-requests`);
+    },
+
+    async approveVerification(requestId) {
+        return adminRequest(`${API_URL}/admin/verification-requests/${requestId}/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+    },
+
+    async rejectVerification(requestId, reason = '') {
+        return adminRequest(`${API_URL}/admin/verification-requests/${requestId}/reject`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason })
+        });
+    },
+
     async getChatConversations() {
         return adminRequest(`${API_URL}/admin/chat`);
     },

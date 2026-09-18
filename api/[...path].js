@@ -628,8 +628,88 @@ async function withdrawalRoutes(method, parts, user, body) {
     return { body: { message: 'Withdrawal submitted successfully', transfer: clean(transfer), newBalance: transfer.new_balance } };
 }
 
+const ACCOUNT_TIERS = {
+    tier1: { label: 'Tier 1 · Essential', documentTypes: ['national_id'], required: ['identity', 'address'] },
+    tier2: { label: 'Tier 2 · Plus', documentTypes: ['drivers_license', 'ssn_proof'], required: ['identity', 'address'] },
+    tier3: { label: 'Tier 3 · Premier', documentTypes: ['international_passport'], required: ['identity', 'address'] }
+};
+const ACCOUNT_TIER_RANK = { tier1: 1, tier2: 2, tier3: 3 };
+
+function validVerificationPath(path, userId) {
+    return typeof path === 'string' && path.startsWith(`uploads/${userId}/`) && path.length < 500;
+}
+
+async function verificationRoutes(method, parts, user, body) {
+    if (user.userId === GUEST_ID) return { status: 401, body: { error: 'Please sign in to verify your account' } };
+
+    if (method === 'GET' && parts.length === 0) {
+        const requests = await listDocs('verification_requests', 'user_id', user.userId, 'created_at', 20);
+        return { body: clean(requests) };
+    }
+
+    if (method === 'POST' && parts.length === 0) {
+        const tier = ACCOUNT_TIERS[body.tier];
+        const identityType = String(body.identityType || '');
+        const documents = body.documents || {};
+        if (!tier || !tier.documentTypes.includes(identityType)) return { status: 400, body: { error: 'Select a valid identity document for this tier' } };
+        const currentUser = await userProfile(user.userId);
+        if ((ACCOUNT_TIER_RANK[body.tier] || 0) <= (ACCOUNT_TIER_RANK[currentUser?.account_tier] || 0) && currentUser?.verification_status === 'verified') return { status: 400, body: { error: 'Select a tier higher than your current verified tier' } };
+        if (!validVerificationPath(documents.identity, user.userId) || !validVerificationPath(documents.address, user.userId)) {
+            return { status: 400, body: { error: 'Both identity and residential proof documents are required' } };
+        }
+        const existing = await listDocs('verification_requests', 'user_id', user.userId, 'created_at', 20);
+        if (existing.some(request => request.status === 'pending')) return { status: 409, body: { error: 'A verification request is already under review' } };
+
+        const request = await save('verification_requests', {
+            user_id: user.userId,
+            tier: body.tier,
+            identity_type: identityType,
+            documents: { identity: documents.identity, address: documents.address },
+            status: 'pending',
+            review_eta_hours: 48,
+            submitted_at: now()
+        });
+        return { status: 201, body: { message: 'Documents submitted. Bank verification usually takes up to 48 hours.', request: clean(request) } };
+    }
+    return { status: 404, body: { error: 'Verification route not found' } };
+}
+
 async function adminRoutes(method, parts, user, body, query) {
     requireAdmin(user);
+
+    if (method === 'GET' && parts[0] === 'verification-requests') {
+        const requests = await listDocs('verification_requests', 'status', 'pending', 'created_at', 500);
+        const withUsers = await Promise.all(requests.map(async request => {
+            const customer = await getDoc('users', request.user_id);
+            const documents = {};
+            for (const [key, path] of Object.entries(request.documents || {})) {
+                try {
+                    const [url] = await getBucket().file(path).getSignedUrl({ action: 'read', expires: Date.now() + 15 * 60 * 1000 });
+                    documents[key] = url;
+                } catch (error) {
+                    documents[key] = null;
+                }
+            }
+            return clean({ ...request, documents, user: customer ? { id: customer.id, first_name: customer.first_name, last_name: customer.last_name, email: customer.email } : null });
+        }));
+        return { body: { requests: withUsers } };
+    }
+
+    if (method === 'POST' && parts[0] === 'verification-requests' && parts[1] && parts[2] === 'approve') {
+        const request = await getDoc('verification_requests', parts[1]);
+        if (!request || request.status !== 'pending') return { status: 404, body: { error: 'Pending verification request not found' } };
+        const timestamp = now();
+        await getDb().collection('verification_requests').doc(request.id).set({ status: 'approved', reviewed_by: user.userId, reviewed_at: timestamp, updated_at: timestamp }, { merge: true });
+        await getDb().collection('users').doc(request.user_id).set({ account_tier: request.tier, verification_status: 'verified', verified_at: timestamp, verified_by: user.userId, updated_at: timestamp }, { merge: true });
+        return { body: { message: 'Account tier approved successfully' } };
+    }
+
+    if (method === 'POST' && parts[0] === 'verification-requests' && parts[1] && parts[2] === 'reject') {
+        const request = await getDoc('verification_requests', parts[1]);
+        if (!request || request.status !== 'pending') return { status: 404, body: { error: 'Pending verification request not found' } };
+        await getDb().collection('verification_requests').doc(request.id).set({ status: 'rejected', rejection_reason: String(body.reason || 'Documents could not be verified'), reviewed_by: user.userId, reviewed_at: now(), updated_at: now() }, { merge: true });
+        return { body: { message: 'Verification request rejected' } };
+    }
 
     if (method === 'GET' && parts[0] === 'chat' && parts.length === 1) {
         const snapshot = await getDb().collection('chat_conversations').get();
@@ -969,8 +1049,11 @@ async function route(req) {
     if (parts[0] === 'bills') return billRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'external-transfers') return externalRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'withdrawals') return withdrawalRoutes(method, parts.slice(1), user, body);
+    if (parts[0] === 'verification') return verificationRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'admin') return adminRoutes(method, parts.slice(1), user, body, req.query || {});
     if (parts[0] === 'storage' && method === 'POST' && parts[1] === 'upload-url') {
+        if (user.userId === GUEST_ID) return { status: 401, body: { error: 'Please sign in before uploading documents' } };
+        if (!String(body.contentType || '').match(/^(image\/(jpeg|png|webp)|application\/pdf)$/)) return { status: 400, body: { error: 'Only PDF, JPG, PNG, and WEBP files are accepted' } };
         const path = `uploads/${user.userId}/${randomUUID()}-${String(body.fileName || 'file').replace(/[^a-zA-Z0-9._-]/g, '_')}`;
         const [url] = await getBucket().file(path).getSignedUrl({ action: 'write', expires: Date.now() + 15 * 60 * 1000, contentType: body.contentType || 'application/octet-stream' });
         return { body: { path, uploadUrl: url } };
