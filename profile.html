@@ -345,6 +345,33 @@
         </div>
     </main>
 
+    <!-- Account Upgrade Modal -->
+    <div id="upgradeAccountModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4" style="z-index:40;">
+        <div class="bg-white max-w-lg w-full rounded-xl p-5 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-start justify-between gap-4">
+                <div><p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Secure verification</p><h3 class="text-xl font-bold text-slate-900">Upgrade your account</h3></div>
+                <button type="button" class="text-slate-500" onclick="closeUpgradeModal()" aria-label="Close"><i class="fas fa-xmark"></i></button>
+            </div>
+            <p class="text-sm text-slate-600 mt-2">Choose a tier, then upload clear documents. A bank specialist will verify your identity before approval.</p>
+            <div id="tierOptions" class="tier-options">
+                <label class="tier-option"><div class="tier-option-head"><span class="tier-option-title">Tier 1 · Essential</span><input type="radio" name="upgradeTier" value="tier1" checked></div><div class="tier-option-copy">National ID card. Daily transfers up to $2,500 and balances up to $10,000.</div></label>
+                <label class="tier-option"><div class="tier-option-head"><span class="tier-option-title">Tier 2 · Plus</span><input type="radio" name="upgradeTier" value="tier2"></div><div class="tier-option-copy">Driver's license or SSN proof. Daily transfers up to $25,000 and balances up to $100,000.</div></label>
+                <label class="tier-option"><div class="tier-option-head"><span class="tier-option-title">Tier 3 · Premier</span><input type="radio" name="upgradeTier" value="tier3"></div><div class="tier-option-copy">International passport. Unlimited account access, priority support, and our highest benefits.</div></label>
+            </div>
+            <form id="upgradeAccountForm">
+                <label class="verification-label" for="identityType">Identity document</label>
+                <select id="identityType" class="w-full border rounded px-3 py-2 text-sm" required></select>
+                <label class="verification-label" for="identityFile">Upload identity document</label>
+                <input id="identityFile" class="verification-file" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" required>
+                <label class="verification-label" for="addressFile">Upload residential proof</label>
+                <input id="addressFile" class="verification-file" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" required>
+                <div class="verification-note mt-3"><i class="fas fa-clock mr-1"></i> Bank verification can take up to 48 hours. Your account tier changes only after approval.</div>
+                <p id="upgradeError" class="hidden text-sm text-red-600 mt-3"></p>
+                <div class="flex justify-end gap-2 mt-4"><button type="button" class="border px-3 py-2 rounded" onclick="closeUpgradeModal()">Cancel</button><button id="submitUpgradeBtn" type="submit" class="opay-btn">Submit for verification</button></div>
+            </form>
+        </div>
+    </div>
+
     <!-- Edit Profile Modal -->
     <div id="editProfileModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center p-4">
         <div class="bg-white max-w-md w-full rounded-lg p-4">
@@ -352,33 +379,6 @@
             <form id="editProfileForm" class="space-y-3">
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-
-                    <!-- Account Upgrade Modal -->
-                    <div id="upgradeAccountModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4" style="z-index:40;">
-                        <div class="bg-white max-w-lg w-full rounded-xl p-5 max-h-[90vh] overflow-y-auto">
-                            <div class="flex items-start justify-between gap-4">
-                                <div><p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Secure verification</p><h3 class="text-xl font-bold text-slate-900">Upgrade your account</h3></div>
-                                <button type="button" class="text-slate-500" onclick="closeUpgradeModal()" aria-label="Close"><i class="fas fa-xmark"></i></button>
-                            </div>
-                            <p class="text-sm text-slate-600 mt-2">Choose a tier, then upload clear documents. A bank specialist will verify your identity before approval.</p>
-                            <div id="tierOptions" class="tier-options">
-                                <label class="tier-option"><div class="tier-option-head"><span class="tier-option-title">Tier 1 · Essential</span><input type="radio" name="upgradeTier" value="tier1" checked></div><div class="tier-option-copy">National ID card. Daily transfers up to $2,500 and balances up to $10,000.</div></label>
-                                <label class="tier-option"><div class="tier-option-head"><span class="tier-option-title">Tier 2 · Plus</span><input type="radio" name="upgradeTier" value="tier2"></div><div class="tier-option-copy">Driver's license or SSN proof. Daily transfers up to $25,000 and balances up to $100,000.</div></label>
-                                <label class="tier-option"><div class="tier-option-head"><span class="tier-option-title">Tier 3 · Premier</span><input type="radio" name="upgradeTier" value="tier3"></div><div class="tier-option-copy">International passport. Unlimited account access, priority support, and our highest benefits.</div></label>
-                            </div>
-                            <form id="upgradeAccountForm">
-                                <label class="verification-label" for="identityType">Identity document</label>
-                                <select id="identityType" class="w-full border rounded px-3 py-2 text-sm" required></select>
-                                <label class="verification-label" for="identityFile">Upload identity document</label>
-                                <input id="identityFile" class="verification-file" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" required>
-                                <label class="verification-label" for="addressFile">Upload residential proof</label>
-                                <input id="addressFile" class="verification-file" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" required>
-                                <div class="verification-note mt-3"><i class="fas fa-clock mr-1"></i> Bank verification can take up to 48 hours. Your account tier changes only after approval.</div>
-                                <p id="upgradeError" class="hidden text-sm text-red-600 mt-3"></p>
-                                <div class="flex justify-end gap-2 mt-4"><button type="button" class="border px-3 py-2 rounded" onclick="closeUpgradeModal()">Cancel</button><button id="submitUpgradeBtn" type="submit" class="opay-btn">Submit for verification</button></div>
-                            </form>
-                        </div>
-                    </div>
                         <label class="text-xs text-slate-600">First name</label>
                         <input id="editFirstName" class="w-full border rounded px-3 py-2" />
                     </div>
