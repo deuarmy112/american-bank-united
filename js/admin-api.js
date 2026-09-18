@@ -27,6 +27,14 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
     : '/api';
 
 const adminAPI = {
+    async createTransfer(payload) {
+        return adminRequest(`${API_URL}/admin/transfers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    },
+
     async getVerificationRequests() {
         return adminRequest(`${API_URL}/admin/verification-requests`);
     },

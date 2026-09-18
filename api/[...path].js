@@ -677,6 +677,65 @@ async function verificationRoutes(method, parts, user, body) {
 async function adminRoutes(method, parts, user, body, query) {
     requireAdmin(user);
 
+    if (method === 'POST' && parts[0] === 'transfers' && parts.length === 1) {
+        const amount = Number(body.amount);
+        const senderName = String(body.senderName || '').trim();
+        const bankName = String(body.bankName || '').trim();
+        const recipientName = String(body.recipientName || '').trim();
+        const recipientIdentifier = String(body.accountNumber || body.iban || '').trim();
+        const recipientEmail = String(body.recipientEmail || '').trim();
+        const recipientPhone = String(body.recipientPhone || '').trim();
+        const description = String(body.description || '').trim() || 'Admin funded transfer';
+        if (!senderName || !bankName || !recipientName || !recipientIdentifier || !Number.isFinite(amount) || amount <= 0) {
+            return { status: 400, body: { error: 'Sender name, bank name, recipient name, account number or IBAN, and a valid amount are required' } };
+        }
+
+        const accountsSnapshot = await getDb().collection('accounts').limit(1000).get();
+        const normalizedRecipient = normalizeName(recipientName);
+        const matches = accountsSnapshot.docs.filter(doc => {
+            const account = doc.data();
+            const identifierMatches = accountIdentifierMatches(account, recipientIdentifier);
+            const ownerName = account.user_id;
+            return identifierMatches && ownerName;
+        });
+        if (matches.length !== 1) return { status: 404, body: { error: 'A unique ABU account could not be found for that account number or IBAN' } };
+
+        const accountRef = matches[0].ref;
+        const account = { id: matches[0].id, ...matches[0].data() };
+        const recipient = await getDoc('users', account.user_id);
+        const actualName = normalizeName(`${recipient?.first_name || ''} ${recipient?.last_name || ''}`);
+        if (!recipient || actualName !== normalizedRecipient) return { status: 400, body: { error: 'Recipient name does not match the ABU account holder' } };
+        if (String(account.status || '').toLowerCase() !== 'active' || String(account.approval_status || 'approved').toLowerCase() !== 'approved') return { status: 400, body: { error: 'The recipient account is not active' } };
+
+        const isInternal = normalizeName(bankName) === 'abu' || normalizeName(bankName) === 'american bank united';
+        const transferId = randomUUID();
+        const transactionId = randomUUID();
+        const timestamp = now();
+        const result = await getDb().runTransaction(async transaction => {
+            const fresh = await transaction.get(accountRef);
+            if (!fresh.exists || fresh.data().status !== 'active') throw new Error('The recipient account is not active');
+            const newBalance = Number((Number(fresh.data().balance || 0) + amount).toFixed(2));
+            transaction.update(accountRef, { balance: newBalance, updated_at: timestamp });
+            transaction.set(getDb().collection('transactions').doc(transactionId), {
+                id: transactionId, account_id: account.id, type: 'deposit', amount, balance_after: newBalance,
+                description, bank_name: bankName, source_name: senderName, transfer_id: transferId,
+                transfer_type: isInternal ? 'internal_admin_transfer' : 'other_bank_funds', status: 'completed', approval_status: 'approved', created_at: timestamp
+            });
+            transaction.set(getDb().collection('admin_transfers').doc(transferId), {
+                id: transferId, user_id: recipient.id, account_id: account.id, amount, bank_name: bankName,
+                sender_name: senderName, recipient_name: recipientName, recipient_identifier: recipientIdentifier, recipient_email: recipientEmail || null, recipient_phone: recipientPhone || null, description,
+                transfer_type: isInternal ? 'internal_admin_transfer' : 'other_bank_funds', status: 'completed', created_by: user.userId, created_at: timestamp
+            });
+            if (!isInternal) transaction.set(getDb().collection('external_transfers').doc(transferId), {
+                id: transferId, user_id: recipient.id, account_id: account.id, direction: 'incoming', amount,
+                transfer_type: 'other_bank_funds', bank_name: bankName, sender_name: senderName, recipient_name: recipientName, recipient_email: recipientEmail || null, recipient_phone: recipientPhone || null,
+                recipient_identifier: recipientIdentifier, description, status: 'completed', created_at: timestamp
+            });
+            return { newBalance };
+        });
+        return { status: 201, body: { message: isInternal ? 'ABU transfer completed successfully' : 'Other-bank funds credited successfully', transferType: isInternal ? 'internal_admin_transfer' : 'other_bank_funds', transferId, newBalance: result.newBalance } };
+    }
+
     if (method === 'GET' && parts[0] === 'verification-requests') {
         const requests = await listDocs('verification_requests', 'status', 'pending', 'created_at', 500);
         const withUsers = await Promise.all(requests.map(async request => {
@@ -693,7 +752,8 @@ async function adminRoutes(method, parts, user, body, query) {
             return clean({ ...request, documents, user: customer ? { id: customer.id, first_name: customer.first_name, last_name: customer.last_name, email: customer.email } : null });
         }));
         return { body: { requests: withUsers } };
-    }
+        const notification = await sendTransferNotifications({ email: recipientEmail, phone: recipientPhone, recipientName, amount, transferType: isInternal ? 'internal ABU' : 'other-bank', bankName, accountNumber: recipientIdentifier, description });
+        return { status: 201, body: { message: isInternal ? 'ABU transfer completed successfully' : 'Other-bank funds credited successfully', transferType: isInternal ? 'internal_admin_transfer' : 'other_bank_funds', transferId, newBalance: result.newBalance, notification } };
 
     if (method === 'POST' && parts[0] === 'verification-requests' && parts[1] && parts[2] === 'approve') {
         const request = await getDoc('verification_requests', parts[1]);

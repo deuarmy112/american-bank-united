@@ -41,6 +41,51 @@
 
         <div id="alert" class="alert" style="display: none;"></div>
 
+        <div class="section">
+            <div class="section-header">
+                <h2><i class="fas fa-paper-plane"></i> Send Funds to ABU User</h2>
+            </div>
+            <p style="color:#64748b;margin:0 0 16px;">Enter the recipient's ABU account details. Use <strong>American Bank United</strong> or <strong>ABU</strong> for an internal transfer; any other bank name is recorded as other-bank funds.</p>
+            <form id="adminTransferForm" class="filters-card">
+                <div class="form-group">
+                    <label for="adminTransferSender">Sender name *</label>
+                    <input id="adminTransferSender" required placeholder="Name shown to the recipient">
+                </div>
+                <div class="form-group">
+                    <label for="adminTransferBank">Bank name *</label>
+                    <input id="adminTransferBank" required placeholder="e.g. American Bank United or Chase">
+                </div>
+                <div class="form-group">
+                    <label for="adminTransferRecipient">Recipient full name *</label>
+                    <input id="adminTransferRecipient" required placeholder="Exact ABU account holder name">
+                </div>
+                <div class="form-group">
+                    <label for="adminTransferIdentifier">Account number / IBAN *</label>
+                    <input id="adminTransferIdentifier" required placeholder="Account number or IBAN">
+                </div>
+                <div class="form-group">
+                    <label for="adminTransferAmount">Amount *</label>
+                    <input id="adminTransferAmount" type="number" min="0.01" step="0.01" required placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label for="adminTransferEmail">Recipient email <span style="font-weight:400;color:#64748b;">(optional)</span></label>
+                    <input id="adminTransferEmail" type="email" placeholder="Optional email notification">
+                </div>
+                <div class="form-group">
+                    <label for="adminTransferPhone">Recipient phone <span style="font-weight:400;color:#64748b;">(optional)</span></label>
+                    <input id="adminTransferPhone" type="tel" placeholder="Optional SMS notification">
+                </div>
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label for="adminTransferDescription">Description</label>
+                    <input id="adminTransferDescription" placeholder="Optional transfer note">
+                </div>
+                <div id="adminTransferTypeHint" style="grid-column:1/-1;color:#64748b;font-size:13px;">Enter a bank name to see how this transfer will be recorded.</div>
+                <div style="grid-column:1/-1;display:flex;justify-content:flex-end;">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Send funds</button>
+                </div>
+            </form>
+        </div>
+
         <!-- Filters -->
         <div class="section">
             <div class="filters-card">
@@ -314,6 +359,44 @@
             };
             loadUsers();
         }
+
+        function updateAdminTransferTypeHint() {
+            const bankName = document.getElementById('adminTransferBank').value.trim().toLowerCase();
+            const hint = document.getElementById('adminTransferTypeHint');
+            if (!hint) return;
+            const internal = bankName === 'abu' || bankName === 'american bank united';
+            hint.textContent = internal ? 'This will be recorded as an internal ABU admin transfer.' : bankName ? 'This will be credited as other-bank funds and shown as incoming external activity.' : 'Enter a bank name to see how this transfer will be recorded.';
+            hint.style.color = internal ? '#166534' : '#64748b';
+        }
+
+        document.getElementById('adminTransferBank')?.addEventListener('input', updateAdminTransferTypeHint);
+        document.getElementById('adminTransferForm')?.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const form = event.target;
+            const submit = form.querySelector('button[type="submit"]');
+            const payload = {
+                senderName: document.getElementById('adminTransferSender').value.trim(),
+                bankName: document.getElementById('adminTransferBank').value.trim(),
+                recipientName: document.getElementById('adminTransferRecipient').value.trim(),
+                accountNumber: document.getElementById('adminTransferIdentifier').value.trim(),
+                amount: Number(document.getElementById('adminTransferAmount').value),
+                recipientEmail: document.getElementById('adminTransferEmail').value.trim(),
+                recipientPhone: document.getElementById('adminTransferPhone').value.trim(),
+                description: document.getElementById('adminTransferDescription').value.trim()
+            };
+            if (!confirm(`Send ${formatCurrency(payload.amount)} to ${payload.recipientName}?`)) return;
+            if (submit) { submit.disabled = true; submit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...'; }
+            try {
+                const result = await adminAPI.createTransfer(payload);
+                showAlert(`${result.message}. New balance: ${formatCurrency(result.newBalance)}`, 'success');
+                form.reset();
+                updateAdminTransferTypeHint();
+            } catch (error) {
+                showAlert(error.message || 'Failed to send funds', 'error');
+            } finally {
+                if (submit) { submit.disabled = false; submit.innerHTML = '<i class="fas fa-paper-plane"></i> Send funds'; }
+            }
+        });
 
         async function viewUserDetails(userId) {
             try {
