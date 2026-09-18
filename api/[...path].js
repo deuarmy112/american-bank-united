@@ -629,9 +629,9 @@ async function withdrawalRoutes(method, parts, user, body) {
 }
 
 const ACCOUNT_TIERS = {
-    tier1: { label: 'Tier 1 · Essential', documentTypes: ['national_id'], required: ['identity', 'address'] },
-    tier2: { label: 'Tier 2 · Plus', documentTypes: ['drivers_license', 'ssn_proof'], required: ['identity', 'address'] },
-    tier3: { label: 'Tier 3 · Premier', documentTypes: ['international_passport'], required: ['identity', 'address'] }
+    tier1: { label: 'Tier 1 · Essential', documentTypes: ['national_id'], required: ['identity', 'address'], dailyTransferLimit: 5000, transferAccountLimit: 15000, dailyDepositLimit: 20000, depositAccountLimit: 50000 },
+    tier2: { label: 'Tier 2 · Plus', documentTypes: ['drivers_license', 'ssn_proof'], required: ['identity', 'address'], dailyTransferLimit: 15000, transferAccountLimit: 100000, dailyDepositLimit: 50000, depositAccountLimit: 500000 },
+    tier3: { label: 'Tier 3 · Premier', documentTypes: ['international_passport'], required: ['identity', 'address'], dailyTransferLimit: null, transferAccountLimit: null, dailyDepositLimit: null, depositAccountLimit: null }
 };
 const ACCOUNT_TIER_RANK = { tier1: 1, tier2: 2, tier3: 3 };
 
