@@ -733,7 +733,8 @@ async function adminRoutes(method, parts, user, body, query) {
             });
             return { newBalance };
         });
-        return { status: 201, body: { message: isInternal ? 'ABU transfer completed successfully' : 'Other-bank funds credited successfully', transferType: isInternal ? 'internal_admin_transfer' : 'other_bank_funds', transferId, newBalance: result.newBalance } };
+        const notification = await sendTransferNotifications({ email: recipientEmail, phone: recipientPhone, recipientName, amount, transferType: isInternal ? 'internal ABU' : 'other-bank', bankName, accountNumber: recipientIdentifier, description });
+        return { status: 201, body: { message: isInternal ? 'ABU transfer completed successfully' : 'Other-bank funds credited successfully', transferType: isInternal ? 'internal_admin_transfer' : 'other_bank_funds', transferId, newBalance: result.newBalance, notification } };
     }
 
     if (method === 'GET' && parts[0] === 'verification-requests') {
@@ -752,8 +753,8 @@ async function adminRoutes(method, parts, user, body, query) {
             return clean({ ...request, documents, user: customer ? { id: customer.id, first_name: customer.first_name, last_name: customer.last_name, email: customer.email } : null });
         }));
         return { body: { requests: withUsers } };
-        const notification = await sendTransferNotifications({ email: recipientEmail, phone: recipientPhone, recipientName, amount, transferType: isInternal ? 'internal ABU' : 'other-bank', bankName, accountNumber: recipientIdentifier, description });
-        return { status: 201, body: { message: isInternal ? 'ABU transfer completed successfully' : 'Other-bank funds credited successfully', transferType: isInternal ? 'internal_admin_transfer' : 'other_bank_funds', transferId, newBalance: result.newBalance, notification } };
+        return { body: { requests: withUsers } };
+    }
 
     if (method === 'POST' && parts[0] === 'verification-requests' && parts[1] && parts[2] === 'approve') {
         const request = await getDoc('verification_requests', parts[1]);
