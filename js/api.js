@@ -163,9 +163,6 @@ const verificationAPI = {
     async getStatus() {
         return apiClient.get('/verification');
     },
-    async getUploadUrl(fileName, contentType) {
-        return apiClient.post('/storage/upload-url', { fileName, contentType });
-    },
     async submit(payload) {
         return apiClient.post('/verification', payload);
     }

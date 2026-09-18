@@ -775,11 +775,31 @@
         }
 
         async function uploadVerificationFile(file) {
-            if (!file || file.size > 10 * 1024 * 1024) throw new Error('Each document must be 10 MB or smaller');
-            const upload = await verificationAPI.getUploadUrl(file.name, file.type);
-            const response = await fetch(upload.uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
-            if (!response.ok) throw new Error(`Could not upload ${file.name}`);
-            return upload.path;
+            if (!file || !['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Upload a PDF, JPG, PNG, or WEBP document');
+            if (file.type.startsWith('image/')) {
+                const source = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => { const image = new Image(); image.onload = () => resolve(image); image.onerror = reject; image.src = reader.result; };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+                const scale = Math.min(1, 1400 / Math.max(source.width, source.height));
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.max(1, Math.round(source.width * scale));
+                canvas.height = Math.max(1, Math.round(source.height * scale));
+                canvas.getContext('2d').drawImage(source, 0, 0, canvas.width, canvas.height);
+                const compressed = canvas.toDataURL('image/jpeg', 0.68);
+                if (compressed.length > 450000) throw new Error('Each document must be a clear image under 450 KB after compression');
+                return compressed;
+            }
+            const dataUrl = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+            if (dataUrl.length > 450000) throw new Error('Each PDF document must be 450 KB or smaller');
+            return dataUrl;
         }
 
         async function loadVerificationStatus(user) {

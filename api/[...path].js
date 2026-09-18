@@ -636,7 +636,9 @@ const ACCOUNT_TIERS = {
 const ACCOUNT_TIER_RANK = { tier1: 1, tier2: 2, tier3: 3 };
 
 function validVerificationPath(path, userId) {
-    return typeof path === 'string' && path.startsWith(`uploads/${userId}/`) && path.length < 500;
+    if (typeof path !== 'string') return false;
+    if (path.startsWith(`uploads/${userId}/`)) return path.length < 500;
+    return /^data:(application\/pdf|image\/(jpeg|png|webp));base64,[A-Za-z0-9+/=]+$/.test(path) && path.length <= 450000;
 }
 
 async function verificationRoutes(method, parts, user, body) {
@@ -743,6 +745,10 @@ async function adminRoutes(method, parts, user, body, query) {
             const customer = await getDoc('users', request.user_id);
             const documents = {};
             for (const [key, path] of Object.entries(request.documents || {})) {
+                if (typeof path === 'string' && path.startsWith('data:')) {
+                    documents[key] = path;
+                    continue;
+                }
                 try {
                     const [url] = await getBucket().file(path).getSignedUrl({ action: 'read', expires: Date.now() + 15 * 60 * 1000 });
                     documents[key] = url;
