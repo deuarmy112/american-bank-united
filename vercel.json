@@ -27,6 +27,22 @@
       "destination": "/api/[...path]?path=cards/:id/status"
     },
     {
+      "source": "/api/storage/upload-url",
+      "destination": "/api/[...path]?path=storage/upload-url"
+    },
+    {
+      "source": "/api/verification",
+      "destination": "/api/[...path]?path=verification"
+    },
+    {
+      "source": "/api/admin/verification-requests/:requestId/:action",
+      "destination": "/api/[...path]?path=admin/verification-requests/:requestId/:action"
+    },
+    {
+      "source": "/api/admin/verification-requests",
+      "destination": "/api/[...path]?path=admin/verification-requests"
+    },
+    {
       "source": "/api/chat/start",
       "destination": "/api/[...path]?path=chat/start"
     },

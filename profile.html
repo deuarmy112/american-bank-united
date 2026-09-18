@@ -221,6 +221,8 @@
             box-shadow: 0 10px 24px rgba(15, 23, 42, .16);
         }
         .tier-card-head, .tier-option-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .tier-title-row { display: flex; align-items: center; gap: 9px; }
+        .tier-verified-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 7px; border-radius: 999px; background: #dcfce7; color: #166534; font-size: .68rem; font-weight: 800; white-space: nowrap; }
         .tier-kicker { color: #cbd5e1; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
         .tier-current { margin: 4px 0; font-size: 1.25rem; font-weight: 800; }
         .tier-status { color: #dbeafe; font-size: .82rem; line-height: 1.45; }
@@ -274,7 +276,7 @@
                 <div class="tier-card-head">
                     <div>
                         <div class="tier-kicker">Account verification</div>
-                        <div id="tierTitle" class="tier-current">Tier 1 · Essential</div>
+                        <div class="tier-title-row"><div id="tierTitle" class="tier-current">Tier 1 · Essential</div><span id="tierVerifiedBadge" class="tier-verified-badge hidden"><i class="fas fa-check"></i> Verified</span></div>
                     </div>
                     <i class="fas fa-shield-halved" style="font-size:1.55rem;color:#d5b86a;"></i>
                 </div>
@@ -748,8 +750,10 @@
             const status = document.getElementById('tierStatus');
             const button = document.getElementById('upgradeAccountBtn');
             const pending = requests.some(request => request.status === 'pending');
+            const verified = user.verification_status === 'verified';
             if (title) title.textContent = tierLabels[tier] || tierLabels.tier1;
-            if (status) status.textContent = pending ? 'Documents received. Bank verification is in progress and may take up to 48 hours.' : (user.verification_status === 'verified' ? 'Verified account. Your current tier benefits are active.' : 'Upgrade your verification level for higher limits and more account benefits.');
+            document.getElementById('tierVerifiedBadge')?.classList.toggle('hidden', !verified);
+            if (status) status.textContent = pending ? 'Documents received. Bank verification is in progress and may take up to 48 hours.' : (verified ? 'Verified account. Your current tier benefits are active.' : 'Upgrade your verification level for higher limits and more account benefits.');
             if (button) { button.disabled = pending || tier === 'tier3'; button.textContent = pending ? 'Verification in progress' : (tier === 'tier3' ? 'Highest tier reached' : 'Upgrade account'); }
         }
 

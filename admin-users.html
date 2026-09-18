@@ -239,9 +239,12 @@
         async function loadCardRequests() {
             if (!checkAuth()) return;
             try {
-                const data = await adminAPI.getCardRequests();
+                const [data, verificationData] = await Promise.all([
+                    adminAPI.getCardRequests(),
+                    adminAPI.getVerificationRequests()
+                ]);
                 const tbody = document.getElementById('cardRequestsTable');
-                tbody.innerHTML = data.requests.length ? data.requests.map(request => `
+                const cardRows = data.requests.map(request => `
                     <tr>
                         <td><strong>${request.user ? `${request.user.first_name} ${request.user.last_name}` : 'Unknown'}</strong><br><small>${request.user?.email || ''}</small></td>
                         <td>${request.card_type.toUpperCase()}<br><small>${request.design}</small></td>
@@ -249,11 +252,41 @@
                         <td>${formatDate(request.requested_at || request.created_at)}</td>
                         <td><button onclick="approveCardRequest('${request.id}')" class="btn btn-sm btn-primary"><i class="fas fa-check"></i> Process & Send</button> <button onclick="rejectCardRequest('${request.id}')" class="btn btn-sm btn-danger"><i class="fas fa-times"></i> Reject</button></td>
                     </tr>
-                `).join('') : '<tr><td colspan="5" style="text-align:center;padding:20px;">No pending card requests</td></tr>';
+                `);
+                const upgradeRows = verificationData.requests.map(request => `
+                    <tr>
+                        <td><strong>${request.user ? `${request.user.first_name} ${request.user.last_name}` : 'Unknown'}</strong><br><small>${request.user?.email || ''}</small></td>
+                        <td><strong><i class="fas fa-shield-halved"></i> Account upgrade</strong><br><small>${request.tier.toUpperCase()} · ${request.identity_type.replaceAll('_', ' ')}</small></td>
+                        <td><a href="${request.documents?.identity || '#'}" target="_blank" rel="noopener">Identity</a><br><a href="${request.documents?.address || '#'}" target="_blank" rel="noopener">Residential proof</a></td>
+                        <td>${formatDate(request.submitted_at || request.created_at)}</td>
+                        <td><button onclick="approveVerificationRequest('${request.id}')" class="btn btn-sm btn-primary"><i class="fas fa-check"></i> Approve tier</button> <button onclick="rejectVerificationRequest('${request.id}')" class="btn btn-sm btn-danger"><i class="fas fa-times"></i> Reject</button></td>
+                    </tr>
+                `);
+                const rows = [...upgradeRows, ...cardRows];
+                tbody.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="5" style="text-align:center;padding:20px;">No pending card or account upgrade requests</td></tr>';
             } catch (error) {
                 console.error('Load card requests error:', error);
                 showAlert('Failed to load card requests', 'error');
             }
+        }
+
+        async function approveVerificationRequest(requestId) {
+            if (!confirm('Confirm that the uploaded identity documents are valid and approve this account tier?')) return;
+            try {
+                await adminAPI.approveVerification(requestId);
+                showAlert('Account upgrade approved and marked verified', 'success');
+                loadCardRequests();
+            } catch (error) { showAlert(error.message || 'Failed to approve account upgrade', 'error'); }
+        }
+
+        async function rejectVerificationRequest(requestId) {
+            const reason = prompt('Reason for rejecting this account upgrade:', 'Documents could not be verified');
+            if (reason === null) return;
+            try {
+                await adminAPI.rejectVerification(requestId, reason);
+                showAlert('Account upgrade request rejected', 'success');
+                loadCardRequests();
+            } catch (error) { showAlert(error.message || 'Failed to reject account upgrade', 'error'); }
         }
 
         async function approveCardRequest(requestId) {
