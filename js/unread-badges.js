@@ -47,6 +47,7 @@
             const approvals = (accounts.accounts || []).length + (transactions.transactions || []).length + (verifications.requests || []).length;
             addNavBadge(document.querySelector('a[href="admin-chat.html"]'), 'admin-chat', unread);
             addNavBadge(document.querySelector('a[href="admin-approvals.html"]'), 'admin-approvals', approvals);
+            addNavBadge(document.querySelector('a[href="admin-notifications.html"]'), 'admin-notifications', approvals + unread);
             setBadge(document.getElementById('adminChatUnreadCount'), unread);
         } catch (error) {
             console.warn('Admin unread badge refresh failed', error);

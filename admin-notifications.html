@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - Admin Portal</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .notification-item { display:flex; gap:14px; align-items:flex-start; padding:18px; border-bottom:1px solid #eef0f3; text-decoration:none; color:inherit; }
+        .notification-item:hover { background:#f8fafc; }
+        .notification-icon { width:38px; height:38px; flex:0 0 38px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#e0ecff; color:#1d4ed8; }
+        .notification-item[data-type="chat"] .notification-icon { background:#fce7f3; color:#be185d; }
+        .notification-item[data-type="activity"] .notification-icon { background:#dcfce7; color:#166534; }
+        .notification-time { color:#94a3b8; font-size:12px; margin-top:5px; }
+        @media (max-width:760px) { body { overflow-x:hidden; } .navbar { overflow-x:auto; } .navbar-container { min-width:max-content; } .navbar-menu { flex-wrap:nowrap; white-space:nowrap; } .main-content { padding:12px; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar"><div class="container navbar-container"><div class="navbar-brand"><h2><img src="assets/abu-logo.png" alt="American Bank United" style="width:150px;height:auto;display:block;"></h2></div><div class="navbar-menu">
+        <a href="admin-dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="admin-users.html" class="nav-link"><i class="fas fa-users"></i> Users</a>
+        <a href="admin-accounts.html" class="nav-link"><i class="fas fa-wallet"></i> Accounts</a>
+        <a href="admin-transfer.html" class="nav-link"><i class="fas fa-paper-plane"></i> Transfer</a>
+        <a href="admin-approvals.html" class="nav-link"><i class="fas fa-check-circle"></i> Approvals</a>
+        <a href="admin-transactions.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Transactions</a>
+        <a href="admin-chat.html" class="nav-link"><i class="fas fa-comments"></i> Chat</a>
+        <a href="admin-notifications.html" class="nav-link active"><i class="fas fa-bell"></i> Notifications</a>
+        <a href="admin-audit.html" class="nav-link"><i class="fas fa-history"></i> Audit Log</a>
+        <div class="navbar-user"><span id="adminName"><i class="fas fa-user-shield"></i> Admin</span></div>
+    </div></div></nav>
+    <main class="container main-content"><div class="dashboard-header"><h1><i class="fas fa-bell"></i> Admin Notifications</h1><p class="subtitle">Approvals, customer messages, and recent admin activity.</p></div><div id="alert" class="alert" style="display:none;"></div>
+        <section class="section"><div class="section-header"><h2>Activity center</h2><button type="button" onclick="loadNotifications()" class="btn btn-secondary"><i class="fas fa-sync"></i> Refresh</button></div><div id="notificationList"><p style="padding:20px;color:#64748b;">Loading notifications...</p></div></section>
+    </main>
+    <script src="js/utils.js"></script><script src="js/admin-api.js"></script>
+    <script>
+        function checkAuth() { const token = localStorage.getItem('adminAuthToken'); const admin = JSON.parse(localStorage.getItem('adminUser') || '{}'); if (!token || !['admin','super_admin'].includes(admin.role)) { location.href = 'admin-login.html'; return false; } document.getElementById('adminName').innerHTML = `<i class="fas fa-user-shield"></i> ${admin.firstName || admin.first_name || 'Admin'}`; return true; }
+        function iconFor(type) { return type === 'chat' ? 'fa-comments' : type === 'activity' ? 'fa-money-bill-transfer' : 'fa-check-circle'; }
+        async function loadNotifications() { if (!checkAuth()) return; const list = document.getElementById('notificationList'); try { const data = await adminAPI.getNotifications(); const notifications = data.notifications || []; list.innerHTML = notifications.length ? notifications.map(item => `<a class="notification-item" data-type="${item.type}" href="${item.href}"><span class="notification-icon"><i class="fas ${iconFor(item.type)}"></i></span><span><strong>${item.title}</strong><span style="display:block;color:#64748b;margin-top:4px;">${item.message}</span><span class="notification-time">${formatDate(item.createdAt)}</span></span></a>`).join('') : '<p style="padding:24px;color:#64748b;text-align:center;">No admin notifications.</p>'; } catch (error) { list.innerHTML = `<p style="padding:20px;color:#b91c1c;">${error.message || 'Unable to load notifications.'}</p>`; } }
+        loadNotifications(); window.setInterval(loadNotifications, 15000);
+    </script>
+</body>
+</html>

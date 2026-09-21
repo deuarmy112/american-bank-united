@@ -55,6 +55,10 @@
       "destination": "/api/[...path]?path=admin/transfer-recipients"
     },
     {
+      "source": "/api/admin/notifications",
+      "destination": "/api/[...path]?path=admin/notifications"
+    },
+    {
       "source": "/api/chat/start",
       "destination": "/api/[...path]?path=chat/start"
     },

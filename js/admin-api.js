@@ -27,6 +27,10 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
     : '/api';
 
 const adminAPI = {
+    async getNotifications() {
+        return adminRequest(`${API_URL}/admin/notifications`);
+    },
+
     async getTransferRecipients() {
         return adminRequest(`${API_URL}/admin/transfer-recipients`);
     },

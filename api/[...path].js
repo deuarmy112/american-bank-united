@@ -705,6 +705,25 @@ async function verificationRoutes(method, parts, user, body) {
 async function adminRoutes(method, parts, user, body, query) {
     requireAdmin(user);
 
+    if (method === 'GET' && parts[0] === 'notifications') {
+        const [accounts, transactions, verifications, conversations, transfers] = await Promise.all([
+            getDb().collection('accounts').where('approval_status', '==', 'pending').limit(100).get(),
+            getDb().collection('transactions').where('approval_status', '==', 'pending').limit(100).get(),
+            getDb().collection('verification_requests').where('status', '==', 'pending').limit(100).get(),
+            getDb().collection('chat_conversations').get(),
+            getDb().collection('admin_transfers').orderBy('created_at', 'desc').limit(25).get()
+        ]);
+        const notifications = [
+            ...accounts.docs.map(doc => ({ id: `account-${doc.id}`, type: 'approval', title: 'Account approval required', message: `New ${doc.data().account_type || 'account'} request is waiting for review.`, href: 'admin-accounts.html', createdAt: doc.data().created_at })),
+            ...transactions.docs.map(doc => ({ id: `transaction-${doc.id}`, type: 'approval', title: 'Transaction approval required', message: `${doc.data().description || 'A transaction'} is waiting for review.`, href: 'admin-approvals.html', createdAt: doc.data().created_at })),
+            ...verifications.docs.map(doc => ({ id: `verification-${doc.id}`, type: 'approval', title: 'Identity verification required', message: `A ${doc.data().tier || 'tier'} upgrade is waiting for review.`, href: 'admin-approvals.html', createdAt: doc.data().created_at })),
+            ...conversations.docs.filter(doc => Number(doc.data().admin_unread_count || 0) > 0).map(doc => ({ id: `chat-${doc.id}`, type: 'chat', title: 'Unread customer message', message: `${doc.data().user_name || 'A customer'} has ${doc.data().admin_unread_count} unread message(s).`, href: 'admin-chat.html', createdAt: doc.data().updated_at || doc.data().last_message_at })),
+            ...transfers.docs.map(doc => ({ id: `transfer-${doc.id}`, type: 'activity', title: 'Admin transfer completed', message: `Transfer of $${Number(doc.data().amount || 0).toFixed(2)} sent to ${doc.data().recipient_name || 'an ABU user'}.`, href: 'admin-transactions.html', createdAt: doc.data().created_at }))
+        ];
+        notifications.sort((left, right) => String(right.createdAt || '').localeCompare(String(left.createdAt || '')));
+        return { body: { notifications: clean(notifications.slice(0, 150)) } };
+    }
+
     if (method === 'GET' && parts[0] === 'transfer-recipients') {
         const usersSnapshot = await getDb().collection('users').where('role', '==', 'customer').limit(1000).get();
         const recipients = [];
