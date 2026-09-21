@@ -47,6 +47,14 @@
       "destination": "/api/[...path]?path=admin/transfers"
     },
     {
+      "source": "/api/admin/accounts/:id/reject",
+      "destination": "/api/[...path]?path=admin/accounts/:id/reject"
+    },
+    {
+      "source": "/api/admin/transfer-recipients",
+      "destination": "/api/[...path]?path=admin/transfer-recipients"
+    },
+    {
       "source": "/api/chat/start",
       "destination": "/api/[...path]?path=chat/start"
     },

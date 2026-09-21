@@ -679,16 +679,34 @@ async function verificationRoutes(method, parts, user, body) {
 async function adminRoutes(method, parts, user, body, query) {
     requireAdmin(user);
 
+    if (method === 'GET' && parts[0] === 'transfer-recipients') {
+        const usersSnapshot = await getDb().collection('users').where('role', '==', 'customer').limit(1000).get();
+        const recipients = [];
+        for (const userDoc of usersSnapshot.docs) {
+            const customer = { id: userDoc.id, ...userDoc.data() };
+            const accounts = await listDocs('accounts', 'user_id', customer.id, null, 100);
+            recipients.push({
+                id: customer.id,
+                name: `${customer.first_name || ''} ${customer.last_name || ''}`.trim(),
+                email: customer.email || '',
+                accounts: accounts.filter(account => account.status === 'active' && String(account.approval_status || 'approved') === 'approved').map(account => ({ id: account.id, accountNumber: account.account_number, iban: account.iban || '', type: account.account_type, balance: Number(account.balance || 0) }))
+            });
+        }
+        return { body: { recipients: recipients.filter(recipient => recipient.accounts.length) } };
+    }
+
     if (method === 'POST' && parts[0] === 'transfers' && parts.length === 1) {
         const amount = Number(body.amount);
         const senderName = String(body.senderName || '').trim();
         const bankName = String(body.bankName || '').trim();
+        const requestedAccountId = String(body.accountId || '').trim();
         const recipientName = String(body.recipientName || '').trim();
         const recipientIdentifier = String(body.accountNumber || body.iban || '').trim();
+        const transferType = ['other_bank', 'international'].includes(body.transferType) ? body.transferType : 'abu';
         const recipientEmail = String(body.recipientEmail || '').trim();
         const recipientPhone = String(body.recipientPhone || '').trim();
         const description = String(body.description || '').trim() || 'Admin funded transfer';
-        if (!senderName || !bankName || !recipientName || !recipientIdentifier || !Number.isFinite(amount) || amount <= 0) {
+        if (!senderName || !bankName || !requestedAccountId || !recipientName || !recipientIdentifier || !Number.isFinite(amount) || amount <= 0) {
             return { status: 400, body: { error: 'Sender name, bank name, recipient name, account number or IBAN, and a valid amount are required' } };
         }
 
@@ -696,7 +714,7 @@ async function adminRoutes(method, parts, user, body, query) {
         const normalizedRecipient = normalizeName(recipientName);
         const matches = accountsSnapshot.docs.filter(doc => {
             const account = doc.data();
-            const identifierMatches = accountIdentifierMatches(account, recipientIdentifier);
+            const identifierMatches = doc.id === requestedAccountId && accountIdentifierMatches(account, recipientIdentifier);
             const ownerName = account.user_id;
             return identifierMatches && ownerName;
         });
@@ -709,7 +727,7 @@ async function adminRoutes(method, parts, user, body, query) {
         if (!recipient || actualName !== normalizedRecipient) return { status: 400, body: { error: 'Recipient name does not match the ABU account holder' } };
         if (String(account.status || '').toLowerCase() !== 'active' || String(account.approval_status || 'approved').toLowerCase() !== 'approved') return { status: 400, body: { error: 'The recipient account is not active' } };
 
-        const isInternal = normalizeName(bankName) === 'abu' || normalizeName(bankName) === 'american bank united';
+        const isInternal = transferType === 'abu';
         const transferId = randomUUID();
         const transactionId = randomUUID();
         const timestamp = now();
@@ -718,25 +736,30 @@ async function adminRoutes(method, parts, user, body, query) {
             if (!fresh.exists || fresh.data().status !== 'active') throw new Error('The recipient account is not active');
             const newBalance = Number((Number(fresh.data().balance || 0) + amount).toFixed(2));
             transaction.update(accountRef, { balance: newBalance, updated_at: timestamp });
+            const receiptId = `RCPT-${Date.now()}-${transactionId.slice(0, 8).toUpperCase()}`;
             transaction.set(getDb().collection('transactions').doc(transactionId), {
-                id: transactionId, account_id: account.id, type: 'deposit', amount, balance_after: newBalance,
+                id: transactionId, receipt_id: receiptId, account_id: account.id, type: 'deposit', amount, balance_after: newBalance,
                 description, bank_name: bankName, source_name: senderName, transfer_id: transferId,
-                transfer_type: isInternal ? 'internal_admin_transfer' : 'other_bank_funds', status: 'completed', approval_status: 'approved', created_at: timestamp
+                transfer_type: transferType === 'international' ? 'international_transfer' : isInternal ? 'internal_admin_transfer' : 'other_bank_funds', receipt_data: {
+                    type: transferType === 'international' ? 'International Transfer' : isInternal ? 'ABU Account Transfer' : 'External Transfer',
+                    amount, amountSent: amount, senderName, recipientName, to: recipientName, recipientBank: bankName, bank: bankName, recipientAccountNumber: recipientIdentifier, accountNumber: recipientIdentifier,
+                    senderAccountNumber: senderName, reference: receiptId, date: new Date(timestamp).toLocaleString('en-US'), description, fee: '0.00', email: recipientEmail, phone: recipientPhone, swift: body.swift || '', country: body.country || ''
+                }, status: 'completed', approval_status: 'approved', created_at: timestamp
             });
             transaction.set(getDb().collection('admin_transfers').doc(transferId), {
                 id: transferId, user_id: recipient.id, account_id: account.id, amount, bank_name: bankName,
                 sender_name: senderName, recipient_name: recipientName, recipient_identifier: recipientIdentifier, recipient_email: recipientEmail || null, recipient_phone: recipientPhone || null, description,
-                transfer_type: isInternal ? 'internal_admin_transfer' : 'other_bank_funds', status: 'completed', created_by: user.userId, created_at: timestamp
+                transfer_type: transferType === 'international' ? 'international_transfer' : isInternal ? 'internal_admin_transfer' : 'other_bank_funds', status: 'completed', created_by: user.userId, created_at: timestamp
             });
             if (!isInternal) transaction.set(getDb().collection('external_transfers').doc(transferId), {
-                id: transferId, user_id: recipient.id, account_id: account.id, direction: 'incoming', amount,
-                transfer_type: 'other_bank_funds', bank_name: bankName, sender_name: senderName, recipient_name: recipientName, recipient_email: recipientEmail || null, recipient_phone: recipientPhone || null,
+                id: transferId, receipt_id: receiptId, user_id: recipient.id, account_id: account.id, direction: 'incoming', amount,
+                transfer_type: transferType === 'international' ? 'international_transfer' : 'other_bank_funds', bank_name: bankName, sender_name: senderName, recipient_name: recipientName, recipient_email: recipientEmail || null, recipient_phone: recipientPhone || null,
                 recipient_identifier: recipientIdentifier, description, status: 'completed', created_at: timestamp
             });
             return { newBalance };
         });
         const notification = await sendTransferNotifications({ email: recipientEmail, phone: recipientPhone, recipientName, amount, transferType: isInternal ? 'internal ABU' : 'other-bank', bankName, accountNumber: recipientIdentifier, description });
-        return { status: 201, body: { message: isInternal ? 'ABU transfer completed successfully' : 'Other-bank funds credited successfully', transferType: isInternal ? 'internal_admin_transfer' : 'other_bank_funds', transferId, newBalance: result.newBalance, notification } };
+        return { status: 201, body: { message: transferType === 'international' ? 'International transfer completed successfully' : isInternal ? 'ABU transfer completed successfully' : 'Other-bank funds credited successfully', transferType, transferId, newBalance: result.newBalance, notification } };
     }
 
     if (method === 'GET' && parts[0] === 'verification-requests') {

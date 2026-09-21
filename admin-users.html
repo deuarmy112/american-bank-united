@@ -43,23 +43,31 @@
             <div class="section-header">
                 <h2><i class="fas fa-paper-plane"></i> Send Funds to ABU User</h2>
             </div>
-            <p style="color:#64748b;margin:0 0 16px;">Enter the recipient's ABU account details. Use <strong>American Bank United</strong> or <strong>ABU</strong> for an internal transfer; any other bank name is recorded as other-bank funds.</p>
+            <p style="color:#64748b;margin:0 0 16px;">Select an ABU user and account. The recipient details will be filled automatically and the user will receive a receipt matching the transfer type.</p>
             <form id="adminTransferForm" class="filters-card">
                 <div class="form-group">
                     <label for="adminTransferSender">Sender name *</label>
                     <input id="adminTransferSender" required placeholder="Name shown to the recipient">
                 </div>
                 <div class="form-group">
+                    <label for="adminTransferType">Transfer type *</label>
+                    <select id="adminTransferType" required>
+                        <option value="abu">ABU to ABU</option>
+                        <option value="other_bank">Other bank to ABU</option>
+                        <option value="international">International to ABU</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="adminTransferBank">Bank name *</label>
-                    <input id="adminTransferBank" required placeholder="e.g. American Bank United or Chase">
+                    <input id="adminTransferBank" required placeholder="e.g. American Bank United, Chase, or HSBC">
                 </div>
                 <div class="form-group">
-                    <label for="adminTransferRecipient">Recipient full name *</label>
-                    <input id="adminTransferRecipient" required placeholder="Exact ABU account holder name">
+                    <label for="adminTransferRecipient">ABU recipient *</label>
+                    <select id="adminTransferRecipient" required><option value="">Loading users...</option></select>
                 </div>
                 <div class="form-group">
-                    <label for="adminTransferIdentifier">Account number / IBAN *</label>
-                    <input id="adminTransferIdentifier" required placeholder="Account number or IBAN">
+                    <label for="adminTransferAccount">Account to fund *</label>
+                    <select id="adminTransferAccount" required disabled><option value="">Select a user first</option></select>
                 </div>
                 <div class="form-group">
                     <label for="adminTransferAmount">Amount *</label>
@@ -72,6 +80,14 @@
                 <div class="form-group">
                     <label for="adminTransferPhone">Recipient phone <span style="font-weight:400;color:#64748b;">(optional)</span></label>
                     <input id="adminTransferPhone" type="tel" placeholder="Optional SMS notification">
+                </div>
+                <div class="form-group international-transfer-field" style="display:none;">
+                    <label for="adminTransferCountry">Recipient country</label>
+                    <input id="adminTransferCountry" placeholder="For international transfers">
+                </div>
+                <div class="form-group international-transfer-field" style="display:none;">
+                    <label for="adminTransferSwift">SWIFT / BIC</label>
+                    <input id="adminTransferSwift" placeholder="For international transfers">
                 </div>
                 <div class="form-group" style="grid-column:1/-1;">
                     <label for="adminTransferDescription">Description</label>
@@ -358,28 +374,59 @@
             loadUsers();
         }
 
-        function updateAdminTransferTypeHint() {
-            const bankName = document.getElementById('adminTransferBank').value.trim().toLowerCase();
-            const hint = document.getElementById('adminTransferTypeHint');
-            if (!hint) return;
-            const internal = bankName === 'abu' || bankName === 'american bank united';
-            hint.textContent = internal ? 'This will be recorded as an internal ABU admin transfer.' : bankName ? 'This will be credited as other-bank funds and shown as incoming external activity.' : 'Enter a bank name to see how this transfer will be recorded.';
-            hint.style.color = internal ? '#166534' : '#64748b';
+        let adminTransferRecipients = [];
+
+        async function loadTransferRecipients() {
+            try {
+                const data = await adminAPI.getTransferRecipients();
+                adminTransferRecipients = data.recipients || [];
+                const select = document.getElementById('adminTransferRecipient');
+                select.innerHTML = '<option value="">Select an ABU user</option>' + adminTransferRecipients.map(recipient => `<option value="${recipient.id}">${recipient.name} · ${recipient.email}</option>`).join('');
+            } catch (error) {
+                document.getElementById('adminTransferRecipient').innerHTML = '<option value="">Unable to load ABU users</option>';
+                showAlert(error.message || 'Failed to load ABU users', 'error');
+            }
         }
 
+        function syncRecipientAccounts() {
+            const recipient = adminTransferRecipients.find(item => item.id === document.getElementById('adminTransferRecipient').value);
+            const accountSelect = document.getElementById('adminTransferAccount');
+            accountSelect.disabled = !recipient;
+            accountSelect.innerHTML = recipient ? '<option value="">Select an account</option>' + recipient.accounts.map(account => `<option value="${account.id}">${account.type.toUpperCase()} · ${account.accountNumber}${account.iban ? ` · ${account.iban}` : ''}</option>`).join('') : '<option value="">Select a user first</option>';
+            document.getElementById('adminTransferEmail').value = recipient?.email || '';
+        }
+
+        function updateAdminTransferTypeHint() {
+            const transferType = document.getElementById('adminTransferType').value;
+            const bankName = document.getElementById('adminTransferBank').value.trim();
+            const hint = document.getElementById('adminTransferTypeHint');
+            if (!hint) return;
+            const labels = { abu: 'ABU to ABU', other_bank: 'Other bank to ABU', international: 'International to ABU' };
+            hint.textContent = bankName ? `${labels[transferType]} receipt will be created for the recipient.` : 'Enter the sending bank name to see the receipt type.';
+            hint.style.color = transferType === 'abu' ? '#166534' : '#64748b';
+            document.querySelectorAll('.international-transfer-field').forEach(field => field.style.display = transferType === 'international' ? '' : 'none');
+        }
+
+        document.getElementById('adminTransferType')?.addEventListener('change', updateAdminTransferTypeHint);
         document.getElementById('adminTransferBank')?.addEventListener('input', updateAdminTransferTypeHint);
+        document.getElementById('adminTransferRecipient')?.addEventListener('change', syncRecipientAccounts);
         document.getElementById('adminTransferForm')?.addEventListener('submit', async (event) => {
             event.preventDefault();
             const form = event.target;
             const submit = form.querySelector('button[type="submit"]');
             const payload = {
                 senderName: document.getElementById('adminTransferSender').value.trim(),
+                transferType: document.getElementById('adminTransferType').value,
                 bankName: document.getElementById('adminTransferBank').value.trim(),
-                recipientName: document.getElementById('adminTransferRecipient').value.trim(),
-                accountNumber: document.getElementById('adminTransferIdentifier').value.trim(),
+                recipientId: document.getElementById('adminTransferRecipient').value,
+                accountId: document.getElementById('adminTransferAccount').value,
+                recipientName: adminTransferRecipients.find(item => item.id === document.getElementById('adminTransferRecipient').value)?.name || '',
+                accountNumber: adminTransferRecipients.find(item => item.id === document.getElementById('adminTransferRecipient').value)?.accounts.find(item => item.id === document.getElementById('adminTransferAccount').value)?.accountNumber || '',
                 amount: Number(document.getElementById('adminTransferAmount').value),
                 recipientEmail: document.getElementById('adminTransferEmail').value.trim(),
                 recipientPhone: document.getElementById('adminTransferPhone').value.trim(),
+                country: document.getElementById('adminTransferCountry').value.trim(),
+                swift: document.getElementById('adminTransferSwift').value.trim(),
                 description: document.getElementById('adminTransferDescription').value.trim()
             };
             if (!confirm(`Send ${formatCurrency(payload.amount)} to ${payload.recipientName}?`)) return;
@@ -395,6 +442,8 @@
                 if (submit) { submit.disabled = false; submit.innerHTML = '<i class="fas fa-paper-plane"></i> Send funds'; }
             }
         });
+
+        loadTransferRecipients();
 
         async function viewUserDetails(userId) {
             try {
