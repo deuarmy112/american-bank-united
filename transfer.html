@@ -84,6 +84,9 @@
             box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
         }
         .international-receipt {
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
             font-family: Arial, sans-serif;
             color: #172033;
             background: #fff;
@@ -93,7 +96,7 @@
             border-bottom: 1px solid #cbd5e1;
             padding-bottom: 14px;
         }
-        .international-receipt .receipt-brand img { width: 155px; height: auto; }
+        .international-receipt .receipt-brand img { width: 112px; max-width: 42%; height: auto; }
         .international-receipt .receipt-section-title {
             color: #0b2c5f;
             border-bottom: 1px solid #334155;
@@ -125,20 +128,26 @@
             line-height: 1.45;
         }
         .compact-abu-receipt { font-family: Arial, sans-serif; color: #172033; background: #fff; border-top: 5px solid #0b2c5f; }
-        .compact-abu-receipt .receipt-brand { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; }
-        .compact-abu-receipt .receipt-brand img { width: 128px; height: auto; }
+        .compact-abu-receipt { width: 100%; min-width: 0; box-sizing: border-box; }
+        .compact-abu-receipt .receipt-brand { display: flex; align-items: center; gap: 10px; padding-bottom: 16px; min-width: 0; }
+        .compact-abu-receipt .receipt-brand img { width: 104px; max-width: 42%; height: auto; flex: 0 1 auto; }
         .compact-abu-receipt .receipt-success { color: #0b2c5f; font-weight: 700; font-size: 1.35rem; line-height: 1.25; margin-top: 0.5rem; }
         .compact-abu-receipt .receipt-amount { color: #0b2c5f; font-size: 2.25rem; line-height: 1.15; font-weight: 800; letter-spacing: 0.04em; }
         .compact-abu-receipt .receipt-dashed { border-top: 1px dashed #cbd5e1; }
         .compact-abu-receipt .receipt-section-title { color: #0b2c5f; border-bottom: 1px solid #334155; padding-bottom: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-        .compact-abu-receipt .receipt-row { display: flex; justify-content: space-between; gap: 18px; padding: 5px 0; font-size: 0.75rem; }
+        .compact-abu-receipt .receipt-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 5px 0; font-size: 0.75rem; }
         .compact-abu-receipt .receipt-row > span:first-child { color: #64748b; }
         .compact-abu-receipt .receipt-row > span:last-child, .compact-abu-receipt .receipt-row strong { text-align: right; overflow-wrap: anywhere; }
         .compact-abu-receipt .receipt-disclaimer { border-top: 1px solid #cbd5e1; color: #64748b; font-size: 0.65rem; line-height: 1.45; }
         @media (max-width: 640px) {
+            .receipt-modal { max-width: calc(100vw - 16px) !important; }
+            .receipt-paper { margin: 8px !important; min-width: 0; overflow-wrap: anywhere; }
             .international-receipt .receipt-row { align-items: flex-start; flex-direction: column; gap: 2px; }
             .international-receipt .receipt-row > span:last-child,
             .international-receipt .receipt-row strong { text-align: left; }
+            .compact-abu-receipt .receipt-row { flex-direction: column; gap: 2px; }
+            .compact-abu-receipt .receipt-row > span:last-child,
+            .compact-abu-receipt .receipt-row strong { text-align: left; max-width: 100%; }
         }
     </style>
 </head>
@@ -830,7 +839,7 @@
             };
 
             try {
-                await apiClient.post('/transactions/transfer', {
+                const transferResponse = await apiClient.post('/transactions/transfer', {
                     fromAccountId: fromAccount,
                     toAccountId: destinationAccountId,
                     toAccountNumber: currentAbuMode === 'myAccounts' ? '' : accountNumber,
@@ -838,6 +847,11 @@
                     description: currentAbuMode === 'myAccounts' ? 'Transfer between ABU accounts' : 'Transfer to ABU account',
                     receiptData
                 });
+                if (transferResponse.status === 'pending') {
+                    showAlert(transferResponse.message || 'Transfer submitted for admin approval.', 'info');
+                    document.getElementById('internalAmount').value = '';
+                    return;
+                }
             } catch (error) {
                 showAlert(error.message || 'Transfer failed. No funds were deducted.', 'error');
                 return;
@@ -1131,21 +1145,21 @@
                         .receipt-footer { text-align: center; margin-top: 20px; color: #94a3b8; font-size: 12px; }
                         .international-receipt { border-top: 5px solid #0b2c5f; max-width: 760px; margin: 0 auto; padding: 24px; }
                         .receipt-brand { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; border-bottom: 1px solid #cbd5e1; padding-bottom: 14px; }
-                        .receipt-brand img { width: 155px; height: auto; }
+                        .receipt-brand img { width: 112px; max-width: 42%; height: auto; }
                         .receipt-section-title { color: #0b2c5f; border-bottom: 1px solid #334155; padding-bottom: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
-                        .receipt-row { display: flex; justify-content: space-between; gap: 18px; padding: 5px 0; font-size: 12px; }
+                        .receipt-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 5px 0; font-size: 12px; }
                         .receipt-row > span:first-child { color: #475569; }
                         .receipt-row > span:last-child, .receipt-row strong { text-align: right; overflow-wrap: anywhere; }
                         .receipt-total { background: #eef3f8; border-left: 4px solid #c8102e; padding: 10px 12px; margin-top: 8px; }
                         .receipt-disclaimer { border-top: 1px solid #cbd5e1; color: #64748b; font-size: 10px; line-height: 1.45; margin-top: 20px; padding-top: 12px; }
                         .receipt-block { margin-top: 18px; }
                         .compact-abu-receipt { border-top: 5px solid #0b2c5f; max-width: 760px; margin: 0 auto; padding: 24px; }
-                        .compact-abu-receipt img { width: 128px; height: auto; }
+                        .compact-abu-receipt img { width: 104px; max-width: 42%; height: auto; }
                         .compact-abu-receipt .receipt-success { color: #0b2c5f; font-weight: 700; font-size: 22px; line-height: 1.25; margin-top: 8px; }
                         .compact-abu-receipt .receipt-amount { color: #0b2c5f; font-size: 36px; line-height: 1.15; font-weight: 800; letter-spacing: 0.04em; }
                         .compact-abu-receipt .receipt-dashed { border-top: 1px dashed #cbd5e1; }
                         .compact-abu-receipt .receipt-section-title { color: #0b2c5f; border-bottom: 1px solid #334155; padding-bottom: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
-                        .compact-abu-receipt .receipt-row { display: flex; justify-content: space-between; gap: 18px; padding: 5px 0; font-size: 12px; }
+                        .compact-abu-receipt .receipt-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 5px 0; font-size: 12px; }
                         .compact-abu-receipt .receipt-row > span:first-child { color: #64748b; }
                         .compact-abu-receipt .receipt-row > span:last-child, .compact-abu-receipt .receipt-row strong { text-align: right; overflow-wrap: anywhere; }
                         .compact-abu-receipt .receipt-disclaimer { border-top: 1px solid #cbd5e1; color: #64748b; font-size: 10px; line-height: 1.45; margin-top: 20px; padding-top: 12px; }

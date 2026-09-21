@@ -9,24 +9,37 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/opay.css">
     <style>
-        .compact-abu-receipt { font-family: Arial, sans-serif; color: #172033; background: #fff; border-top: 5px solid #0b2c5f; }
+        .receipt-paper { min-width: 0; overflow-wrap: anywhere; }
+        .compact-abu-receipt { width: 100%; min-width: 0; box-sizing: border-box; font-family: Arial, sans-serif; color: #172033; background: #fff; border-top: 5px solid #0b2c5f; }
+        .compact-abu-receipt .receipt-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .compact-abu-receipt .receipt-brand img { width: 104px; max-width: 42%; height: auto; flex: 0 1 auto; }
         .compact-abu-receipt .receipt-amount { color: #0b2c5f; font-size: 2.25rem; line-height: 1.15; font-weight: 800; letter-spacing: 0.04em; }
         .compact-abu-receipt .receipt-success { color: #0b2c5f; font-weight: 700; font-size: 1.35rem; line-height: 1.25; margin-top: 0.5rem; }
         .compact-abu-receipt .receipt-dashed { border-top: 1px dashed #cbd5e1; }
         .compact-abu-receipt .receipt-section-title { color: #0b2c5f; border-bottom: 1px solid #334155; padding-bottom: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-        .compact-abu-receipt .receipt-row { display: flex; justify-content: space-between; gap: 18px; padding: 5px 0; font-size: 0.75rem; }
+        .compact-abu-receipt .receipt-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 5px 0; font-size: 0.75rem; }
         .compact-abu-receipt .receipt-row > span:first-child { color: #64748b; }
         .compact-abu-receipt .receipt-row > span:last-child, .compact-abu-receipt .receipt-row strong { text-align: right; overflow-wrap: anywhere; }
         .compact-abu-receipt .receipt-disclaimer { border-top: 1px solid #cbd5e1; color: #64748b; font-size: 0.65rem; line-height: 1.45; }
-        .international-receipt { font-family: Arial, sans-serif; color: #172033; background: #fff; border-top: 5px solid #0b2c5f; }
+        .international-receipt { width: 100%; min-width: 0; box-sizing: border-box; font-family: Arial, sans-serif; color: #172033; background: #fff; border-top: 5px solid #0b2c5f; }
         .international-receipt .receipt-brand { border-bottom: 1px solid #cbd5e1; padding-bottom: 14px; }
-        .international-receipt .receipt-brand img { width: 155px; height: auto; }
+        .international-receipt .receipt-brand img { width: 112px; max-width: 42%; height: auto; }
         .international-receipt .receipt-section-title { color: #0b2c5f; border-bottom: 1px solid #334155; padding-bottom: 4px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; }
-        .international-receipt .receipt-row { display: flex; justify-content: space-between; gap: 18px; padding: 5px 0; font-size: 0.75rem; }
+        .international-receipt .receipt-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 5px 0; font-size: 0.75rem; }
         .international-receipt .receipt-row > span:first-child { color: #475569; }
         .international-receipt .receipt-row > span:last-child, .international-receipt .receipt-row strong { text-align: right; overflow-wrap: anywhere; }
         .international-receipt .receipt-total { background: #eef3f8; border-left: 4px solid #c8102e; padding: 10px 12px; }
         .international-receipt .receipt-disclaimer { border-top: 1px solid #cbd5e1; color: #64748b; font-size: 0.65rem; line-height: 1.45; }
+        @media (max-width: 640px) {
+            .receipt-modal { max-width: calc(100vw - 16px) !important; }
+            .receipt-paper { margin: 8px !important; }
+            .compact-abu-receipt .receipt-row,
+            .international-receipt .receipt-row { flex-direction: column; gap: 2px; }
+            .compact-abu-receipt .receipt-row > span:last-child,
+            .compact-abu-receipt .receipt-row strong,
+            .international-receipt .receipt-row > span:last-child,
+            .international-receipt .receipt-row strong { text-align: left; max-width: 100%; }
+        }
     </style>
     <script>
         if (!localStorage.getItem('authToken')) {

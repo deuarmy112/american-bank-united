@@ -45,8 +45,9 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <button aria-label="Open support chat" title="Support chat" onclick="openCustomerServiceModal()" class="p-2 rounded-full hover:bg-slate-100">
+                    <button aria-label="Open support chat" title="Support chat" onclick="openCustomerServiceModal()" class="p-2 rounded-full hover:bg-slate-100 relative">
                         <i class="fas fa-headphones text-slate-700"></i>
+                        <span id="userChatBadge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full min-w-4 h-4 px-1 flex items-center justify-center" aria-hidden="true"></span>
                     </button>
                     <button aria-label="Notifications" title="Notifications" onclick="location.href='notifications.html'" class="p-2 rounded-full hover:bg-slate-100 relative">
                         <i class="fas fa-bell text-slate-700"></i>
@@ -216,6 +217,7 @@
         <script src="js/dashboard-api.js?v=20260914.2"></script>
         <script src="js/features.js?v=20260914.2"></script>
         <script src="js/chat.js?v=20260917.2"></script>
+        <script src="js/unread-badges.js?v=20260921.1"></script>
         <script src="js/ui.js?v=20260914.2"></script>
         <script src="js/balance-slides.js?v=20260914.2"></script>
         <script>

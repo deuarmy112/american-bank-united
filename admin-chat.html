@@ -39,7 +39,7 @@
     <main class="container main-content"><div class="dashboard-header"><h1><i class="fas fa-comments"></i> Customer Chat</h1><p class="subtitle">Respond to customer support conversations</p></div>
         <div class="chat-layout"><section class="chat-list"><div style="padding:14px;border-bottom:1px solid #eef0f3;display:flex;gap:8px"><input id="userSearch" class="form-control" placeholder="Search customers..." aria-label="Search customers"><select id="userStatus" class="form-control" aria-label="Filter customers"><option value="active">Active</option><option value="">All statuses</option><option value="inactive">Inactive</option><option value="suspended">Suspended</option></select></div><div id="conversationList"><p style="padding:20px;color:#6b7280">Loading customers...</p></div></section><section class="chat-window"><div id="chatHeader" style="padding:16px;border-bottom:1px solid #eef0f3;color:#6b7280">Select a customer to begin chat</div><div id="adminChatMessages" class="chat-messages"><p style="text-align:center;color:#9ca3af">Choose a customer to view messages.</p></div><form id="adminChatForm" style="display:flex;gap:10px;padding:16px;border-top:1px solid #eef0f3"><input id="adminChatInput" class="form-control" maxlength="2000" placeholder="Reply to customer..." required disabled><button class="btn btn-primary" type="submit" disabled id="adminChatSend"><i class="fas fa-paper-plane"></i> Send</button></form></section></div>
     </main>
-    <script src="js/utils.js"></script><script src="js/admin-api.js"></script>
+    <script src="js/utils.js"></script><script src="js/admin-api.js"></script><script src="js/unread-badges.js"></script>
     <script>
         let selectedConversation = null;
         let selectedUser = null;

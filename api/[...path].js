@@ -169,6 +169,16 @@ async function listDocs(collection, field, value, orderField = 'created_at', lim
         .sort((left, right) => String(right[orderField] || '').localeCompare(String(left[orderField] || '')));
 }
 
+async function getApprovalPolicy() {
+    const settings = await getDoc('settings', 'approval-thresholds');
+    const values = settings?.values || {};
+    return {
+        transferThreshold: Number(values.transfer_threshold || 5000),
+        withdrawalThreshold: Number(values.withdrawal_threshold || 1000),
+        requireAll: values.require_all_approvals === true || values.require_all_approvals === 'true'
+    };
+}
+
 async function save(collection, data, id = randomUUID()) {
     const record = { ...data, id, created_at: data.created_at || now(), updated_at: now() };
     await getDb().collection(collection).doc(id).set(record, { merge: true });
@@ -300,6 +310,22 @@ async function transactionRoutes(method, parts, user, body) {
     const amount = Number(body.amount);
     if (!body.fromAccountId || !body.toAccountId || amount <= 0) return { status: 400, body: { error: 'Transfer details are invalid' } };
     if (body.fromAccountId === body.toAccountId) return { status: 400, body: { error: 'Cannot transfer to the same account' } };
+    const approvalPolicy = await getApprovalPolicy();
+    if (approvalPolicy.requireAll || amount > approvalPolicy.transferThreshold) {
+        const pending = await save('transactions', {
+            account_id: body.fromAccountId,
+            type: 'transfer',
+            amount: -amount,
+            description: body.description || 'Transfer awaiting admin approval',
+            related_account_id: body.toAccountId,
+            approval_status: 'pending',
+            status: 'pending',
+            operation_type: 'internal_transfer',
+            operation_data: { fromAccountId: body.fromAccountId, toAccountId: body.toAccountId, amount, description: body.description || 'Transfer' },
+            user_id: user.userId
+        });
+        return { status: 202, body: { message: 'Transfer submitted for admin approval', status: 'pending', transactionId: pending.id } };
+    }
     const db = getDb();
     const result = await db.runTransaction(async transaction => {
         const fromRef = db.collection('accounts').doc(body.fromAccountId);
@@ -731,20 +757,40 @@ async function adminRoutes(method, parts, user, body, query) {
         const transferId = randomUUID();
         const transactionId = randomUUID();
         const timestamp = now();
+        const receiptId = `RCPT-${Date.now()}-${transactionId.slice(0, 8).toUpperCase()}`;
+        const receiptData = {
+            type: transferType === 'international' ? 'International Transfer' : isInternal ? 'ABU Account Transfer' : 'External Transfer',
+            amount,
+            amountSent: amount,
+            senderName,
+            senderBankName: bankName,
+            senderAccountNumber: 'Admin funding account',
+            senderEmail: '',
+            senderPhone: '',
+            recipientName,
+            to: recipientName,
+            recipientBank: 'American Bank United',
+            bank: 'American Bank United',
+            recipientAccountNumber: recipientIdentifier,
+            accountNumber: recipientIdentifier,
+            email: recipientEmail,
+            phone: recipientPhone,
+            swift: body.swift || '',
+            country: body.country || '',
+            reference: receiptId,
+            date: new Date(timestamp).toLocaleString('en-US'),
+            description,
+            fee: '0.00'
+        };
         const result = await getDb().runTransaction(async transaction => {
             const fresh = await transaction.get(accountRef);
             if (!fresh.exists || fresh.data().status !== 'active') throw new Error('The recipient account is not active');
             const newBalance = Number((Number(fresh.data().balance || 0) + amount).toFixed(2));
             transaction.update(accountRef, { balance: newBalance, updated_at: timestamp });
-            const receiptId = `RCPT-${Date.now()}-${transactionId.slice(0, 8).toUpperCase()}`;
             transaction.set(getDb().collection('transactions').doc(transactionId), {
                 id: transactionId, receipt_id: receiptId, account_id: account.id, type: 'deposit', amount, balance_after: newBalance,
                 description, bank_name: bankName, source_name: senderName, transfer_id: transferId,
-                transfer_type: transferType === 'international' ? 'international_transfer' : isInternal ? 'internal_admin_transfer' : 'other_bank_funds', receipt_data: {
-                    type: transferType === 'international' ? 'International Transfer' : isInternal ? 'ABU Account Transfer' : 'External Transfer',
-                    amount, amountSent: amount, senderName, recipientName, to: recipientName, recipientBank: bankName, bank: bankName, recipientAccountNumber: recipientIdentifier, accountNumber: recipientIdentifier,
-                    senderAccountNumber: senderName, reference: receiptId, date: new Date(timestamp).toLocaleString('en-US'), description, fee: '0.00', email: recipientEmail, phone: recipientPhone, swift: body.swift || '', country: body.country || ''
-                }, status: 'completed', approval_status: 'approved', created_at: timestamp
+                transfer_type: transferType === 'international' ? 'international_transfer' : isInternal ? 'internal_admin_transfer' : 'other_bank_funds', receipt_data: receiptData, status: 'completed', approval_status: 'approved', created_at: timestamp
             });
             transaction.set(getDb().collection('admin_transfers').doc(transferId), {
                 id: transferId, user_id: recipient.id, account_id: account.id, amount, bank_name: bankName,
@@ -754,7 +800,7 @@ async function adminRoutes(method, parts, user, body, query) {
             if (!isInternal) transaction.set(getDb().collection('external_transfers').doc(transferId), {
                 id: transferId, receipt_id: receiptId, user_id: recipient.id, account_id: account.id, direction: 'incoming', amount,
                 transfer_type: transferType === 'international' ? 'international_transfer' : 'other_bank_funds', bank_name: bankName, sender_name: senderName, recipient_name: recipientName, recipient_email: recipientEmail || null, recipient_phone: recipientPhone || null,
-                recipient_identifier: recipientIdentifier, description, status: 'completed', created_at: timestamp
+                recipient_identifier: recipientIdentifier, receipt_data: receiptData, description, status: 'completed', created_at: timestamp
             });
             return { newBalance };
         });
@@ -865,6 +911,26 @@ async function adminRoutes(method, parts, user, body, query) {
     if (method === 'POST' && parts[0] === 'transactions' && parts[1] && parts[2] === 'approve') {
         const transaction = await getDoc('transactions', parts[1]);
         if (!transaction || transaction.approval_status !== 'pending') return { status: 404, body: { error: 'Pending transaction not found' } };
+        if (transaction.operation_type === 'internal_transfer') {
+            const operation = transaction.operation_data || {};
+            const amount = Number(operation.amount);
+            const db = getDb();
+            const result = await db.runTransaction(async firestoreTransaction => {
+                const fromRef = db.collection('accounts').doc(operation.fromAccountId);
+                const toRef = db.collection('accounts').doc(operation.toAccountId);
+                const fromSnap = await firestoreTransaction.get(fromRef);
+                const toSnap = await firestoreTransaction.get(toRef);
+                if (!fromSnap.exists || !toSnap.exists || fromSnap.data().user_id !== transaction.user_id || !isTransferableAccount(fromSnap.data()) || !isTransferableAccount(toSnap.data())) throw new Error('Transfer accounts are no longer available');
+                if (Number(fromSnap.data().balance || 0) < amount) throw new Error('Insufficient funds');
+                const fromBalance = Number((Number(fromSnap.data().balance || 0) - amount).toFixed(2));
+                const toBalance = Number((Number(toSnap.data().balance || 0) + amount).toFixed(2));
+                firestoreTransaction.update(fromRef, { balance: fromBalance, updated_at: now() });
+                firestoreTransaction.update(toRef, { balance: toBalance, updated_at: now() });
+                firestoreTransaction.set(db.collection('transactions').doc(parts[1]), { approval_status: 'approved', status: 'completed', approved_by: user.userId, approved_at: now(), balance_after: fromBalance, updated_at: now() }, { merge: true });
+                return fromBalance;
+            });
+            return { body: { message: 'Transfer approved successfully', newBalance: result } };
+        }
         await getDb().collection('transactions').doc(parts[1]).set({ approval_status: 'approved', approved_by: user.userId, approved_at: now(), updated_at: now() }, { merge: true });
         return { body: { message: 'Transaction approved successfully' } };
     }
