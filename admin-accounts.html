@@ -13,6 +13,28 @@
         .modal-content .btn { min-width: 120px; }
         .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
         .approval-note { padding: 12px 14px; border-radius: 8px; background: #fff7ed; color: #9a3412; font-size: 13px; margin: 12px 0 16px; }
+        .main-content { min-width: 0; }
+        .account-approval-card, .account-card { overflow: hidden; }
+        .account-approval-card > div, .account-card > div { min-width: 0; }
+        .account-approval-card p, .account-card p { overflow-wrap: anywhere; }
+        @media (max-width: 760px) {
+            body { overflow-x: hidden; }
+            .navbar { overflow-x: auto; }
+            .navbar-container { min-width: max-content; }
+            .navbar-menu { flex-wrap: nowrap; white-space: nowrap; }
+            .main-content { padding-left: 12px; padding-right: 12px; }
+            .dashboard-header h1 { font-size: 1.45rem; line-height: 1.2; }
+            .dashboard-header .subtitle { line-height: 1.4; }
+            .section { overflow: hidden; }
+            .tab-btn { padding: 10px 12px !important; font-size: 14px !important; }
+            .account-approval-card > div, .account-card > div { display: block !important; }
+            .account-approval-card > div > div:last-child, .account-card > div > div:last-child { display: grid !important; grid-template-columns: 1fr; gap: 8px !important; margin-top: 16px; }
+            .account-approval-card .btn, .account-card .btn { width: 100%; min-width: 0; }
+            .modal { padding: 12px; }
+            .modal-content { width: 100%; max-width: none; max-height: 90vh; overflow-y: auto; }
+            .modal-actions { flex-direction: column-reverse; }
+            .modal-actions .btn, .modal-content > form > .btn { width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -26,6 +48,7 @@
                 <a href="admin-dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
                 <a href="admin-users.html" class="nav-link"><i class="fas fa-users"></i> Users</a>
                 <a href="admin-accounts.html" class="nav-link active"><i class="fas fa-wallet"></i> Accounts</a>
+                <a href="admin-transfer.html" class="nav-link"><i class="fas fa-paper-plane"></i> Transfer</a>
                 <a href="admin-approvals.html" class="nav-link"><i class="fas fa-check-circle"></i> Approvals</a>
                 <a href="admin-transactions.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Transactions</a>
                 <a href="admin-chat.html" class="nav-link"><i class="fas fa-comments"></i> Chat</a>

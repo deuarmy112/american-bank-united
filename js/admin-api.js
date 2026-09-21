@@ -199,6 +199,14 @@ const adminAPI = {
         return await response.json();
     },
 
+    async notifyTransaction(transactionId, channels) {
+        return adminRequest(`${API_URL}/admin/transactions/${transactionId}/notify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channels })
+        });
+    },
+
     // Get approval settings
     async getApprovalSettings() {
         const response = await fetch(`${API_URL}/admin/settings/approval-thresholds`, {

@@ -461,6 +461,7 @@
     <script src="js/auth.js?v=20260121.2"></script>
     <script src="js/storage.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/countries.js"></script>
 
     <script>
         // Country currency mapping
@@ -486,6 +487,9 @@
             'Sweden': { code: 'SEK', symbol: 'kr', rate: 10.65 },
             'Norway': { code: 'NOK', symbol: 'kr', rate: 10.52 }
         };
+        window.ABU_COUNTRIES.forEach(country => {
+            if (!countryCurrencies[country]) countryCurrencies[country] = { code: 'USD', symbol: '$', rate: 1 };
+        });
 
         let currentUser = null;
         let userAccounts = [];
@@ -582,7 +586,7 @@
 
         function populateCountries() {
             const countrySelect = document.getElementById('intlCountry');
-            const countries = Object.keys(countryCurrencies).sort();
+            const countries = window.ABU_COUNTRIES.slice().sort();
             const options = countries.map(country => `<option value="${country}">${country}</option>`).join('');
             countrySelect.innerHTML = '<option value="">Select destination country</option>' + options;
 

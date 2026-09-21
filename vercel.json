@@ -83,6 +83,10 @@
       "destination": "/api/[...path]?path=admin/transactions/:action"
     },
     {
+      "source": "/api/admin/audit-log",
+      "destination": "/api/[...path]?path=admin/audit-log"
+    },
+    {
       "source": "/api/admin/settings/:setting",
       "destination": "/api/[...path]?path=admin/settings/:setting"
     },

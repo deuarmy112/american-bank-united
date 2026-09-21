@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .receipt-preview { background:#f8fafc; border:1px solid #dbe3ec; border-radius:10px; padding:16px; margin-top:12px; }
+        .receipt-preview .receipt-total { font-size:1.5rem; font-weight:800; color:#0b2c5f; }
+        .action-row { display:flex; gap:6px; flex-wrap:wrap; }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
@@ -19,6 +24,7 @@
                 <a href="admin-dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
                 <a href="admin-users.html" class="nav-link"><i class="fas fa-users"></i> Users</a>
                 <a href="admin-accounts.html" class="nav-link"><i class="fas fa-wallet"></i> Accounts</a>
+                <a href="admin-transfer.html" class="nav-link"><i class="fas fa-paper-plane"></i> Transfer</a>
                 <a href="admin-approvals.html" class="nav-link"><i class="fas fa-check-circle"></i> Approvals</a>
                 <a href="admin-transactions.html" class="nav-link active"><i class="fas fa-exchange-alt"></i> Transactions</a>
                 <a href="admin-chat.html" class="nav-link"><i class="fas fa-comments"></i> Chat</a>
@@ -92,15 +98,37 @@
                             <th>Amount</th>
                             <th>Description</th>
                             <th>Balance After</th>
+                            <th>Controls</th>
                         </tr>
                     </thead>
                     <tbody id="transactionsTable">
                         <tr>
-                            <td colspan="7" style="text-align: center; padding: 20px;">Loading...</td>
+                            <td colspan="8" style="text-align: center; padding: 20px;">Loading...</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+
+    <div id="receiptModal" class="modal">
+        <div class="modal-content" style="max-width:520px;">
+            <span class="close" onclick="closeReceiptModal()">&times;</span>
+            <h2><i class="fas fa-receipt"></i> Transaction Receipt</h2>
+            <div id="receiptPreview" class="receipt-preview"></div>
+            <button type="button" onclick="closeReceiptModal()" class="btn btn-secondary">Close</button>
+        </div>
+    </div>
+
+    <div id="notifyModal" class="modal">
+        <div class="modal-content" style="max-width:480px;">
+            <span class="close" onclick="closeNotifyModal()">&times;</span>
+            <h2><i class="fas fa-bell"></i> Notify Recipient</h2>
+            <p style="color:#64748b;">Choose how to resend this transaction notification.</p>
+            <input type="hidden" id="notifyTransactionId">
+            <label style="display:block;margin:14px 0;"><input type="checkbox" id="notifyEmail" checked> Email notification</label>
+            <label style="display:block;margin:14px 0;"><input type="checkbox" id="notifySms"> SMS notification</label>
+            <button type="button" onclick="sendTransactionNotification()" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Send notification</button>
         </div>
     </div>
 
@@ -138,7 +166,7 @@
                 
                 const tbody = document.getElementById('transactionsTable');
                 if (data.transactions.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No transactions found</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No transactions found</td></tr>';
                     return;
                 }
 
@@ -151,6 +179,7 @@
                         <td><strong>${formatCurrency(txn.amount)}</strong></td>
                         <td>${txn.description || '-'}</td>
                         <td>${formatCurrency(txn.balance_after)}</td>
+                        <td><div class="action-row"><button class="btn btn-sm btn-secondary" onclick='showReceipt(${JSON.stringify(txn).replace(/'/g, "&apos;")})'><i class="fas fa-receipt"></i> Receipt</button><button class="btn btn-sm btn-primary" onclick="openNotifyModal('${txn.id}')"><i class="fas fa-bell"></i> Notify</button></div></td>
                     </tr>
                 `).join('');
 
@@ -185,6 +214,24 @@
             document.getElementById('maxAmount').value = '';
             currentFilters = {};
             loadTransactions();
+        }
+
+        function showReceipt(transaction) {
+            const receipt = transaction.receipt_data || {};
+            document.getElementById('receiptPreview').innerHTML = `<div style="display:flex;justify-content:space-between;gap:12px;"><strong>American Bank United</strong><span>${receipt.type || transaction.transfer_type || 'Transaction'}</span></div><hr style="margin:12px 0;border:0;border-top:1px solid #dbe3ec;"><div class="receipt-total">${formatCurrency(Math.abs(Number(receipt.amount ?? transaction.amount) || 0))}</div><p><strong>Receipt:</strong> ${receipt.reference || transaction.receipt_id || transaction.id}</p><p><strong>Recipient:</strong> ${receipt.recipientName || `${transaction.first_name || ''} ${transaction.last_name || ''}`}</p><p><strong>Bank:</strong> ${receipt.recipientBank || transaction.bank_name || 'American Bank United'}</p><p><strong>Account:</strong> ${receipt.recipientAccountNumber || transaction.account_number || '—'}</p><p><strong>Description:</strong> ${receipt.description || transaction.description || 'Account activity'}</p><p><strong>Date:</strong> ${formatDate(receipt.date || transaction.created_at)}</p>`;
+            document.getElementById('receiptModal').style.display = 'block';
+        }
+
+        function closeReceiptModal() { document.getElementById('receiptModal').style.display = 'none'; }
+        function openNotifyModal(transactionId) { document.getElementById('notifyTransactionId').value = transactionId; document.getElementById('notifyModal').style.display = 'block'; }
+        function closeNotifyModal() { document.getElementById('notifyModal').style.display = 'none'; }
+        async function sendTransactionNotification() {
+            const channels = [];
+            if (document.getElementById('notifyEmail').checked) channels.push('email');
+            if (document.getElementById('notifySms').checked) channels.push('sms');
+            if (!channels.length) { showAlert('Select at least one notification channel', 'error'); return; }
+            try { const result = await adminAPI.notifyTransaction(document.getElementById('notifyTransactionId').value, channels); showAlert(`Notification processed: email ${result.notification.email}, SMS ${result.notification.sms}`, 'success'); closeNotifyModal(); }
+            catch (error) { showAlert(error.message || 'Failed to send notification', 'error'); }
         }
 
         // Load transactions on page load

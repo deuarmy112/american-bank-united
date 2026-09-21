@@ -876,6 +876,26 @@ async function adminRoutes(method, parts, user, body, query) {
         return { body: { message: 'Transaction rejected successfully' } };
     }
 
+    if (method === 'POST' && parts[0] === 'transactions' && parts[1] && parts[2] === 'notify') {
+        const transaction = await getDoc('transactions', parts[1]);
+        if (!transaction) return { status: 404, body: { error: 'Transaction not found' } };
+        const account = await getDoc('accounts', transaction.account_id);
+        const customer = account ? await getDoc('users', account.user_id) : null;
+        if (!customer) return { status: 404, body: { error: 'Transaction recipient not found' } };
+        const channels = Array.isArray(body.channels) ? body.channels : ['email'];
+        const notification = await sendTransferNotifications({
+            email: channels.includes('email') ? (body.email || customer.email) : '',
+            phone: channels.includes('sms') ? (body.phone || customer.phone) : '',
+            recipientName: `${customer.first_name || ''} ${customer.last_name || ''}`.trim(),
+            amount: transaction.amount,
+            transferType: transaction.transfer_type || 'admin transaction',
+            bankName: transaction.bank_name || 'American Bank United',
+            accountNumber: account.account_number,
+            description: transaction.description || 'Admin transaction'
+        });
+        return { body: { message: 'Notification request processed', notification } };
+    }
+
     if (method === 'GET' && parts[0] === 'settings' && parts[1] === 'approval-thresholds') {
         const settings = await getDoc('settings', 'approval-thresholds');
         return { body: { settings: Object.entries(settings?.values || { withdrawal_threshold: '1000', transfer_threshold: '5000', require_all_approvals: 'false' }).map(([setting_name, setting_value]) => ({ setting_name, setting_value })) } };
@@ -1077,14 +1097,21 @@ async function adminRoutes(method, parts, user, body, query) {
         if (balanceAfter < 0) return { status: 400, body: { error: 'Adjustment would make the balance negative' } };
 
         const timestamp = now();
+        const accountOwner = await userProfile(account.user_id);
+        const transactionId = randomUUID();
+        const receiptId = `RCPT-${Date.now()}-${transactionId.slice(0, 8).toUpperCase()}`;
         await getDb().collection('accounts').doc(accountId).set({ balance: balanceAfter, updated_at: timestamp }, { merge: true });
         await save('transactions', {
+            id: transactionId,
             account_id: accountId,
             type: 'deposit',
             amount,
+            receipt_id: receiptId,
             description: 'Deposit',
             balance_after: balanceAfter,
             approval_status: 'approved',
+            transfer_type: 'admin_balance_adjustment',
+            receipt_data: { type: 'ABU Account Transfer', amount, amountSent: amount, senderName: 'American Bank United Admin', recipientName: `${accountOwner?.first_name || ''} ${accountOwner?.last_name || ''}`.trim(), recipientBank: 'American Bank United', recipientAccountNumber: account.account_number, senderAccountNumber: 'Admin adjustment', reference: receiptId, date: new Date(timestamp).toLocaleString('en-US'), description: reason, fee: '0.00' },
             created_at: timestamp
         });
 
@@ -1101,8 +1128,25 @@ async function adminRoutes(method, parts, user, body, query) {
     }
 
     if (method === 'GET' && parts[0] === 'transactions') {
-        const transactions = await getDb().collection('transactions').orderBy('created_at', 'desc').limit(Number(reqQuery(query, 'limit', 50) || 50)).get();
-        return { body: { transactions: transactions.docs.map(doc => clean({ id: doc.id, ...doc.data() })) } };
+        const limit = Number(reqQuery(query, 'limit', 100)) || 100;
+        const snapshot = await getDb().collection('transactions').orderBy('created_at', 'desc').limit(limit).get();
+        const transactions = await Promise.all(snapshot.docs.map(async doc => {
+            const transaction = { id: doc.id, ...doc.data() };
+            const account = await getDoc('accounts', transaction.account_id);
+            const customer = account ? await getDoc('users', account.user_id) : null;
+            return clean({ ...transaction, account_number: account?.account_number || '', account_type: account?.account_type || '', first_name: customer?.first_name || '', last_name: customer?.last_name || '', email: customer?.email || '' });
+        }));
+        return { body: { transactions } };
+    }
+
+    if (method === 'GET' && parts[0] === 'audit-log') {
+        const snapshot = await getDb().collection('admin_transfers').orderBy('created_at', 'desc').limit(Number(reqQuery(query, 'limit', 100) || 100)).get();
+        const actions = await Promise.all(snapshot.docs.map(async doc => {
+            const item = { id: doc.id, ...doc.data() };
+            const admin = await getDoc('users', item.created_by);
+            return clean({ id: item.id, action_type: 'ADMIN_TRANSFER', description: `${item.transfer_type || 'Transfer'} of $${Number(item.amount || 0).toFixed(2)} to ${item.recipient_name || 'user'}`, metadata: item, created_at: item.created_at, first_name: admin?.first_name || 'Admin', last_name: admin?.last_name || '', email: admin?.email || '' });
+        }));
+        return { body: { actions } };
     }
 
     return { status: 404, body: { error: 'Admin route not found' } };
