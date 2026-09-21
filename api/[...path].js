@@ -160,10 +160,11 @@ async function verifyTransferPin(user, pin) {
         await getDb().collection('users').doc(user.userId).set({ transfer_pin_failures: 0, updated_at: now() }, { merge: true });
         return null;
     }
+    const policy = await getApprovalPolicy();
     const failures = Number(profile.transfer_pin_failures || 0) + 1;
-    const locked = failures >= 5;
+    const locked = failures >= policy.maxPinAttempts;
     await getDb().collection('users').doc(user.userId).set({ transfer_pin_failures: failures, transfer_pin_locked: locked, status: locked ? 'suspended' : profile.status, updated_at: now() }, { merge: true });
-    return { status: 403, body: { error: locked ? 'Your account is restricted after 5 incorrect PIN attempts. Contact support.' : `Incorrect transfer PIN. ${5 - failures} attempt(s) remaining.`, attemptsRemaining: Math.max(0, 5 - failures) } };
+    return { status: 403, body: { error: locked ? `Your account is restricted after ${policy.maxPinAttempts} incorrect PIN attempts. Contact support.` : `Incorrect transfer PIN. ${policy.maxPinAttempts - failures} attempt(s) remaining.`, attemptsRemaining: Math.max(0, policy.maxPinAttempts - failures) } };
 }
 
 async function transferPinRoutes(method, parts, user, body) {
@@ -189,6 +190,16 @@ function requireAdmin(user) {
     }
 }
 
+async function restrictedCustomerResponse(user, parts) {
+    if (user.role !== 'customer' || user.userId === GUEST_ID) return null;
+    if (parts[0] === 'chat' || parts[0] === 'notifications') return null;
+    const profile = await userProfile(user.userId);
+    if (profile?.status === 'suspended' || profile?.transfer_pin_locked || profile?.status === 'restricted') {
+        return { status: 403, body: { error: 'Your account is restricted. Contact American Bank United support to appeal. Only an administrator can reactivate your account.', code: 'ACCOUNT_RESTRICTED', support: 'admin-chat.html' } };
+    }
+    return null;
+}
+
 async function getDoc(collection, id) {
     const snapshot = await getDb().collection(collection).doc(id).get();
     return snapshot.exists ? { id: snapshot.id, ...snapshot.data() } : null;
@@ -207,7 +218,8 @@ async function getApprovalPolicy() {
     return {
         transferThreshold: Number(values.transfer_threshold || 5000),
         withdrawalThreshold: Number(values.withdrawal_threshold || 1000),
-        requireAll: values.require_all_approvals === true || values.require_all_approvals === 'true'
+        requireAll: values.require_all_approvals === true || values.require_all_approvals === 'true',
+        maxPinAttempts: Math.max(3, Math.min(10, Number(values.max_pin_attempts || 5)))
     };
 }
 
@@ -258,7 +270,7 @@ async function authLogin(body) {
     const snapshot = await getDb().collection('users').where('email', '==', String(email || '').toLowerCase()).limit(1).get();
     if (snapshot.empty) return { status: 401, body: { error: 'Invalid email or password' } };
     const user = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
-    if (user.status && user.status !== 'active') return { status: 403, body: { error: 'Account is inactive or suspended' } };
+    if (user.status && !['active', 'suspended'].includes(user.status)) return { status: 403, body: { error: 'Account is inactive' } };
     if (!(await bcrypt.compare(password || '', user.password_hash || ''))) return { status: 401, body: { error: 'Invalid email or password' } };
     await getDb().collection('users').doc(user.id).set({ last_login: now() }, { merge: true });
     return { body: { message: 'Login successful', token: makeToken(user), user: { id: user.id, email: user.email, firstName: user.first_name, lastName: user.last_name, role: user.role || 'customer' } } };
@@ -1021,7 +1033,7 @@ async function adminRoutes(method, parts, user, body, query) {
 
     if (method === 'GET' && parts[0] === 'settings' && parts[1] === 'approval-thresholds') {
         const settings = await getDoc('settings', 'approval-thresholds');
-        return { body: { settings: Object.entries(settings?.values || { withdrawal_threshold: '1000', transfer_threshold: '5000', require_all_approvals: 'false' }).map(([setting_name, setting_value]) => ({ setting_name, setting_value })) } };
+        return { body: { settings: Object.entries(settings?.values || { withdrawal_threshold: '1000', transfer_threshold: '5000', require_all_approvals: 'false', max_pin_attempts: '5' }).map(([setting_name, setting_value]) => ({ setting_name, setting_value })) } };
     }
 
     if (method === 'PUT' && parts[0] === 'settings' && parts[1] === 'approval-thresholds') {
@@ -1029,7 +1041,8 @@ async function adminRoutes(method, parts, user, body, query) {
         const values = {
             withdrawal_threshold: String(requestedSettings.withdrawal_threshold || 1000),
             transfer_threshold: String(requestedSettings.transfer_threshold || 5000),
-            require_all_approvals: String(Boolean(requestedSettings.require_all_approvals))
+            require_all_approvals: String(Boolean(requestedSettings.require_all_approvals)),
+            max_pin_attempts: String(Math.max(3, Math.min(10, Number(requestedSettings.max_pin_attempts || 5))))
         };
         await getDb().collection('settings').doc('approval-thresholds').set({ values, updated_at: now(), updated_by: user.userId }, { merge: true });
         return { body: { message: 'Approval settings updated successfully', settings: Object.entries(values).map(([setting_name, setting_value]) => ({ setting_name, setting_value })) } };
@@ -1128,7 +1141,7 @@ async function adminRoutes(method, parts, user, body, query) {
         const user = await getDoc('users', userId);
         if (!user) return { status: 404, body: { error: 'User not found' } };
 
-        await getDb().collection('users').doc(userId).set({ status, updated_at: now(), status_reason: reason || null }, { merge: true });
+        await getDb().collection('users').doc(userId).set({ status, updated_at: now(), status_reason: reason || null, ...(status === 'active' ? { transfer_pin_locked: false, transfer_pin_failures: 0 } : {}) }, { merge: true });
 
         return {
             body: {
@@ -1298,6 +1311,8 @@ async function route(req) {
 
     const user = await authenticate(req);
     await ensureGuest();
+    const restrictedResponse = await restrictedCustomerResponse(user, parts);
+    if (restrictedResponse) return restrictedResponse;
     if (parts[0] === 'accounts') return accountRoutes(method, parts.slice(1), user, body, req.query || {});
     if (parts[0] === 'transfer-pin') return transferPinRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'chat') return chatRoutes(method, parts.slice(1), user, body);

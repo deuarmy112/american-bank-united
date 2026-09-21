@@ -57,6 +57,10 @@
                 </div>
             </div>
 
+            <div id="accountRestrictionNotice" class="hidden mb-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+                <div class="flex items-start gap-3"><i class="fas fa-lock mt-0.5"></i><div><strong>Account restricted</strong><p class="mt-1">Transfers and withdrawals are paused. Contact bank support to appeal. Only an administrator can reactivate your account.</p><button type="button" onclick="openCustomerServiceModal()" class="mt-3 rounded-lg bg-rose-700 px-3 py-2 text-white font-semibold">Contact support</button></div></div>
+            </div>
+
             <!-- Deposit moved to standalone page: deposit.html -->
 
          
@@ -162,6 +166,10 @@
                 // Initialize user name display
                 document.addEventListener('DOMContentLoaded', async function() {
                     await displayUserName();
+                    try {
+                        const profile = await authAPI.getProfile();
+                        if (profile?.status === 'suspended' || profile?.status === 'restricted' || profile?.transfer_pin_locked) document.getElementById('accountRestrictionNotice')?.classList.remove('hidden');
+                    } catch (error) { console.warn('Unable to load account restriction status', error); }
                 });
             </script>
 
