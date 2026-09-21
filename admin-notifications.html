@@ -14,6 +14,9 @@
         .notification-item[data-type="chat"] .notification-icon { background:#fce7f3; color:#be185d; }
         .notification-item[data-type="activity"] .notification-icon { background:#dcfce7; color:#166534; }
         .notification-time { color:#94a3b8; font-size:12px; margin-top:5px; }
+        .navbar { overflow-x: auto; }
+        .navbar-container { min-width: max-content; }
+        .navbar-menu { flex-shrink: 0; }
         @media (max-width:760px) { body { overflow-x:hidden; } .navbar { overflow-x:auto; } .navbar-container { min-width:max-content; } .navbar-menu { flex-wrap:nowrap; white-space:nowrap; } .main-content { padding:12px; } }
     </style>
 </head>
@@ -33,7 +36,7 @@
     <main class="container main-content"><div class="dashboard-header"><h1><i class="fas fa-bell"></i> Admin Notifications</h1><p class="subtitle">Approvals, customer messages, and recent admin activity.</p></div><div id="alert" class="alert" style="display:none;"></div>
         <section class="section"><div class="section-header"><h2>Activity center</h2><button type="button" onclick="loadNotifications()" class="btn btn-secondary"><i class="fas fa-sync"></i> Refresh</button></div><div id="notificationList"><p style="padding:20px;color:#64748b;">Loading notifications...</p></div></section>
     </main>
-    <script src="js/utils.js"></script><script src="js/admin-api.js"></script>
+    <script src="js/utils.js"></script><script src="js/admin-api.js"></script><script src="js/unread-badges.js"></script>
     <script>
         function checkAuth() { const token = localStorage.getItem('adminAuthToken'); const admin = JSON.parse(localStorage.getItem('adminUser') || '{}'); if (!token || !['admin','super_admin'].includes(admin.role)) { location.href = 'admin-login.html'; return false; } document.getElementById('adminName').innerHTML = `<i class="fas fa-user-shield"></i> ${admin.firstName || admin.first_name || 'Admin'}`; return true; }
         function iconFor(type) { return type === 'chat' ? 'fa-comments' : type === 'activity' ? 'fa-money-bill-transfer' : 'fa-check-circle'; }

@@ -149,6 +149,38 @@ async function authenticate(req) {
     }
 }
 
+async function verifyTransferPin(user, pin) {
+    if (user.userId === GUEST_ID) return { status: 401, body: { error: 'Please sign in before making a transfer' } };
+    const profile = await userProfile(user.userId);
+    if (!profile) return { status: 404, body: { error: 'User profile not found' } };
+    if (profile.status === 'suspended' || profile.transfer_pin_locked) return { status: 403, body: { error: 'Your account is restricted after too many incorrect PIN attempts. Contact support.' } };
+    if (!profile.transfer_pin_hash) return { status: 409, body: { error: 'Set your 4-digit transfer PIN before making a transfer', code: 'PIN_NOT_SET' } };
+    const valid = await bcrypt.compare(String(pin || ''), profile.transfer_pin_hash);
+    if (valid) {
+        await getDb().collection('users').doc(user.userId).set({ transfer_pin_failures: 0, updated_at: now() }, { merge: true });
+        return null;
+    }
+    const failures = Number(profile.transfer_pin_failures || 0) + 1;
+    const locked = failures >= 5;
+    await getDb().collection('users').doc(user.userId).set({ transfer_pin_failures: failures, transfer_pin_locked: locked, status: locked ? 'suspended' : profile.status, updated_at: now() }, { merge: true });
+    return { status: 403, body: { error: locked ? 'Your account is restricted after 5 incorrect PIN attempts. Contact support.' : `Incorrect transfer PIN. ${5 - failures} attempt(s) remaining.`, attemptsRemaining: Math.max(0, 5 - failures) } };
+}
+
+async function transferPinRoutes(method, parts, user, body) {
+    if (user.userId === GUEST_ID) return { status: 401, body: { error: 'Please sign in before setting a transfer PIN' } };
+    const profile = await userProfile(user.userId);
+    if (profile?.status === 'suspended' || profile?.transfer_pin_locked) return { status: 403, body: { error: 'Your account is restricted. Contact support.' } };
+    if (method === 'GET' && parts.length === 0) return { body: { configured: Boolean(profile?.transfer_pin_hash), locked: Boolean(profile?.transfer_pin_locked), failures: Number(profile?.transfer_pin_failures || 0) } };
+    if (method === 'POST' && parts.length === 0) {
+        const pin = String(body.pin || '');
+        if (!/^\d{4}$/.test(pin)) return { status: 400, body: { error: 'Transfer PIN must be exactly 4 digits' } };
+        if (profile?.transfer_pin_hash) return { status: 409, body: { error: 'Transfer PIN is already configured' } };
+        await getDb().collection('users').doc(user.userId).set({ transfer_pin_hash: await bcrypt.hash(pin, 12), transfer_pin_failures: 0, transfer_pin_locked: false, updated_at: now() }, { merge: true });
+        return { status: 201, body: { message: 'Transfer PIN set successfully' } };
+    }
+    return { status: 404, body: { error: 'Transfer PIN route not found' } };
+}
+
 function requireAdmin(user) {
     if (!['admin', 'super_admin'].includes(user.role)) {
         const error = new Error('Access denied. Admin privileges required.');
@@ -310,6 +342,8 @@ async function transactionRoutes(method, parts, user, body) {
     const amount = Number(body.amount);
     if (!body.fromAccountId || !body.toAccountId || amount <= 0) return { status: 400, body: { error: 'Transfer details are invalid' } };
     if (body.fromAccountId === body.toAccountId) return { status: 400, body: { error: 'Cannot transfer to the same account' } };
+    const pinError = await verifyTransferPin(user, body.transferPin);
+    if (pinError) return pinError;
     const approvalPolicy = await getApprovalPolicy();
     if (approvalPolicy.requireAll || amount > approvalPolicy.transferThreshold) {
         const pending = await save('transactions', {
@@ -521,6 +555,8 @@ async function billRoutes(method, parts, user, body) {
 async function externalRoutes(method, parts, user, body) {
     if (method === 'GET' && (parts[0] === 'external' || parts[0] === 'transfers')) return { body: clean(await listDocs('external_transfers', 'user_id', user.userId)) };
     if (method === 'POST' && ['send-to-bank', 'send-to-user'].includes(parts[0])) {
+        const pinError = await verifyTransferPin(user, body.transferPin);
+        if (pinError) return pinError;
         const account = await getDoc('accounts', body.fromAccountId);
         const amount = Number(body.amount);
         if (!account || account.user_id !== user.userId) return { status: 404, body: { error: 'Account not found' } };
@@ -563,6 +599,8 @@ async function withdrawalRoutes(method, parts, user, body) {
     if (!body.fromAccountId || !Number.isFinite(amount) || amount <= 0) {
         return { status: 400, body: { error: 'Withdrawal details are invalid' } };
     }
+    const pinError = await verifyTransferPin(user, body.transferPin);
+    if (pinError) return pinError;
 
     const account = await getDoc('accounts', body.fromAccountId);
     if (!account || account.user_id !== user.userId || account.status !== 'active') {
@@ -1261,6 +1299,7 @@ async function route(req) {
     const user = await authenticate(req);
     await ensureGuest();
     if (parts[0] === 'accounts') return accountRoutes(method, parts.slice(1), user, body, req.query || {});
+    if (parts[0] === 'transfer-pin') return transferPinRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'chat') return chatRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'transactions') return transactionRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'notifications') return notificationRoutes(method, parts.slice(1), user);

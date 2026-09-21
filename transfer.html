@@ -471,6 +471,7 @@
     <script src="js/storage.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/countries.js"></script>
+    <script src="js/transfer-pin.js"></script>
 
     <script>
         // Country currency mapping
@@ -837,6 +838,8 @@
                 fee: 0,
                 total: amount
             };
+            const transferPin = await requireTransferPin();
+            if (!transferPin) return;
 
             try {
                 const transferResponse = await apiClient.post('/transactions/transfer', {
@@ -845,6 +848,7 @@
                     toAccountNumber: currentAbuMode === 'myAccounts' ? '' : accountNumber,
                     amount,
                     description: currentAbuMode === 'myAccounts' ? 'Transfer between ABU accounts' : 'Transfer to ABU account',
+                    transferPin,
                     receiptData
                 });
                 if (transferResponse.status === 'pending') {
@@ -919,6 +923,8 @@
                 description,
                 total: amount
             };
+            const transferPin = await requireTransferPin();
+            if (!transferPin) return;
 
             try {
                 await apiClient.post('/external-transfers/send-to-bank', {
@@ -932,6 +938,7 @@
                     amount,
                     description,
                     transferType: 'ach',
+                    transferPin,
                     receiptData
                 });
             } catch (error) {
@@ -1007,6 +1014,8 @@
                 convertedAmount: convertedAmount.toFixed(2),
                 description
             };
+            const transferPin = await requireTransferPin();
+            if (!transferPin) return;
 
             try {
                 await apiClient.post('/external-transfers/send-to-bank', {
@@ -1020,6 +1029,7 @@
                     amount,
                     description,
                     transferType: 'international',
+                    transferPin,
                     receiptData
                 });
             } catch (error) {
