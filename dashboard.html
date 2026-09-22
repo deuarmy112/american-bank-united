@@ -15,8 +15,20 @@
         <link rel="stylesheet" href="css/opay.css">
         <style>
             body { background: #f8fafc }
+            .dashboard-page { --dashboard-navy: #111827; --dashboard-navy-light: #26364a; --dashboard-border: #d8e0ea; }
             body.opay-ui main { padding-top: 78px; }
             body.opay-ui .opay-header { padding: 8px 0; }
+            .dashboard-page .opay-balance-gradient { background: linear-gradient(135deg, var(--dashboard-navy), var(--dashboard-navy-light)) !important; }
+            .dashboard-page .opay-balance-gradient button { background: rgba(255,255,255,.12) !important; border: 1px solid rgba(255,255,255,.26); color: #fff; }
+            .dashboard-page .opay-balance-gradient button:hover { background: rgba(255,255,255,.22) !important; }
+            .dashboard-page #homeQuickActionsGrid > button > div { background: linear-gradient(135deg, var(--dashboard-navy), var(--dashboard-navy-light)) !important; color: #fff !important; border: 0; }
+            .dashboard-page #homeQuickActionsGrid > button i { color: #fff !important; }
+            .dashboard-page #homeQuickActionsGrid > button > span { color: var(--dashboard-navy); font-weight: 600; }
+            .dashboard-page .opay-card { border: 1px solid var(--dashboard-border); box-shadow: 0 8px 20px rgba(15,23,42,.06); }
+            .dashboard-page .opay-card a.bg-indigo-600, .dashboard-page button.bg-indigo-600 { background: var(--dashboard-navy) !important; }
+            .dashboard-page .opay-card a.bg-indigo-600:hover, .dashboard-page button.bg-indigo-600:hover { background: var(--dashboard-navy-light) !important; }
+            .dashboard-page .gradient-sg { background: linear-gradient(135deg, var(--dashboard-navy), var(--dashboard-navy-light)) !important; color: #fff; }
+            .dashboard-page .gradient-sg a { color: #dbeafe !important; }
             html.dashboard-data-loading #recentTransactions { visibility: hidden; }
             html.dashboard-data-loading #balanceSlides { visibility: hidden; }
             .support-chat-topbar { display: grid; grid-template-columns: 1fr minmax(0, 1fr) 1fr; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #0f172a; }
@@ -34,7 +46,7 @@
             }
         </style>
 </head>
-<body class="opay-ui">
+<body class="opay-ui dashboard-page">
         <header class="opay-header">
             <div class="max-w-md mx-auto px-4 py-2 flex items-center justify-between gap-4">
                 <a href="dashboard.html" class="opay-brand flex items-center gap-3 min-w-0" aria-label="American Bank United home">
