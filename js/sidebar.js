@@ -236,19 +236,11 @@ function openCalculator() {
 }
 
 function openCurrencyConverter() {
-    if (typeof showAlert !== 'undefined') {
-        showAlert('Currency converter feature coming soon!', 'info');
-    } else {
-        alert('Currency converter feature coming soon!');
-    }
+    window.location.href = 'exchange.html';
 }
 
 function openATMLocator() {
-    if (typeof showAlert !== 'undefined') {
-        showAlert('ATM locator feature coming soon!', 'info');
-    } else {
-        alert('ATM locator feature coming soon!');
-    }
+    window.location.href = 'atm.html';
 }
 
 function openBudgetPlanner() {

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Exchange Rates - American Bank United</title>
+  <link rel="stylesheet" href="css/tailwind.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/opay.css">
+  <link rel="icon" href="assets/abu-logo.png" type="image/png">
+  <style>
+    :root{--exchange-navy:#111827;--exchange-light:#26364a;--exchange-border:#dbe3ec}
+    body{background:#f8fafc;color:#0f172a}.exchange-page{min-height:100vh;padding:20px 16px 40px}.exchange-shell{width:min(100%,560px);margin:0 auto}.exchange-topbar{display:flex;justify-content:flex-end;margin-bottom:24px}.exchange-close{width:40px;height:40px;border:1px solid var(--exchange-border);border-radius:999px;background:#fff;color:#64748b;box-shadow:0 4px 12px rgba(15,23,42,.08)}.exchange-kicker{font-size:11px;color:#64748b;font-weight:700;letter-spacing:.09em;text-transform:uppercase}.exchange-heading h1{font-size:28px;line-height:1.1;margin:4px 0 7px}.exchange-heading p{font-size:14px;color:#64748b;margin:0 0 18px}.exchange-card{background:#fff;border:1px solid var(--exchange-border);border-radius:18px;padding:18px;box-shadow:0 10px 28px rgba(15,23,42,.06)}.exchange-field{display:grid;gap:7px;margin-bottom:13px}.exchange-field label{font-size:12px;color:#475569;font-weight:700}.exchange-input{display:flex;gap:8px}.exchange-input input,.exchange-input select{border:1px solid #cbd5e1;border-radius:10px;padding:12px;background:#fff;color:#0f172a;font-size:15px}.exchange-input input{width:100%;min-width:0}.exchange-input select{width:118px;font-weight:700}.exchange-swap{display:flex;justify-content:center;margin:-3px 0 10px}.exchange-swap button{width:38px;height:38px;border:1px solid var(--exchange-border);border-radius:999px;background:#f8fafc;color:var(--exchange-navy)}.exchange-result{margin-top:18px;padding:18px;border-radius:14px;background:linear-gradient(135deg,var(--exchange-navy),var(--exchange-light));color:#fff}.exchange-result-label{font-size:12px;color:#cbd5e1}.exchange-result-value{font-size:30px;font-weight:800;margin-top:3px}.exchange-rate{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.2);font-size:12px;color:#cbd5e1}.exchange-note{margin-top:14px;color:#64748b;font-size:12px;line-height:1.5}.exchange-button{width:100%;margin-top:15px;border:0;border-radius:10px;padding:12px;background:var(--exchange-navy);color:#fff;font-weight:700}.exchange-button:hover{background:var(--exchange-light)}
+  </style>
+</head>
+<body>
+  <main class="exchange-page"><div class="exchange-shell">
+    <div class="exchange-topbar"><button type="button" class="exchange-close" onclick="window.history.length > 1 ? history.back() : location.href='dashboard.html'" aria-label="Close and return" title="Close"><i class="fas fa-xmark"></i></button></div>
+    <section class="exchange-heading"><div class="exchange-kicker">ABU Tools</div><h1>Exchange rates</h1><p>Check an estimated conversion between supported currencies.</p></section>
+    <section class="exchange-card">
+      <div class="exchange-field"><label for="fromAmount">You send</label><div class="exchange-input"><input id="fromAmount" type="number" min="0" step="0.01" value="100"><select id="fromCurrency" aria-label="Source currency"><option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option><option>AUD</option><option>NGN</option><option>GHS</option></select></div></div>
+      <div class="exchange-swap"><button type="button" id="swapCurrencies" aria-label="Swap currencies" title="Swap currencies"><i class="fas fa-arrow-down-up"></i></button></div>
+      <div class="exchange-field"><label for="toAmount">You receive</label><div class="exchange-input"><input id="toAmount" type="text" readonly value="100.00"><select id="toCurrency" aria-label="Target currency"><option>EUR</option><option>USD</option><option>GBP</option><option>CAD</option><option>AUD</option><option>NGN</option><option>GHS</option></select></div></div>
+      <div class="exchange-result"><div class="exchange-result-label">Estimated conversion</div><div id="conversionResult" class="exchange-result-value">EUR 92.00</div><div id="rateSummary" class="exchange-rate">1 USD = 0.92 EUR</div></div>
+      <button type="button" id="convertButton" class="exchange-button"><i class="fas fa-arrows-rotate mr-2"></i>Update conversion</button>
+      <p class="exchange-note"><i class="fas fa-circle-info mr-1"></i> Rates shown are estimates for planning. Final rates and fees may vary when a transfer is completed.</p>
+    </section>
+  </div></main>
+  <script>
+    (() => {
+      const rates = { USD:1, EUR:.92, GBP:.79, CAD:1.36, AUD:1.53, NGN:1550, GHS:15.2 };
+      const amount=document.getElementById('fromAmount'), from=document.getElementById('fromCurrency'), to=document.getElementById('toCurrency'), output=document.getElementById('toAmount'), result=document.getElementById('conversionResult'), summary=document.getElementById('rateSummary');
+      function convert(){ const value=Math.max(0,Number(amount.value)||0); const converted=value/rates[from.value]*rates[to.value]; output.value=converted.toFixed(2); result.textContent=`${to.value} ${converted.toFixed(2)}`; summary.textContent=`1 ${from.value} = ${(rates[to.value]/rates[from.value]).toFixed(4)} ${to.value}`; }
+      document.getElementById('convertButton').addEventListener('click',convert); [amount,from,to].forEach(el=>el.addEventListener('input',convert));
+      document.getElementById('swapCurrencies').addEventListener('click',()=>{const current=from.value;from.value=to.value;to.value=current;convert();});
+      convert();
+    })();
+  </script>
+</body>
+</html>
