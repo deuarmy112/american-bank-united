@@ -16,7 +16,7 @@
 </head>
 <body>
   <main class="settings-page"><div class="settings-shell">
-    <div class="settings-topbar"><button type="button" class="settings-close" onclick="window.history.length > 1 ? history.back() : location.href='dashboard.html'" aria-label="Close and return" title="Close"><i class="fas fa-xmark"></i></button></div>
+    <div class="settings-topbar"><button type="button" class="settings-close" data-nav-back="dashboard.html" aria-label="Close and return" title="Close"><i class="fas fa-xmark"></i></button></div>
     <section class="settings-heading"><div class="settings-kicker">ABU Preferences</div><h1>Settings</h1><p>Manage your profile, security, and app preferences.</p></section>
     <section class="settings-card"><div class="settings-card-head"><i class="fas fa-user-gear"></i><h2>Account</h2></div><div class="settings-row"><a class="settings-link" href="profile.html"><i class="fas fa-user"></i><span><strong>Profile details</strong><span>Update your name, contact details, and picture</span></span></a><i class="fas fa-chevron-right chevron"></i></div><div class="settings-row"><a class="settings-link" href="security.html"><i class="fas fa-shield-halved"></i><span><strong>Security</strong><span>Review verification and transfer security</span></span></a><i class="fas fa-chevron-right chevron"></i></div></section>
     <section class="settings-card"><div class="settings-card-head"><i class="fas fa-bell"></i><h2>Notifications</h2></div><div class="settings-row"><span><strong>Transaction alerts</strong><span>Receive updates about account activity</span></span><button type="button" class="settings-toggle on" data-setting="transactionAlerts" aria-label="Toggle transaction alerts" aria-pressed="true"></button></div><div class="settings-row"><span><strong>Support messages</strong><span>Be notified when support replies</span></span><button type="button" class="settings-toggle on" data-setting="supportMessages" aria-label="Toggle support messages" aria-pressed="true"></button></div></section>
@@ -24,6 +24,7 @@
     <p class="settings-note"><i class="fas fa-lock mr-1"></i> Changes are saved on this device. Sensitive account and transfer security settings remain protected by American Bank United.</p>
   </div></main>
   <script src="js/api.js"></script>
+  <script src="js/navigation-stack.js"></script>
   <script>
     (async()=>{
       const key='abu_user_settings';

@@ -18,13 +18,14 @@
 </head>
 <body>
   <main class="privacy-page"><div class="privacy-shell">
-    <div class="privacy-topbar"><a class="privacy-back" href="more.html"><i class="fas fa-arrow-left"></i> Menu</a><button type="button" class="privacy-close" onclick="window.history.length > 1 ? history.back() : location.href='dashboard.html'" aria-label="Close and return" title="Close"><i class="fas fa-xmark"></i></button></div>
+    <div class="privacy-topbar"><a class="privacy-back" href="more.html" data-nav-back="more.html"><i class="fas fa-arrow-left"></i> Menu</a><button type="button" class="privacy-close" data-nav-back="dashboard.html" aria-label="Close and return" title="Close"><i class="fas fa-xmark"></i></button></div>
     <section class="privacy-heading"><div class="privacy-kicker">Your information</div><h1>Privacy</h1><p>Understand how American Bank United uses and protects your information.</p></section>
     <section class="privacy-card"><div class="privacy-card-head"><i class="fas fa-database"></i><h2>What we use</h2></div><ul><li>Account details to provide banking services and support.</li><li>Transaction information to process payments and help prevent fraud.</li><li>Device and activity information to protect your account.</li></ul></section>
     <section class="privacy-card"><div class="privacy-card-head"><i class="fas fa-sliders"></i><h2>Your choices</h2></div><div class="privacy-choice"><span><strong>Product updates</strong><span>Receive news about useful banking features.</span></span><button type="button" class="privacy-toggle" data-privacy-setting="productUpdates" aria-label="Toggle product updates" aria-pressed="false"></button></div><div class="privacy-choice"><span><strong>Personalized experience</strong><span>Allow recommendations based on your activity.</span></span><button type="button" class="privacy-toggle on" data-privacy-setting="personalizedExperience" aria-label="Toggle personalized experience" aria-pressed="true"></button></div></section>
     <section class="privacy-card"><div class="privacy-card-head"><i class="fas fa-envelope"></i><h2>Questions about your data?</h2></div><p>For privacy requests or questions about how your information is handled, contact our support team.</p><p class="privacy-note"><i class="fas fa-lock"></i> We keep required account and transaction records secure for as long as needed to provide services and meet legal obligations.</p><a class="privacy-link" href="support.html">Contact support <i class="fas fa-arrow-right"></i></a></section>
   </div></main>
   <script src="js/api.js"></script>
+  <script src="js/navigation-stack.js"></script>
   <script>
     (async()=>{
       const toggles=[...document.querySelectorAll('[data-privacy-setting]')];

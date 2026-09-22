@@ -20,7 +20,7 @@
 <body>
   <main class="menu-page">
     <div class="menu-shell">
-      <div class="menu-topbar"><div><div class="menu-kicker">American Bank United</div><h1>Menu</h1></div><div class="flex items-center gap-3"><a id="menuProfile" href="profile.html" class="menu-profile" aria-label="View profile" title="Profile"><i class="fas fa-user"></i></a><button type="button" class="menu-close" onclick="window.history.length > 1 ? history.back() : location.href='dashboard.html'" aria-label="Close and return" title="Close"><i class="fas fa-xmark"></i></button></div></div>
+      <div class="menu-topbar"><div><div class="menu-kicker">American Bank United</div><h1>Menu</h1></div><div class="flex items-center gap-3"><a id="menuProfile" href="profile.html" class="menu-profile" aria-label="View profile" title="Profile"><i class="fas fa-user"></i></a><button type="button" class="menu-close" data-nav-back="dashboard.html" aria-label="Close and return" title="Close"><i class="fas fa-xmark"></i></button></div></div>
       <p class="menu-intro">Access your banking tools and services.</p>
       <nav class="menu-grid" aria-label="Additional banking services">
         <a href="wallet.html" class="menu-item"><span class="menu-item-icon"><i class="fas fa-wallet"></i></span><span class="menu-item-copy"><strong>Wallet</strong><span>Manage your wallet</span></span></a>
@@ -41,6 +41,7 @@
     </div>
   </main>
   <script src="js/api.js"></script>
+  <script src="js/navigation-stack.js"></script>
   <script src="js/features.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {

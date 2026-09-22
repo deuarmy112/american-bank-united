@@ -17,13 +17,14 @@
 </head>
 <body>
   <main class="security-page"><div class="security-shell">
-    <div class="security-topbar"><a class="security-back" href="more.html"><i class="fas fa-arrow-left"></i> Menu</a><button type="button" class="security-close" onclick="window.history.length > 1 ? history.back() : location.href='dashboard.html'" aria-label="Close and return" title="Close"><i class="fas fa-xmark"></i></button></div>
+    <div class="security-topbar"><a class="security-back" href="more.html" data-nav-back="more.html"><i class="fas fa-arrow-left"></i> Menu</a><button type="button" class="security-close" data-nav-back="dashboard.html" aria-label="Close and return" title="Close"><i class="fas fa-xmark"></i></button></div>
     <section class="security-heading"><div class="security-kicker">Account protection</div><h1>Security</h1><p>Review the controls that help keep your account and money protected.</p></section>
     <section class="security-card"><div class="security-card-head"><i class="fas fa-lock"></i><h2>Sign-in protection</h2></div><div class="security-row"><span><strong>Password</strong><span>Reset your password with email verification.</span></span><a class="security-link" href="security-action.html?mode=password">Reset</a></div><div class="security-row"><span><strong>Two-step verification</strong><span>Require an email code when changing this setting.</span></span><button id="twoStepLink" type="button" class="security-link security-action" aria-pressed="false">Set up</button></div></section>
     <section class="security-card"><div class="security-card-head"><i class="fas fa-money-check-dollar"></i><h2>Transfer security</h2></div><div class="security-row"><span><strong>Transfer PIN</strong><span>Reset your four-digit PIN with email verification.</span></span><button id="transferPinLink" type="button" class="security-link security-action">Set up</button></div><div class="security-row"><span><strong>Activity alerts</strong><span>Get notified about important account activity.</span></span><button id="activityAlertsToggle" type="button" class="security-link security-action" aria-pressed="true">On</button></div></section>
     <section class="security-card"><div class="security-card-head"><i class="fas fa-headset"></i><h2>Need help?</h2></div><p class="security-note">If you notice activity you do not recognize, contact support immediately and avoid sharing your password, transfer PIN, or one-time code.</p><a class="security-link" href="support.html">Contact support <i class="fas fa-arrow-right"></i></a></section>
   </div></main>
   <script src="js/api.js"></script>
+  <script src="js/navigation-stack.js"></script>
   <script>
     (async()=>{
       const verificationStatus=document.getElementById('verificationStatus');
