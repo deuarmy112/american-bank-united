@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   let pendingRedirect = null;
   let scannerLibraryPromise = null;
   let scannerStarting = false;
+  let nativeStream = null;
+  let nativeVideo = null;
+  let nativeScanTimer = null;
 
   function loadScannerLibrary() {
     if (typeof window.Html5Qrcode === 'function') return Promise.resolve();
@@ -57,9 +60,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     scannerStarting = true;
     startBtn.style.display = 'none'; stopBtn.style.display = 'inline-block';
     try {
-      await loadScannerLibrary();
-      html5QrcodeScanner = new window.Html5Qrcode(readerId);
-      await html5QrcodeScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: 250 }, onScanSuccess, onScanFailure);
+      if (typeof window.BarcodeDetector === 'function' && navigator.mediaDevices?.getUserMedia) {
+        await startNativeScanner();
+      } else {
+        await loadScannerLibrary();
+        html5QrcodeScanner = new window.Html5Qrcode(readerId);
+        await html5QrcodeScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: 250 }, onScanSuccess, onScanFailure);
+      }
     } catch (err) {
       console.error('Scanner start failed', err);
       const cameraHint = /permission|secure|notallowed|denied/i.test(err.message || '')
@@ -73,10 +80,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  async function startNativeScanner() {
+    const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+    nativeStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+    const reader = $(readerId);
+    if (!reader) throw new Error('Scanner display is unavailable');
+    reader.innerHTML = '';
+    nativeVideo = document.createElement('video');
+    nativeVideo.setAttribute('autoplay', '');
+    nativeVideo.setAttribute('playsinline', '');
+    nativeVideo.muted = true;
+    nativeVideo.style.cssText = 'width:100%;display:block;border-radius:10px;min-height:200px;object-fit:cover;';
+    nativeVideo.srcObject = nativeStream;
+    reader.appendChild(nativeVideo);
+    await nativeVideo.play();
+    nativeScanTimer = window.setInterval(async () => {
+      if (!nativeVideo || nativeVideo.readyState < 2) return;
+      try {
+        const codes = await detector.detect(nativeVideo);
+        if (codes.length && codes[0].rawValue) await onScanSuccess(codes[0].rawValue, codes[0]);
+      } catch (error) { /* Camera frames can be unavailable between reads. */ }
+    }, 250);
+  }
+
+  function stopNativeScanner() {
+    if (nativeScanTimer) window.clearInterval(nativeScanTimer);
+    nativeScanTimer = null;
+    if (nativeStream) nativeStream.getTracks().forEach(track => track.stop());
+    nativeStream = null;
+    if (nativeVideo) nativeVideo.srcObject = null;
+    nativeVideo = null;
+  }
+
   async function stopScanner(){
     if (!stopBtn || !startBtn) return;
     stopBtn.style.display = 'none'; startBtn.style.display = 'inline-block';
+    stopNativeScanner();
     try { if (html5QrcodeScanner && html5QrcodeScanner.stop) await html5QrcodeScanner.stop(); } catch(e) { console.error(e); }
+    html5QrcodeScanner = null;
   }
 
   if (startBtn) startBtn.addEventListener('click', startScanner);
@@ -93,14 +134,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       const bank = payload.bankName || payload.bank || payload.bank_name || '';
       const amount = payload.amount || '';
       const recipName = payload.name || payload.recipientName || payload.payee || payload.payee_name || '';
-      try { if (html5QrcodeScanner && html5QrcodeScanner.stop) await html5QrcodeScanner.stop(); } catch(e){console.warn(e);} 
+      await stopScanner();
       pendingRedirect = { acct, bank, amount, recipName };
       showConfirmation(pendingRedirect);
       return;
     }
 
     if (!payload && decodedText) {
-      try { if (html5QrcodeScanner && html5QrcodeScanner.stop) await html5QrcodeScanner.stop(); } catch(e){console.warn(e);} 
+      await stopScanner();
       pendingRedirect = { acct: decodedText, bank: '', amount: '', recipName: '' };
       showConfirmation(pendingRedirect);
     }
