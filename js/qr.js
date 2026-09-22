@@ -135,20 +135,35 @@ document.addEventListener('DOMContentLoaded', async () => {
       const amount = payload.amount || '';
       const recipName = payload.name || payload.recipientName || payload.payee || payload.payee_name || '';
       await stopScanner();
-      pendingRedirect = { acct, bank, amount, recipName };
+      pendingRedirect = await resolveScannedAccount({ acct, bank, amount, recipName, accountType: payload.accountType || payload.account_type || '' });
       showConfirmation(pendingRedirect);
       return;
     }
 
     if (!payload && decodedText) {
       await stopScanner();
-      pendingRedirect = { acct: decodedText, bank: '', amount: '', recipName: '' };
+      pendingRedirect = await resolveScannedAccount({ acct: decodedText, bank: '', amount: '', recipName: '', accountType: '' });
       showConfirmation(pendingRedirect);
     }
   }
 
   function onScanFailure(error) {
     // optional logging
+  }
+
+  async function resolveScannedAccount(scanned) {
+    const account = { ...scanned, accountNumber: scanned.acct, accountId: '', accountType: scanned.accountType || '' };
+    try {
+      const verified = await apiClient.get(`/accounts/lookup?identifier=${encodeURIComponent(scanned.acct)}`);
+      account.accountId = verified.id || '';
+      account.accountNumber = verified.accountNumber || scanned.acct;
+      account.recipName = verified.recipientName || scanned.recipName || '';
+      account.accountType = verified.accountType || scanned.accountType || '';
+      account.bank = 'American Bank United';
+    } catch (error) {
+      if (!account.recipName || !account.accountType) account.lookupError = 'ABU account details could not be verified';
+    }
+    return account;
   }
 
   // Generate user's QR for receiving deposits
@@ -186,10 +201,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (scanPane) scanPane.classList.add('hidden');
     if (confirmPane) confirmPane.classList.remove('hidden');
     const lines = [];
-    if (p.recipName) lines.push(`<strong>Recipient:</strong> ${p.recipName}`);
-    lines.push(`<strong>Account:</strong> ${p.acct}`);
-    if (p.bank) lines.push(`<strong>Bank:</strong> ${p.bank}`);
+    if (p.recipName) lines.push(`<strong>Account name:</strong> ${p.recipName}`);
+    if (p.accountType) lines.push(`<strong>Account type:</strong> ${String(p.accountType).replace(/_/g, ' ')}`);
+    lines.push(`<strong>Account number:</strong> ${p.accountNumber || p.acct}`);
+    lines.push(`<strong>Bank:</strong> ${p.bank || 'American Bank United'}`);
     if (p.amount) lines.push(`<strong>Amount:</strong> $${p.amount}`);
+    if (p.lookupError) lines.push(`<span style="color:#b91c1c">${p.lookupError}</span>`);
     if (confirmDetails) confirmDetails.innerHTML = lines.join('<br>');
   }
 
@@ -205,7 +222,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!pendingRedirect) return;
     const u = new URL(window.location.origin + '/transfer.html');
     if (pendingRedirect.acct) u.searchParams.set('toAccountNumber', pendingRedirect.acct);
-    if (pendingRedirect.bank) u.searchParams.set('bank', pendingRedirect.bank);
+    u.searchParams.set('recipientType', 'abu');
+    u.searchParams.set('bank', 'American Bank United');
+    if (pendingRedirect.accountType) u.searchParams.set('accountType', pendingRedirect.accountType);
     if (pendingRedirect.amount) u.searchParams.set('amount', pendingRedirect.amount);
     if (pendingRedirect.recipName) u.searchParams.set('recipientName', pendingRedirect.recipName);
     window.location.href = u.toString();

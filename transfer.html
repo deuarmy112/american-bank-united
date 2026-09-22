@@ -551,9 +551,23 @@
                 populateAccountDropdowns();
                 populateCountries();
                 setupEventListeners();
+                applyQrRecipientParams();
             } catch (e) {
                 console.error('Initialization error:', e);
             }
+        }
+
+        function applyQrRecipientParams() {
+            const params = new URLSearchParams(window.location.search);
+            const accountNumber = params.get('toAccountNumber');
+            if (!accountNumber || params.get('recipientType') !== 'abu') return;
+            switchTransferType('internal');
+            switchAbuTransferMode('otherAccounts');
+            const accountInput = document.getElementById('otherAbuAccountNumber');
+            if (accountInput) accountInput.value = accountNumber;
+            const recipientInput = document.getElementById('otherAbuRecipientName');
+            if (recipientInput && params.get('recipientName')) recipientInput.value = params.get('recipientName');
+            lookupAbuRecipient();
         }
 
         function populateAccountDropdowns() {
