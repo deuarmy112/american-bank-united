@@ -20,8 +20,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   let html5QrcodeScanner = null;
   let pendingRedirect = null;
 
-  if (scanTab && showPane) scanTab.addEventListener('click', () => { scanPane.classList.remove('hidden'); showPane.classList.add('hidden'); });
-  if (showTab && showPane) showTab.addEventListener('click', () => { scanPane.classList.add('hidden'); showPane.classList.remove('hidden'); });
+  function selectTab(activeTab, inactiveTab, activePane, inactivePane) {
+    activePane.classList.remove('hidden');
+    inactivePane.classList.add('hidden');
+    activeTab.classList.add('active');
+    inactiveTab.classList.remove('active');
+    activeTab.setAttribute('aria-selected', 'true');
+    inactiveTab.setAttribute('aria-selected', 'false');
+  }
+  if (scanTab && showPane) scanTab.addEventListener('click', () => selectTab(scanTab, showTab, scanPane, showPane));
+  if (showTab && showPane) showTab.addEventListener('click', () => selectTab(showTab, scanTab, showPane, scanPane));
 
   async function startScanner(){
     if (!startBtn || !stopBtn) return;
