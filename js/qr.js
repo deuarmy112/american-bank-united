@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let html5QrcodeScanner = null;
   let pendingRedirect = null;
   let scannerLibraryPromise = null;
+  let scannerStarting = false;
 
   function loadScannerLibrary() {
     if (typeof window.Html5Qrcode === 'function') return Promise.resolve();
@@ -45,11 +46,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     activeTab.setAttribute('aria-selected', 'true');
     inactiveTab.setAttribute('aria-selected', 'false');
   }
-  if (scanTab && showPane) scanTab.addEventListener('click', () => selectTab(scanTab, showTab, scanPane, showPane));
+  if (scanTab && showPane) scanTab.addEventListener('click', () => {
+    selectTab(scanTab, showTab, scanPane, showPane);
+    if (!html5QrcodeScanner && !scannerStarting) startScanner();
+  });
   if (showTab && showPane) showTab.addEventListener('click', () => selectTab(showTab, scanTab, showPane, scanPane));
 
   async function startScanner(){
-    if (!startBtn || !stopBtn) return;
+    if (!startBtn || !stopBtn || scannerStarting || html5QrcodeScanner) return;
+    scannerStarting = true;
     startBtn.style.display = 'none'; stopBtn.style.display = 'inline-block';
     try {
       await loadScannerLibrary();
@@ -61,7 +66,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         ? ' Allow camera access and open this page over HTTPS.'
         : '';
       if (resultEl) resultEl.textContent = 'Unable to start camera: ' + (err.message || err) + cameraHint;
+      html5QrcodeScanner = null;
       startBtn.style.display = 'inline-block'; stopBtn.style.display = 'none';
+    } finally {
+      scannerStarting = false;
     }
   }
 
@@ -169,5 +177,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   if (cancelConfirmBtn) cancelConfirmBtn.addEventListener('click', async () => { await resumeScanner(); });
+
+  // Ask for camera permission and open the rear camera on first entry.
+  if (scanPane && !scanPane.classList.contains('hidden')) startScanner();
 
 });
