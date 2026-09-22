@@ -6,8 +6,9 @@
 
   const primaryPages = new Set(['dashboard.html', 'accounts.html', 'transfer.html', 'cards.html', 'more.html']);
   const currentPage = (window.location.pathname || '/dashboard.html').replace(/\\/g, '/').split('/').pop() || 'dashboard.html';
+  const pageCloseSelector = '.qr-header-action, .bill-close, .invest-close, .account-close, .profile-close, [data-page-close]';
   const pageStyle = document.createElement('style');
-  pageStyle.textContent = `#abu-bottom-nav.secondary-page-nav{display:none!important}.abu-overlay-open #abu-bottom-nav{display:none!important}.abu-page-close{position:fixed;top:14px;right:14px;z-index:60;width:40px;height:40px;border:1px solid #e2e8f0;border-radius:999px;background:#fff;color:#64748b;box-shadow:0 4px 12px rgba(15,23,42,.12);font-size:18px;cursor:pointer}.abu-page-close:focus,.abu-page-close:hover{color:#0f172a;background:#f8fafc}`;
+  pageStyle.textContent = `#abu-bottom-nav.secondary-page-nav{display:none!important}.abu-overlay-open #abu-bottom-nav{display:none!important}.abu-page-close,.qr-header-action,.bill-close,.invest-close,.account-close,.profile-close{position:fixed;top:14px;right:14px;z-index:60;width:40px;height:40px;border:1px solid #e2e8f0;border-radius:999px;background:#fff;color:#64748b;box-shadow:0 4px 12px rgba(15,23,42,.12);font-size:18px;cursor:pointer}.abu-page-close:focus,.abu-page-close:hover,.qr-header-action:hover,.bill-close:hover,.invest-close:hover,.account-close:hover,.profile-close:hover{color:#0f172a;background:#f8fafc}`;
 
   const nav = document.createElement('nav');
   nav.id = 'abu-bottom-nav';
@@ -73,17 +74,19 @@
       nav.setAttribute('aria-hidden', 'true');
       nav.style.display = 'none';
 
-      const close = document.createElement('button');
-      close.type = 'button';
-      close.className = 'abu-page-close';
-      close.setAttribute('aria-label', 'Close and return');
-      close.title = 'Close and return';
-      close.innerHTML = '<i class="fas fa-xmark" aria-hidden="true"></i>';
-      close.addEventListener('click', () => {
-        if (document.referrer && document.referrer.startsWith(window.location.origin) && window.history.length > 1) window.history.back();
-        else window.location.href = '/dashboard.html';
-      });
-      document.body.appendChild(close);
+      if (!document.querySelector(pageCloseSelector)) {
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'abu-page-close';
+        close.setAttribute('aria-label', 'Close and return');
+        close.title = 'Close and return';
+        close.innerHTML = '<i class="fas fa-xmark" aria-hidden="true"></i>';
+        close.addEventListener('click', () => {
+          if (document.referrer && document.referrer.startsWith(window.location.origin) && window.history.length > 1) window.history.back();
+          else window.location.href = '/dashboard.html';
+        });
+        document.body.appendChild(close);
+      }
     }
     markActive();
     // handle history changes
