@@ -28,7 +28,7 @@
   </div></main>
   <script>
     (() => {
-      let rates = { USD:1, EUR:.92, GBP:.79, CAD:1.36, AUD:1.53, NGN:1550, GHS:15.2 };
+      let rates = (()=>{try{const cached=JSON.parse(localStorage.getItem('abu_currency_rates')||'{}');return cached.rates||{USD:1,EUR:.92,GBP:.79,CAD:1.36,AUD:1.53,NGN:1550,GHS:15.2};}catch(error){return {USD:1,EUR:.92,GBP:.79,CAD:1.36,AUD:1.53,NGN:1550,GHS:15.2};}})();
       const amount=document.getElementById('fromAmount'), from=document.getElementById('fromCurrency'), to=document.getElementById('toCurrency'), output=document.getElementById('toAmount'), result=document.getElementById('conversionResult'), summary=document.getElementById('rateSummary');
       const status=document.getElementById('exchangeRateStatus');
       const fallbackNames={USD:'US Dollar',EUR:'Euro',GBP:'British Pound',CAD:'Canadian Dollar',AUD:'Australian Dollar',NGN:'Nigerian Naira',GHS:'Ghanaian Cedi'};
@@ -36,7 +36,7 @@
       function convert(){ const value=Math.max(0,Number(amount.value)||0); const converted=value/rates[from.value]*rates[to.value]; output.value=converted.toFixed(2); result.textContent=`${to.value} ${converted.toFixed(2)}`; summary.textContent=`1 ${from.value} = ${(rates[to.value]/rates[from.value]).toFixed(4)} ${to.value}`; }
       document.getElementById('convertButton').addEventListener('click',convert); [amount,from,to].forEach(el=>el.addEventListener('input',convert));
       document.getElementById('swapCurrencies').addEventListener('click',()=>{const current=from.value;from.value=to.value;to.value=current;convert();});
-      async function loadRates(){try{const response=await fetch('https://open.er-api.com/v6/latest/USD');if(!response.ok)throw new Error('Rate service unavailable');const data=await response.json();if(data.result!=='success'||!data.rates)throw new Error('Rates unavailable');rates=data.rates;populateCurrencies();status.innerHTML='<i class="fas fa-circle-info mr-1"></i> Live reference rates loaded. Final rates and fees may vary.';}catch(error){populateCurrencies();status.innerHTML='<i class="fas fa-circle-info mr-1"></i> Showing fallback reference rates. Final rates and fees may vary.';}convert();}
+      async function loadRates(){try{const response=await fetch('https://open.er-api.com/v6/latest/USD');if(!response.ok)throw new Error('Rate service unavailable');const data=await response.json();if(data.result!=='success'||!data.rates)throw new Error('Rates unavailable');rates=data.rates;localStorage.setItem('abu_currency_rates',JSON.stringify({rates,updatedAt:Date.now()}));populateCurrencies();status.innerHTML='<i class="fas fa-circle-info mr-1"></i> Live reference rates loaded. Final rates and fees may vary.';}catch(error){populateCurrencies();status.innerHTML='<i class="fas fa-circle-info mr-1"></i> Showing cached or fallback reference rates. Final rates and fees may vary.';}convert();}
       populateCurrencies();loadRates();
     })();
   </script>

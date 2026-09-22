@@ -3,14 +3,43 @@
  * This file contains helper functions used throughout the app
  */
 
-// Format currency (converts number to dollar format)
+const DEFAULT_CURRENCY_RATES = { USD: 1, EUR: 0.92, GBP: 0.79, CAD: 1.36, AUD: 1.53 };
+const CURRENCY_RATE_CACHE_KEY = 'abu_currency_rates';
+const CURRENCY_RATE_CACHE_TTL = 6 * 60 * 60 * 1000;
+
+function readCurrencyRates() {
+    try {
+        const cached = JSON.parse(localStorage.getItem(CURRENCY_RATE_CACHE_KEY) || '{}');
+        if (cached.rates && cached.updatedAt && Date.now() - cached.updatedAt < CURRENCY_RATE_CACHE_TTL) return cached.rates;
+    } catch (error) { console.warn('Unable to read cached currency rates', error); }
+    return { ...DEFAULT_CURRENCY_RATES };
+}
+
+window.appCurrencyRates = readCurrencyRates();
+
+async function refreshCurrencyRates() {
+    try {
+        const response = await fetch('https://open.er-api.com/v6/latest/USD');
+        if (!response.ok) throw new Error('Rate service unavailable');
+        const data = await response.json();
+        if (data.result !== 'success' || !data.rates) throw new Error('Rates unavailable');
+        window.appCurrencyRates = data.rates;
+        localStorage.setItem(CURRENCY_RATE_CACHE_KEY, JSON.stringify({ rates: data.rates, updatedAt: Date.now() }));
+        window.dispatchEvent(new CustomEvent('abu-currency-rates-updated'));
+    } catch (error) { console.warn('Live currency rates unavailable; using cached or fallback rates', error); }
+}
+
+refreshCurrencyRates();
+
+// Format USD-backed amounts in the user's selected currency.
 function formatCurrency(amount) {
     const savedSettings = JSON.parse(localStorage.getItem('abu_user_settings') || '{}');
     const currency = ['USD', 'EUR', 'GBP', 'CAD', 'AUD'].includes(savedSettings.currency) ? savedSettings.currency : 'USD';
+    const rate = Number(window.appCurrencyRates?.[currency]) || 1;
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency
-    }).format(amount);
+    }).format((Number(amount) || 0) * rate);
 }
 
 // Format date to readable format
