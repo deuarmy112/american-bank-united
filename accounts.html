@@ -14,50 +14,39 @@
         }
     </script>
     <style>
+        :root{--account-navy:#111827;--account-navy-light:#26364a;--account-border:#dbe3ec}
         body { background: #f8fafc; font-family: Inter, system-ui, -apple-system, sans-serif; }
-        .account-card { transition: all 0.3s ease; }
-        .account-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); }
-        .account-badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
-        .badge-checking { background: #fff; color: #000; }
-        .badge-savings { background: #fff; color: #000; }
-        .badge-business { background: #fff; color: #000; }
-        .modal-overlay { backdrop-filter: blur(4px); }
+        .account-page{min-height:100vh;padding:20px 16px 40px;background:#f8fafc}.account-shell{width:min(100%,960px);margin:0 auto}.account-topbar{display:flex;justify-content:flex-end;margin-bottom:20px}.account-close{width:40px;height:40px;border:1px solid var(--account-border);border-radius:999px;background:#fff;color:#64748b;box-shadow:0 4px 12px rgba(15,23,42,.08)}
+        .account-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:18px}.account-heading h1{font-size:28px;line-height:1.1;margin:3px 0 6px}.account-kicker{font-size:11px;color:#64748b;font-weight:700;letter-spacing:.09em;text-transform:uppercase}.account-heading p{color:#64748b;font-size:14px;margin:0}.account-add{border:0;border-radius:10px;background:var(--account-navy);color:#fff;padding:11px 14px;font-weight:700;white-space:nowrap}
+        .account-summary{background:linear-gradient(135deg,var(--account-navy),var(--account-navy-light));border-radius:16px;padding:20px;color:#fff;margin-bottom:24px;box-shadow:0 10px 24px rgba(15,23,42,.12)}.account-summary-label{color:#cbd5e1;font-size:12px}.account-summary-value{font-size:32px;font-weight:800;margin-top:4px}.account-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.account-section-head h2{font-size:18px;margin:0}.account-count{color:#64748b;font-size:12px}
+        .account-card { transition: transform .2s ease, box-shadow .2s ease; border:1px solid var(--account-border)!important;border-radius:15px!important;box-shadow:0 6px 18px rgba(15,23,42,.05)!important; }
+        .account-card:hover { transform: translateY(-2px); box-shadow:0 12px 26px rgba(15,23,42,.1)!important; }
+        .account-badge { display:inline-block;padding:5px 8px;border-radius:999px;font-size:.65rem;font-weight:700;text-transform:uppercase;background:#eef2f7;color:var(--account-navy); }
+        .badge-checking,.badge-savings,.badge-business{background:#eef2f7;color:var(--account-navy)}
+        .account-card .bg-blue-100,.account-card .bg-green-100,.account-card .bg-pink-100{background:linear-gradient(135deg,var(--account-navy),var(--account-navy-light))!important;color:#fff!important}.account-card .text-blue-600,.account-card .text-green-600,.account-card .text-pink-600{color:#fff!important}
+        .account-card button{background:var(--account-navy)!important;color:#fff!important;border:0!important;border-radius:8px!important}.account-card button:hover{background:var(--account-navy-light)!important}.modal-overlay { backdrop-filter: blur(4px); }
+        #createAccountModal>div{border-radius:16px!important;border:1px solid var(--account-border)}#createAccountModal input:focus{--tw-ring-color:var(--account-navy);border-color:var(--account-navy)}#createAccountModal .bg-blue-50{background:#f1f5f9!important;border-color:#dbe3ec!important}#createAccountModal .text-blue-900,#createAccountModal .text-blue-700{color:#334155!important}#createAccountModal button[type=submit]{background:var(--account-navy)!important}#createAccountModal button[type=submit]:hover{background:var(--account-navy-light)!important}
+        @media(max-width:640px){.account-page{padding:16px 12px 32px}.account-heading{align-items:stretch;flex-direction:column}.account-add{align-self:flex-start}.account-summary-value{font-size:28px}}
     </style>
 </head>
-<body class="bg-slate-50">
-    <main class="max-w-6xl mx-auto bg-white min-h-screen pb-20 px-4">
-        <div class="pt-6">
+<body>
+    <main class="account-page">
+        <div class="account-shell">
+            <div class="account-topbar"><button type="button" class="account-close" onclick="window.history.length > 1 ? history.back() : location.href='dashboard.html'" aria-label="Close and return" title="Close"><i class="fas fa-xmark"></i></button></div>
             <!-- Page Header -->
-            <div class="mb-8">
-                <div class="flex items-center gap-3 mb-2">
-                    <button onclick="history.back()" class="p-2 rounded-full hover:bg-slate-100 transition-colors">
-                        <i class="fas fa-arrow-left text-slate-600"></i>
-                    </button>
-                    <h1 class="text-2xl font-bold text-slate-900">My Accounts</h1>
-                </div>
-                <p class="text-slate-600 ml-11">View and manage all your bank accounts</p>
+            <div class="account-heading">
+                <div><div class="account-kicker">ABU banking</div><h1>My accounts</h1><p>View and manage all your bank accounts.</p></div>
+                <button onclick="showCreateAccountModal()" class="account-add"><i class="fas fa-plus mr-1"></i>Open account</button>
             </div>
 
             <!-- Alert -->
             <div id="alert" class="mb-6"></div>
 
             <!-- Summary Card -->
-            <div class="rounded-lg p-6 mb-8">
-                <div class="flex items-start justify-between">
-                        <h3 class="text-slate-500 text-sm mb-2">Total Available Balance</h3>
-                        <p id="accountsTotalBalance" class="text-4xl font-bold text-slate-500">$0.00</p>
-                    </div>
-                </div>
+            <div class="account-summary"><div class="account-summary-label">Total available balance</div><p id="accountsTotalBalance" class="account-summary-value">$0.00</p></div>
             
             <!-- Accounts Grid -->
-            <div class="mb-6">
-                <div class="flex items-start justify-between">
-                    <h2 class="text-xl font-semibold text-slate-700"> Your Accounts</h2>
-                    <button onclick="showCreateAccountModal()" class="w-12 h-12 rounded-full flex items-center justify-center">
-                        <i class="fas fa-plus text-2xl text-slate-400"></i>
-                    </button>
-                </div>
-            </div>
+            <div class="account-section-head"><h2>Your accounts</h2><span id="accountCount" class="account-count">Active and pending</span></div>
 
 
                 <div id="accountsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -72,7 +61,6 @@
                     </div>
                 </div>
             </div>
-        </div>
     </main>
 
     <!-- Create Account Modal -->
@@ -155,7 +143,6 @@
         </div>
     </div>
 
-    <script src="js/bottom-nav.js?v=20260121.1"></script>
     <script src="js/sidebar.js?v=20260121.1"></script>
     <script src="js/demo-data.js"></script>
     <script src="js/api.js?v=20260121.2"></script>
