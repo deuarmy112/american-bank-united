@@ -1,12 +1,14 @@
 /* Opay-like visual style overrides */
 :root{
-  --opay-start:#FF6B35;
-  --opay-end:#F7931E;
+  --opay-start:#111827;
+  --opay-end:#26364a;
   --muted:#6b7280;
   --card:#ffffff;
-  --abu-silver:#C0C0C0;
-  --abu-grey:#7f7f7f;
-  --abu-gold:#D4AF37;
+  --abu-silver:#111827;
+  --abu-grey:#26364a;
+  --abu-gold:#334155;
+  --abu-navy:#111827;
+  --abu-navy-light:#26364a;
 }
 body{
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
@@ -25,9 +27,10 @@ body{
   background: var(--card);
   border-radius: 1rem;
   box-shadow: 0 8px 20px rgba(15,23,42,0.06);
+  border: 1px solid #d8e0ea;
 }
 .opay-balance{color:white;padding:1rem;border-radius:1rem}
-.opay-abu-gradient{background: linear-gradient(90deg,var(--abu-silver),var(--abu-grey));}
+.opay-abu-gradient{background: linear-gradient(90deg,var(--abu-navy),var(--abu-navy-light));}
 .opay-action{background:var(--card);border-radius:9999px;padding:.6rem;box-shadow:0 6px 14px rgba(15,23,42,0.06)}
 .opay-quick .w-14{width:3.5rem;height:3.5rem}
 .opay-quick i{font-size:1.1rem}
@@ -38,7 +41,7 @@ body{
 
 /* Make icons and interactive controls use a neutral silver/grey tone by default */
 :root {
-  --abu-control: var(--abu-grey);
+  --abu-control: var(--abu-navy);
 }
 
 /* Icons, font-awesome glyphs and inline SVGs */
@@ -51,29 +54,29 @@ body{
 .hover\:bg-orange-100:hover { background-color: #f8fafc !important; }
 
 /* Neutralize stronger orange utilities used in buttons and text */
-.bg-orange-600 { background-color: #f7f8f8 !important; color: var(--abu-control) !important; border: 1px solid #e6e9ea !important; }
+.bg-orange-600 { background-color: var(--abu-navy) !important; color: #fff !important; border: 1px solid var(--abu-navy) !important; }
 .hover\:bg-orange-700:hover { background-color: #eef0f1 !important; }
 .text-orange-600 { color: var(--abu-control) !important; }
 .text-orange-600:hover { color: var(--abu-control) !important; }
-.bg-amber-500, .text-amber-500 { background: #f7f8f8 !important; color: var(--abu-control) !important; }
+.bg-amber-500, .text-amber-500 { background: var(--abu-navy) !important; color: #fff !important; }
 
 /* Catch other common classes that may color controls */
-.btn-primary, .btn-accent { background: #f7f8f8 !important; color: var(--abu-control) !important; border:1px solid #e6e9ea !important; }
+.btn-primary, .btn-accent { background: var(--abu-navy) !important; color: #fff !important; border:1px solid var(--abu-navy) !important; }
 
 /* Neutralize Indigo utilities (buttons/active states) */
 .bg-indigo-600, .bg-indigo-500, .text-indigo-600, .text-indigo-500 {
-  background: #f7f8f8 !important;
-  color: var(--abu-control) !important;
-  border: 1px solid #e6e9ea !important;
+  background: var(--abu-navy) !important;
+  color: #fff !important;
+  border: 1px solid var(--abu-navy) !important;
 }
-.hover\:bg-indigo-700:hover, .hover\:bg-indigo-600:hover { background: #eef0f1 !important; }
+.hover\:bg-indigo-700:hover, .hover\:bg-indigo-600:hover { background: var(--abu-navy-light) !important; }
 
 .bg-purple-600, .bg-violet-600, .bg-blue-600 {
-  background: linear-gradient(135deg, var(--abu-silver), var(--abu-grey) 55%, var(--abu-gold)) !important;
+  background: linear-gradient(135deg, var(--abu-navy), var(--abu-navy-light)) !important;
   color: #ffffff !important;
 }
 .hover\:bg-purple-700:hover, .hover\:bg-violet-700:hover, .hover\:bg-blue-700:hover {
-  background: linear-gradient(135deg, var(--abu-grey), var(--abu-gold)) !important;
+  background: var(--abu-navy-light) !important;
 }
 .bg-purple-100, .bg-violet-100, .bg-blue-100, .bg-cyan-100 {
   background-color: rgba(192, 192, 192, 0.28) !important;
@@ -106,24 +109,24 @@ a[style*="color"] { color: var(--abu-control) !important; }
 
 /* Primary buttons and action controls: make them subtle silver/grey */
 .opay-btn {
-  background: linear-gradient(90deg,#f5f7f8,#eef0f1) !important;
-  color: var(--abu-control) !important;
+  background: linear-gradient(90deg,var(--abu-navy),var(--abu-navy-light)) !important;
+  color: #fff !important;
   box-shadow: 0 4px 10px rgba(15,23,42,0.04) !important;
   border: 1px solid #e6e9ea !important;
 }
 
 /* Floating action button and bottom nav primary button */
 .opay-bottom-nav .fab {
-  background: #ffffff !important;
-  color: var(--abu-control) !important;
+  background: var(--abu-navy) !important;
+  color: #fff !important;
   box-shadow: 0 6px 14px rgba(15,23,42,0.06) !important;
   transform: translateY(-20%);
   border: 1px solid #e6e9ea !important;
 }
 
 /* Quick action tiles: keep icon background neutral and icon color grey */
-.opay-quick .w-14, .opay-action, .w-14.h-14 { background: #ffffff !important; border: 1px solid #eef2f4 !important; }
-.opay-quick i { color: var(--abu-control) !important; }
+.opay-quick .w-14, .opay-action, .w-14.h-14 { background: var(--abu-navy) !important; border: 1px solid var(--abu-navy-light) !important; color: #fff !important; }
+.opay-quick i { color: #fff !important; }
 
 /* Ensure pills and small controls follow the neutral tone */
 .opay-pill, .opay-card .small, .opay-card .title { color: var(--abu-control) !important; }
@@ -133,7 +136,7 @@ a[style*="color"] { color: var(--abu-control) !important; }
 
 /* Balance card: silver -> grey -> gold gradient for ABU branding */
 .opay-balance-gradient {
-  background: linear-gradient(135deg, var(--abu-silver) 0%, var(--abu-grey) 55%, var(--abu-gold) 100%);
+  background: linear-gradient(135deg, var(--abu-navy) 0%, var(--abu-navy-light) 100%);
   color: #ffffff; /* keep text readable */
   border-radius: 1rem;
   padding: 1rem;
@@ -149,18 +152,13 @@ a[style*="color"] { color: var(--abu-control) !important; }
 .promo-slide { min-width: 100%; box-sizing: border-box; border-radius: 12px; padding: 16px; box-shadow: 0 10px 30px rgba(2,6,23,0.06) }
 .promo-indicators { display:flex; gap:8px; justify-content:center; margin-top:8px }
 .promo-indicators button { width:8px; height:8px; border-radius:9999px; background:rgba(15,23,42,0.08); border:0 }
-.promo-indicators button.active { background: linear-gradient(90deg, var(--abu-silver), var(--abu-grey), var(--abu-gold)); box-shadow:0 4px 10px rgba(0,0,0,0.06) }
+.promo-indicators button.active { background: linear-gradient(90deg, var(--abu-navy), var(--abu-navy-light)); box-shadow:0 4px 10px rgba(0,0,0,0.06) }
 
 /* Soft gradient background for promo slides (restores bottom tint) */
 .gradient-sg {
   /* Smooth, blended silver -> grey -> subtle gold tint matching dashboard design */
-  background: linear-gradient(180deg,
-    var(--abu-silver) 0%,
-    rgba(192,192,192,0.92) 25%,
-    rgba(150,150,150,0.7) 55%,
-    rgba(212,175,55,0.08) 100%
-  );
-  color: #0f172a;
+  background: linear-gradient(135deg, var(--abu-navy), var(--abu-navy-light));
+  color: #fff;
   border: 1px solid rgba(15,23,42,0.03);
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(2,6,23,0.06);
@@ -176,6 +174,13 @@ a[style*="color"] { color: var(--abu-control) !important; }
   background: rgba(255,255,255,0.18) !important;
   color: #ffffff !important;
   border: 1px solid rgba(255,255,255,0.12) !important;
+}
+.opay-btn .fas, .opay-btn .far, .opay-btn .fab,
+.opay-balance-gradient button .fas, .opay-balance-gradient button .far,
+.opay-balance-gradient button .fab,
+.bg-indigo-600 .fas, .bg-indigo-500 .fas, .bg-purple-600 .fas,
+.bg-blue-600 .fas, .bg-amber-500 .fas, .btn-primary .fas, .btn-accent .fas {
+  color: #ffffff !important;
 }
 
 
@@ -209,7 +214,7 @@ a[style*="color"] { color: var(--abu-control) !important; }
 .opay-bottom-nav { display:flex; gap:8px; align-items:flex-end; justify-content:space-between; padding:10px 14px; z-index:60 }
 .opay-bottom-nav .bn-item { background:transparent; border:0; outline:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--abu-control); font-size:12px; padding:10px 8px 14px; border-radius:10px; position:relative }
 .opay-bottom-nav .bn-item i { font-size:18px; color:var(--abu-control); margin-bottom:3px }
-.opay-bottom-nav .bn-item.active { color:var(--abu-grey); background:rgba(0,0,0,0.02); }
+.opay-bottom-nav .bn-item.active { color:var(--abu-navy); background:rgba(17,24,39,0.08); }
 
 /* Active button gradient underline */
 .opay-bottom-nav .bn-item.active::after {
@@ -220,7 +225,7 @@ a[style*="color"] { color: var(--abu-control) !important; }
   height: 3px;
   bottom: 6px;
   border-radius: 4px;
-  background: linear-gradient(90deg, var(--abu-silver) 0%, var(--abu-grey) 55%, var(--abu-gold) 100%);
+  background: linear-gradient(90deg, var(--abu-navy), var(--abu-navy-light));
 }
 .opay-bottom-nav .bn-item.bn-action {
   background: transparent !important;
@@ -275,11 +280,11 @@ h1.opay-title{font-size:1.1rem;font-weight:700;margin:0}
 }
 
 /* Buttons */
-.opay-btn { background:linear-gradient(90deg,var(--opay-start),var(--opay-end)); color:#fff; padding:.6rem 1rem; border-radius:10px; border:0 }
+.opay-btn { background:linear-gradient(90deg,var(--abu-navy),var(--abu-navy-light)); color:#fff; padding:.6rem 1rem; border-radius:10px; border:0 }
 
 /* Bottom nav small tweaks */
 .opay-bottom-nav a { color: #374151; text-decoration:none }
-.opay-bottom-nav a.active { color: var(--opay-end) }
+.opay-bottom-nav a.active { color: var(--abu-navy) }
 
 /* Desktop adjustments: when viewing on a laptop/desktop, prefer a full-screen layout
    and hide the mobile bottom controls. The `desktop` class is toggled by JS. */
