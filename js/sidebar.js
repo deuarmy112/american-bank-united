@@ -140,6 +140,7 @@ function injectSidebar() {
         #abu-sidebar .abu-sidebar-header{background:linear-gradient(135deg,#111827,#26364a)!important}
         #abu-sidebar .abu-sidebar-tile{background:#fff!important;border:1px solid #dbe3ec;box-shadow:0 4px 12px rgba(15,23,42,.05)}
         #abu-sidebar .abu-sidebar-icon{background:linear-gradient(135deg,#111827,#26364a)!important;color:#fff!important}
+        #abu-sidebar .abu-sidebar-icon svg,#abu-sidebar .abu-sidebar-icon svg *{color:#fff!important;fill:#fff!important;stroke:#fff!important}
         #abu-sidebar .abu-sidebar-action{background:#fff!important;border:1px solid #dbe3ec!important}
         #abu-sidebar .abu-sidebar-action i{color:#111827!important}
         #abu-sidebar #sidebarAvatar{width:36px!important;height:36px!important;border:2px solid #111827;border-radius:50%;object-fit:cover}
