@@ -3,80 +3,50 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <script>
-    if (!localStorage.getItem('authToken')) {
-      localStorage.setItem('authToken', 'guest-token');
-    }
-  </script>
-  <title>More - American Bank United</title>
+  <script>if (!localStorage.getItem('authToken')) localStorage.setItem('authToken', 'guest-token');</script>
+  <title>Menu - American Bank United</title>
   <link rel="stylesheet" href="css/tailwind.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/opay.css">
   <link rel="icon" href="assets/abu-logo.png" type="image/png">
+  <style>
+    :root{--menu-navy:#111827;--menu-navy-light:#26364a;--menu-border:#dbe3ec}
+    body{background:#f8fafc;color:#0f172a}
+    .menu-page{min-height:100vh;padding:20px 16px 40px}.menu-shell{width:min(100%,680px);margin:0 auto}.menu-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}.menu-kicker{font-size:11px;color:#64748b;font-weight:700;letter-spacing:.09em;text-transform:uppercase}.menu-topbar h1{font-size:28px;line-height:1.1;margin:3px 0 0}.menu-close{width:40px;height:40px;border:1px solid var(--menu-border);border-radius:999px;background:#fff;color:#64748b;box-shadow:0 4px 12px rgba(15,23,42,.08)}.menu-profile{width:32px;height:32px;border:2px solid var(--menu-navy);border-radius:999px;overflow:hidden;background:#fff;color:var(--menu-navy);display:flex;align-items:center;justify-content:center;text-decoration:none}.menu-profile img{width:100%;height:100%;object-fit:cover;display:block}
+    .menu-intro{color:#64748b;font-size:14px;margin:-14px 0 20px}.menu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.menu-item{display:flex;align-items:center;gap:12px;padding:14px;background:#fff;border:1px solid var(--menu-border);border-radius:13px;color:#0f172a;text-decoration:none;box-shadow:0 5px 15px rgba(15,23,42,.04);transition:transform .2s,box-shadow .2s}.menu-item:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(15,23,42,.09)}.menu-item-icon{width:40px;height:40px;flex:0 0 40px;border-radius:11px;background:linear-gradient(135deg,var(--menu-navy),var(--menu-navy-light));color:#fff;display:flex;align-items:center;justify-content:center}.menu-item-copy{min-width:0}.menu-item-copy strong{display:block;font-size:14px}.menu-item-copy span{display:block;margin-top:3px;color:#64748b;font-size:11px}.menu-note{margin-top:16px;padding:14px;border:1px solid var(--menu-border);border-radius:13px;background:#fff;color:#64748b;font-size:12px;line-height:1.5}.menu-note i{color:var(--menu-navy);margin-right:6px}
+    @media(max-width:480px){.menu-page{padding:16px 12px 32px}.menu-grid{grid-template-columns:1fr}.menu-topbar{margin-bottom:24px}}
+  </style>
 </head>
-<body class="opay-ui">
-  <header class="opay-header">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center gap-4">
-        <a href="dashboard.html" class="opay-brand flex items-center gap-3">
-          <img src="assets/abu-logo.png" alt="American Bank United" class="w-24 h-auto">
-          <div>
-            <div class="opay-name">American Bank United</div>
-            <div class="opay-sub">More</div>
-          </div>
-        </a>
-      </div>
-    </div>
-  </header>
-  <main class="max-w-md mx-auto p-4 pb-32">
-    <h1 class="text-lg font-semibold mb-2">More Controls</h1>
-    <p class="text-sm text-slate-600">Additional features and actions.</p>
-    <div class="mt-4 grid grid-cols-2 gap-3">
-      <a href="wallet.html" class="flex flex-col items-center p-4 bg-slate-50 rounded-lg">
-        <i class="fas fa-wallet text-2xl text-fuchsia-600 mb-2"></i>
-        <span class="text-sm">Wallet</span>
-      </a>
-      <a href="#" onclick="openFeatureModal('loan')" class="flex flex-col items-center p-4 bg-slate-50 rounded-lg">
-        <i class="fas fa-hand-holding-dollar text-2xl text-rose-500 mb-2"></i>
-        <span class="text-sm">Loan</span>
-      </a>
-      <a href="investments.html" class="flex flex-col items-center p-4 bg-slate-50 rounded-lg">
-        <i class="fas fa-chart-line text-2xl text-sky-600 mb-2"></i>
-        <span class="text-sm">Investment</span>
-      </a>
-      <a href="shop.html" class="flex flex-col items-center p-4 bg-slate-50 rounded-lg">
-        <i class="fas fa-store text-2xl text-yellow-600 mb-2"></i>
-        <span class="text-sm">Shop Now</span>
-      </a>
-      <a href="other-banks.html" class="flex flex-col items-center p-4 bg-slate-50 rounded-lg">
-        <i class="fas fa-globe text-2xl text-sky-500 mb-2"></i>
-        <span class="text-sm">International Transfer</span>
-      </a>
-      <a href="trade.html" class="flex flex-col items-center p-4 bg-slate-50 rounded-lg">
-        <i class="fas fa-exchange-alt text-2xl text-indigo-600 mb-2"></i>
-        <span class="text-sm">Trade</span>
-      </a>
-      <a href="transactions.html" class="flex flex-col items-center p-4 bg-slate-50 rounded-lg">
-        <i class="fas fa-history text-2xl text-slate-700 mb-2"></i>
-        <span class="text-sm">History</span>
-      </a>
-      <a href="cards.html" class="flex flex-col items-center p-4 bg-slate-50 rounded-lg">
-        <i class="fas fa-credit-card text-2xl text-sky-500 mb-2"></i>
-        <span class="text-sm">Cards</span>
-      </a>
-      <a href="#" onclick="openFeatureModal('qr')" class="flex flex-col items-center p-4 bg-slate-50 rounded-lg">
-        <i class="fas fa-qrcode text-2xl text-slate-700 mb-2"></i>
-        <span class="text-sm">QR Pay</span>
-      </a>
-      <a href="#" onclick="openBeneficiariesModal()" class="flex flex-col items-center p-4 bg-slate-50 rounded-lg">
-        <i class="fas fa-users text-2xl text-indigo-600 mb-2"></i>
-        <span class="text-sm">Beneficiaries</span>
-      </a>
+<body>
+  <main class="menu-page">
+    <div class="menu-shell">
+      <div class="menu-topbar"><div><div class="menu-kicker">American Bank United</div><h1>Menu</h1></div><div class="flex items-center gap-3"><a id="menuProfile" href="profile.html" class="menu-profile" aria-label="View profile" title="Profile"><i class="fas fa-user"></i></a><button type="button" class="menu-close" onclick="window.history.length > 1 ? history.back() : location.href='dashboard.html'" aria-label="Close and return" title="Close"><i class="fas fa-xmark"></i></button></div></div>
+      <p class="menu-intro">Access your banking tools and services.</p>
+      <nav class="menu-grid" aria-label="Additional banking services">
+        <a href="wallet.html" class="menu-item"><span class="menu-item-icon"><i class="fas fa-wallet"></i></span><span class="menu-item-copy"><strong>Wallet</strong><span>Manage your wallet</span></span></a>
+        <a href="#" onclick="openFeatureModal('loan');return false" class="menu-item"><span class="menu-item-icon"><i class="fas fa-hand-holding-dollar"></i></span><span class="menu-item-copy"><strong>Loans</strong><span>Explore loan options</span></span></a>
+        <a href="investments.html" class="menu-item"><span class="menu-item-icon"><i class="fas fa-chart-line"></i></span><span class="menu-item-copy"><strong>Investments</strong><span>Build toward your goals</span></span></a>
+        <a href="shop.html" class="menu-item"><span class="menu-item-icon"><i class="fas fa-store"></i></span><span class="menu-item-copy"><strong>Shop</strong><span>Browse available offers</span></span></a>
+        <a href="other-banks.html" class="menu-item"><span class="menu-item-icon"><i class="fas fa-globe"></i></span><span class="menu-item-copy"><strong>International transfer</strong><span>Send funds abroad</span></span></a>
+        <a href="trade.html" class="menu-item"><span class="menu-item-icon"><i class="fas fa-exchange-alt"></i></span><span class="menu-item-copy"><strong>Trade</strong><span>Manage trading activity</span></span></a>
+        <a href="transactions.html" class="menu-item"><span class="menu-item-icon"><i class="fas fa-history"></i></span><span class="menu-item-copy"><strong>History</strong><span>Review transactions</span></span></a>
+        <a href="cards.html" class="menu-item"><span class="menu-item-icon"><i class="fas fa-credit-card"></i></span><span class="menu-item-copy"><strong>Cards</strong><span>Manage your cards</span></span></a>
+        <a href="qr.html" class="menu-item"><span class="menu-item-icon"><i class="fas fa-qrcode"></i></span><span class="menu-item-copy"><strong>QR Pay</strong><span>Scan or receive funds</span></span></a>
+        <a href="#" onclick="openBeneficiariesModal();return false" class="menu-item"><span class="menu-item-icon"><i class="fas fa-users"></i></span><span class="menu-item-copy"><strong>Beneficiaries</strong><span>Manage saved recipients</span></span></a>
+      </nav>
+      <div class="menu-note"><i class="fas fa-shield-halved"></i> Your banking tools are protected by American Bank United security controls.</div>
     </div>
   </main>
+  <script src="js/api.js"></script>
   <script src="js/features.js"></script>
   <script>
-    // loan modal uses existing handler present in features.js
-    // close behavior: none required here
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const profile = await authAPI.getProfile();
+        const icon = document.getElementById('menuProfile');
+        if (profile?.avatar && icon) icon.innerHTML = `<img src="${profile.avatar}" alt="Profile picture">`;
+      } catch (error) { console.warn('Unable to load menu profile image', error); }
+    });
   </script>
 </body>
 </html>
