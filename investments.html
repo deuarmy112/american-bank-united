@@ -3,35 +3,34 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <script>
-    if (!localStorage.getItem('authToken')) {
-      localStorage.setItem('authToken', 'guest-token');
-    }
-  </script>
-  <title>Investment - American Bank United</title>
+  <script>if (!localStorage.getItem('authToken')) localStorage.setItem('authToken', 'guest-token');</script>
+  <title>Investments - American Bank United</title>
   <link rel="stylesheet" href="css/tailwind.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/opay.css">
   <link rel="icon" href="assets/abu-logo.png" type="image/png">
+  <style>
+    :root{--invest-navy:#111827;--invest-navy-light:#26364a;--invest-border:#dbe3ec}
+    body{background:#f8fafc;color:#0f172a}
+    .invest-page{min-height:100vh;padding:20px 16px 40px}.invest-shell{width:min(100%,680px);margin:0 auto}.invest-topbar{display:flex;justify-content:flex-end;margin-bottom:28px}.invest-close{width:40px;height:40px;border:1px solid var(--invest-border);border-radius:999px;background:#fff;color:#64748b;box-shadow:0 4px 12px rgba(15,23,42,.08)}
+    .invest-kicker{color:#64748b;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}.invest-hero h1{font-size:28px;line-height:1.12;margin:4px 0 7px}.invest-hero p{color:#64748b;font-size:14px;margin:0}.invest-hero{margin-bottom:18px}
+    .invest-card{background:#fff;border:1px solid var(--invest-border);border-radius:16px;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.05)}.invest-card + .invest-card{margin-top:14px}.invest-card h2{font-size:17px;margin:0}.invest-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.invest-muted{color:#64748b;font-size:13px}
+    .invest-summary{background:linear-gradient(135deg,var(--invest-navy),var(--invest-navy-light));color:#fff;border-radius:14px;padding:18px;margin-top:15px}.invest-summary-label{color:#cbd5e1;font-size:12px}.invest-summary-value{font-size:30px;font-weight:800;margin-top:4px}.invest-summary-foot{display:flex;justify-content:space-between;gap:12px;margin-top:18px;color:#cbd5e1;font-size:12px}
+    .invest-product{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #edf1f5}.invest-product:last-child{border-bottom:0;padding-bottom:0}.invest-product:first-child{padding-top:16px}.invest-product-icon{width:40px;height:40px;flex:0 0 40px;border-radius:11px;background:linear-gradient(135deg,var(--invest-navy),var(--invest-navy-light));color:#fff;display:flex;align-items:center;justify-content:center}.invest-product-copy{flex:1;min-width:0}.invest-product-copy strong{display:block;font-size:14px}.invest-product-copy span{display:block;color:#64748b;font-size:12px;margin-top:3px}.invest-status{font-size:11px;font-weight:700;color:#475569;background:#f1f5f9;border-radius:999px;padding:5px 8px;white-space:nowrap}
+    .invest-note{display:flex;gap:10px;align-items:flex-start;color:#475569;font-size:13px;line-height:1.5}.invest-note i{color:var(--invest-navy);margin-top:2px}.invest-link{display:inline-flex;align-items:center;gap:7px;margin-top:16px;border-radius:10px;padding:11px 14px;background:var(--invest-navy);color:#fff;font-size:13px;font-weight:700;text-decoration:none}.invest-link:hover{background:var(--invest-navy-light)}
+  </style>
 </head>
-<body class="opay-ui">
-  <header class="opay-header">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center gap-4">
-        <a href="dashboard.html" class="opay-brand flex items-center gap-3">
-          <img src="assets/abu-logo.png" alt="American Bank United" class="w-24 h-auto">
-          <div>
-            <div class="opay-name">American Bank United</div>
-            <div class="opay-sub">ABU — Everyday banking</div>
-          </div>
-        </a>
-      </div>
-    </div>
-  </header>
-  <main class="max-w-md mx-auto p-4 pb-32">
-    <h1 class="text-lg font-semibold mb-2">Investment</h1>
-    <p class="text-sm text-slate-600">Explore investment products and track performance.</p>
-    <div class="mt-4">
-      <p class="text-xs text-slate-500">Placeholder — implement investment services and endpoints.</p>
+<body>
+  <main class="invest-page">
+    <div class="invest-shell">
+      <div class="invest-topbar"><button type="button" class="invest-close" onclick="window.history.length > 1 ? history.back() : location.href='dashboard.html'" aria-label="Close and return" title="Close"><i class="fas fa-xmark"></i></button></div>
+      <section class="invest-hero"><div class="invest-kicker">ABU Wealth</div><h1>Investments</h1><p>Build toward your goals with clear, long-term investment options.</p></section>
+
+      <section class="invest-card"><div class="invest-card-head"><div><h2>Portfolio overview</h2><p class="invest-muted" style="margin:4px 0 0">Your investment balance</p></div><i class="fas fa-chart-line" style="color:var(--invest-navy);font-size:20px"></i></div><div class="invest-summary"><div class="invest-summary-label">Total invested</div><div class="invest-summary-value">$0.00</div><div class="invest-summary-foot"><span>Return</span><strong>Not available yet</strong></div></div></section>
+
+      <section class="invest-card"><div class="invest-card-head"><div><h2>Investment products</h2><p class="invest-muted" style="margin:4px 0 0">Options designed for different goals</p></div></div><div class="invest-product"><div class="invest-product-icon"><i class="fas fa-piggy-bank"></i></div><div class="invest-product-copy"><strong>Managed portfolios</strong><span>Diversified investing managed for you</span></div><span class="invest-status">Coming soon</span></div><div class="invest-product"><div class="invest-product-icon"><i class="fas fa-chart-pie"></i></div><div class="invest-product-copy"><strong>Market funds</strong><span>Flexible access to diversified funds</span></div><span class="invest-status">Coming soon</span></div><div class="invest-product"><div class="invest-product-icon"><i class="fas fa-landmark"></i></div><div class="invest-product-copy"><strong>Fixed-term savings</strong><span>Plan ahead with a defined time horizon</span></div><span class="invest-status">Coming soon</span></div></section>
+
+      <section class="invest-card"><div class="invest-note"><i class="fas fa-circle-info"></i><span>Investment services are being prepared for American Bank United customers. Your banking balance remains separate from this overview.</span></div><a class="invest-link" href="dashboard.html"><i class="fas fa-arrow-left"></i>Return to dashboard</a></section>
     </div>
   </main>
 </body>
