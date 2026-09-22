@@ -150,6 +150,9 @@
         document.getElementById('startChatButton')?.addEventListener('click', startCustomerChat);
         document.getElementById('openExistingChat')?.addEventListener('click', openExistingChat);
         document.getElementById('openExistingChatTop')?.addEventListener('click', openExistingChat);
+        if (new URLSearchParams(window.location.search).get('openSupport') === '1') {
+            window.openCustomerServiceModal();
+        }
         const form = document.getElementById('chatForm');
         if (!form) return;
         form.addEventListener('submit', async event => {

@@ -185,8 +185,7 @@
             <script>
                 // Initialize user name display
                 document.addEventListener('DOMContentLoaded', async function() {
-                    const shouldOpenSupport = new URLSearchParams(window.location.search).get('openSupport') === '1';
-                    await displayUserName();
+                    try { await displayUserName(); } catch (error) { console.warn('Unable to load dashboard user name', error); }
                     try {
                         const profile = await authAPI.getProfile();
                         const profileIcon = document.getElementById('dashboardProfileIcon');
@@ -195,7 +194,6 @@
                         }
                         if (profile?.status === 'suspended' || profile?.status === 'restricted' || profile?.transfer_pin_locked) document.getElementById('accountRestrictionNotice')?.classList.remove('hidden');
                     } catch (error) { console.warn('Unable to load account restriction status', error); }
-                    if (shouldOpenSupport && typeof openCustomerServiceModal === 'function') openCustomerServiceModal();
                 });
             </script>
 
