@@ -340,12 +340,12 @@
                     </div>
                 `).join('');
 
-                let transactionsHtml = data.recentTransactions.slice(0, 10).map(txn => `
+                let transactionsHtml = (data.recentTransactions || []).slice(0, 10).map(txn => `
                     <tr>
                         <td>${formatDate(txn.created_at)}</td>
-                        <td>${txn.account_number}</td>
-                        <td><span class="badge">${txn.type.replace('_', ' ')}</span></td>
-                        <td>${formatCurrency(txn.amount)}</td>
+                        <td>${txn.account_number || '-'}</td>
+                        <td><span class="badge">${String(txn.type || 'activity').replace(/_/g, ' ')}</span></td>
+                        <td>${formatCurrency(Number(txn.amount || 0))}</td>
                         <td>${txn.description || '-'}</td>
                     </tr>
                 `).join('');
@@ -384,7 +384,7 @@
 
             } catch (error) {
                 console.error('View user details error:', error);
-                showAlert('Failed to load user details', 'error');
+                showAlert(error.message || 'Failed to load user details', 'error');
             }
         }
 
@@ -465,7 +465,7 @@
                 loadUsers();
             } catch (error) {
                 console.error('Update status error:', error);
-                showAlert('Failed to update user status', 'error');
+                showAlert(error.message || 'Failed to update user status', 'error');
             }
         });
 

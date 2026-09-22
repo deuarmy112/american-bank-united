@@ -223,6 +223,25 @@ async function getApprovalPolicy() {
     };
 }
 
+function approvalSettingDefaults() {
+    return {
+        withdrawal_threshold: '1000',
+        transfer_threshold: '5000',
+        require_all_approvals: 'false',
+        max_pin_attempts: '5'
+    };
+}
+
+async function recordAdminAction(user, actionType, description, metadata = {}) {
+    await save('admin_actions', {
+        admin_id: user.userId,
+        action_type: actionType,
+        description,
+        metadata,
+        created_at: now()
+    });
+}
+
 async function save(collection, data, id = randomUUID()) {
     const record = { ...data, id, created_at: data.created_at || now(), updated_at: now() };
     await getDb().collection(collection).doc(id).set(record, { merge: true });
@@ -1033,7 +1052,7 @@ async function adminRoutes(method, parts, user, body, query) {
 
     if (method === 'GET' && parts[0] === 'settings' && parts[1] === 'approval-thresholds') {
         const settings = await getDoc('settings', 'approval-thresholds');
-        return { body: { settings: Object.entries(settings?.values || { withdrawal_threshold: '1000', transfer_threshold: '5000', require_all_approvals: 'false', max_pin_attempts: '5' }).map(([setting_name, setting_value]) => ({ setting_name, setting_value })) } };
+        return { body: { settings: Object.entries({ ...approvalSettingDefaults(), ...(settings?.values || {}) }).map(([setting_name, setting_value]) => ({ setting_name, setting_value })) } };
     }
 
     if (method === 'PUT' && parts[0] === 'settings' && parts[1] === 'approval-thresholds') {
@@ -1045,7 +1064,25 @@ async function adminRoutes(method, parts, user, body, query) {
             max_pin_attempts: String(Math.max(3, Math.min(10, Number(requestedSettings.max_pin_attempts || 5))))
         };
         await getDb().collection('settings').doc('approval-thresholds').set({ values, updated_at: now(), updated_by: user.userId }, { merge: true });
+        await recordAdminAction(user, 'SETTINGS_UPDATED', 'Approval and transfer security settings updated', values);
         return { body: { message: 'Approval settings updated successfully', settings: Object.entries(values).map(([setting_name, setting_value]) => ({ setting_name, setting_value })) } };
+    }
+
+    if (method === 'POST' && parts[0] === 'settings' && parts[1] === 'approval-thresholds' && parts[2] === 'reset') {
+        const values = approvalSettingDefaults();
+        await getDb().collection('settings').doc('approval-thresholds').set({ values, updated_at: now(), updated_by: user.userId }, { merge: true });
+        await recordAdminAction(user, 'SETTINGS_RESET', 'Approval and transfer security settings reset to defaults', values);
+        return { body: { message: 'Approval settings reset to defaults', settings: Object.entries(values).map(([setting_name, setting_value]) => ({ setting_name, setting_value })) } };
+    }
+
+    if (method === 'GET' && parts[0] === 'data-management') {
+        const collections = ['users', 'accounts', 'transactions', 'cards', 'notifications', 'chat_conversations', 'admin_actions'];
+        const counts = await Promise.all(collections.map(async collection => {
+            const snapshot = await getDb().collection(collection).get();
+            return [collection, snapshot.size];
+        }));
+        const settings = await getDoc('settings', 'approval-thresholds');
+        return { body: { counts: Object.fromEntries(counts), settingsUpdatedAt: settings?.updated_at || null } };
     }
 
     if (method === 'GET' && parts[0] === 'dashboard') {
@@ -1276,12 +1313,24 @@ async function adminRoutes(method, parts, user, body, query) {
     }
 
     if (method === 'GET' && parts[0] === 'audit-log') {
-        const snapshot = await getDb().collection('admin_transfers').orderBy('created_at', 'desc').limit(Number(reqQuery(query, 'limit', 100) || 100)).get();
-        const actions = await Promise.all(snapshot.docs.map(async doc => {
+        const limit = Number(reqQuery(query, 'limit', 100) || 100);
+        const [transferSnapshot, actionSnapshot] = await Promise.all([
+            getDb().collection('admin_transfers').orderBy('created_at', 'desc').limit(limit).get(),
+            getDb().collection('admin_actions').limit(limit).get()
+        ]);
+        const transferActions = await Promise.all(transferSnapshot.docs.map(async doc => {
             const item = { id: doc.id, ...doc.data() };
             const admin = await getDoc('users', item.created_by);
             return clean({ id: item.id, action_type: 'ADMIN_TRANSFER', description: `${item.transfer_type || 'Transfer'} of $${Number(item.amount || 0).toFixed(2)} to ${item.recipient_name || 'user'}`, metadata: item, created_at: item.created_at, first_name: admin?.first_name || 'Admin', last_name: admin?.last_name || '', email: admin?.email || '' });
         }));
+        const settingsActions = await Promise.all(actionSnapshot.docs.map(async doc => {
+            const item = { id: doc.id, ...doc.data() };
+            const admin = await getDoc('users', item.admin_id);
+            return clean({ id: item.id, action_type: item.action_type, description: item.description, metadata: item.metadata || {}, created_at: item.created_at, first_name: admin?.first_name || 'Admin', last_name: admin?.last_name || '', email: admin?.email || '' });
+        }));
+        const actions = [...transferActions, ...settingsActions]
+            .sort((left, right) => String(right.created_at || '').localeCompare(String(left.created_at || '')))
+            .slice(0, limit);
         return { body: { actions } };
     }
 

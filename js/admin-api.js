@@ -232,5 +232,16 @@ const adminAPI = {
         });
         if (!response.ok) throw new Error('Failed to update approval settings');
         return await response.json();
+    },
+
+    async resetApprovalSettings() {
+        return adminRequest(`${API_URL}/admin/settings/approval-thresholds/reset`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+    },
+
+    async getDataManagementSummary() {
+        return adminRequest(`${API_URL}/admin/data-management`);
     }
 };
