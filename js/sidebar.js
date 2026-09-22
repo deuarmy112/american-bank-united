@@ -252,11 +252,7 @@ function openSupport() {
 }
 
 function openSettings() {
-    if (typeof showAlert !== 'undefined') {
-        showAlert('Settings feature coming soon!', 'info');
-    } else {
-        alert('Settings feature coming soon!');
-    }
+    window.location.href = 'settings.html';
 }
 
 // Initialize sidebar when DOM is ready
