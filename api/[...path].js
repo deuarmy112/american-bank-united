@@ -199,7 +199,7 @@ async function transferPinRoutes(method, parts, user, body) {
 }
 
 async function preferenceRoutes(method, user, body) {
-    const defaults = { productUpdates: false, personalizedExperience: true, activityAlerts: true };
+    const defaults = { productUpdates: false, personalizedExperience: true, activityAlerts: true, transactionAlerts: true, supportMessages: true, reduceMotion: false, currency: 'USD' };
     if (method === 'GET') {
         if (user.userId === GUEST_ID) return { body: { preferences: defaults } };
         const profile = await userProfile(user.userId);
@@ -207,8 +207,9 @@ async function preferenceRoutes(method, user, body) {
     }
     if (method !== 'PATCH') return { status: 405, body: { error: 'Preference method not allowed' } };
     if (user.userId === GUEST_ID) return { status: 401, body: { error: 'Please sign in before updating preferences' } };
-    const allowed = Object.keys(defaults);
-    const updates = Object.fromEntries(allowed.filter(key => typeof body[key] === 'boolean').map(key => [key, body[key]]));
+    const booleanKeys = Object.keys(defaults).filter(key => typeof defaults[key] === 'boolean');
+    const updates = Object.fromEntries(booleanKeys.filter(key => typeof body[key] === 'boolean').map(key => [key, body[key]]));
+    if (['USD', 'EUR', 'GBP', 'CAD', 'AUD'].includes(body.currency)) updates.currency = body.currency;
     if (!Object.keys(updates).length) return { status: 400, body: { error: 'At least one valid preference is required' } };
     await getDb().collection('users').doc(user.userId).set({ preferences: updates, updated_at: now() }, { merge: true });
     const profile = await userProfile(user.userId);
@@ -492,6 +493,22 @@ async function transactionRoutes(method, parts, user, body) {
 async function notificationRoutes(method, parts, user) {
     if (method !== 'GET' || parts.length !== 0) return { status: 404, body: { error: 'Route not found' } };
     const accounts = await listDocs('accounts', 'user_id', user.userId, null, 1000);
+    const profile = user.userId === GUEST_ID ? null : await userProfile(user.userId);
+    const preferences = profile?.preferences || {};
+    const supportNotifications = [];
+    if (user.userId !== GUEST_ID && preferences.supportMessages !== false) {
+        const conversation = await getDb().collection('chat_conversations').doc(user.userId).get();
+        if (conversation.exists) {
+            const messages = await conversation.ref.collection('messages').get();
+            supportNotifications.push(...messages.docs.filter(doc => doc.data().sender_role === 'admin').map(doc => ({
+                id: `support-${doc.id}`,
+                type: 'support_message',
+                title: 'New support reply',
+                message: doc.data().text || 'You have a new message from support.',
+                createdAt: doc.data().created_at
+            })));
+        }
+    }
     const transactions = [];
     for (const account of accounts) transactions.push(...await listDocs('transactions', 'account_id', account.id, null, 200));
     const transfers = await listDocs('external_transfers', 'user_id', user.userId, 'created_at', 200);
@@ -513,10 +530,15 @@ async function notificationRoutes(method, parts, user) {
             amount: transfer.amount,
             receiptId: transfer.receipt_id || null,
             createdAt: transfer.created_at
-        }))
+        })),
+        ...supportNotifications
     ];
     notifications.sort((left, right) => String(right.createdAt || '').localeCompare(String(left.createdAt || '')));
-    return { body: notifications.slice(0, 100) };
+    return { body: notifications.filter(item => {
+        if (preferences.transactionAlerts === false && ['transaction', 'account_activity'].includes(item.type)) return false;
+        if (preferences.supportMessages === false && item.type === 'support_message') return false;
+        return true;
+    }).slice(0, 100) };
 }
 
 async function chatRoutes(method, parts, user, body) {

@@ -5,9 +5,11 @@
 
 // Format currency (converts number to dollar format)
 function formatCurrency(amount) {
+    const savedSettings = JSON.parse(localStorage.getItem('abu_user_settings') || '{}');
+    const currency = ['USD', 'EUR', 'GBP', 'CAD', 'AUD'].includes(savedSettings.currency) ? savedSettings.currency : 'USD';
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: 'USD'
+        currency
     }).format(amount);
 }
 
