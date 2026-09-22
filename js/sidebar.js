@@ -248,11 +248,7 @@ function openBudgetPlanner() {
 }
 
 function openSupport() {
-    if (typeof showAlert !== 'undefined') {
-        showAlert('Support feature coming soon!', 'info');
-    } else {
-        alert('Support feature coming soon!');
-    }
+    window.location.href = 'support.html';
 }
 
 function openSettings() {

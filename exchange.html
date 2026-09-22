@@ -18,22 +18,26 @@
     <div class="exchange-topbar"><button type="button" class="exchange-close" onclick="window.history.length > 1 ? history.back() : location.href='dashboard.html'" aria-label="Close and return" title="Close"><i class="fas fa-xmark"></i></button></div>
     <section class="exchange-heading"><div class="exchange-kicker">ABU Tools</div><h1>Exchange rates</h1><p>Check an estimated conversion between supported currencies.</p></section>
     <section class="exchange-card">
-      <div class="exchange-field"><label for="fromAmount">You send</label><div class="exchange-input"><input id="fromAmount" type="number" min="0" step="0.01" value="100"><select id="fromCurrency" aria-label="Source currency"><option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option><option>AUD</option><option>NGN</option><option>GHS</option></select></div></div>
+      <div class="exchange-field"><label for="fromAmount">You send</label><div class="exchange-input"><input id="fromAmount" type="number" min="0" step="0.01" value="100"><select id="fromCurrency" aria-label="Source currency"></select></div></div>
       <div class="exchange-swap"><button type="button" id="swapCurrencies" aria-label="Swap currencies" title="Swap currencies"><i class="fas fa-arrow-down-up"></i></button></div>
-      <div class="exchange-field"><label for="toAmount">You receive</label><div class="exchange-input"><input id="toAmount" type="text" readonly value="100.00"><select id="toCurrency" aria-label="Target currency"><option>EUR</option><option>USD</option><option>GBP</option><option>CAD</option><option>AUD</option><option>NGN</option><option>GHS</option></select></div></div>
+      <div class="exchange-field"><label for="toAmount">You receive</label><div class="exchange-input"><input id="toAmount" type="text" readonly value="100.00"><select id="toCurrency" aria-label="Target currency"></select></div></div>
       <div class="exchange-result"><div class="exchange-result-label">Estimated conversion</div><div id="conversionResult" class="exchange-result-value">EUR 92.00</div><div id="rateSummary" class="exchange-rate">1 USD = 0.92 EUR</div></div>
       <button type="button" id="convertButton" class="exchange-button"><i class="fas fa-arrows-rotate mr-2"></i>Update conversion</button>
-      <p class="exchange-note"><i class="fas fa-circle-info mr-1"></i> Rates shown are estimates for planning. Final rates and fees may vary when a transfer is completed.</p>
+      <p id="exchangeRateStatus" class="exchange-note"><i class="fas fa-circle-info mr-1"></i> Loading global currency rates...</p>
     </section>
   </div></main>
   <script>
     (() => {
-      const rates = { USD:1, EUR:.92, GBP:.79, CAD:1.36, AUD:1.53, NGN:1550, GHS:15.2 };
+      let rates = { USD:1, EUR:.92, GBP:.79, CAD:1.36, AUD:1.53, NGN:1550, GHS:15.2 };
       const amount=document.getElementById('fromAmount'), from=document.getElementById('fromCurrency'), to=document.getElementById('toCurrency'), output=document.getElementById('toAmount'), result=document.getElementById('conversionResult'), summary=document.getElementById('rateSummary');
+      const status=document.getElementById('exchangeRateStatus');
+      const fallbackNames={USD:'US Dollar',EUR:'Euro',GBP:'British Pound',CAD:'Canadian Dollar',AUD:'Australian Dollar',NGN:'Nigerian Naira',GHS:'Ghanaian Cedi'};
+      function populateCurrencies(){const codes=Object.keys(rates).sort();[from,to].forEach(select=>{const current=select.value;select.innerHTML=codes.map(code=>`<option value="${code}">${code} - ${fallbackNames[code]||new Intl.DisplayNames(['en'],{type:'currency'}).of(code)||code}</option>`).join('');if(codes.includes(current))select.value=current;});if(!from.value)from.value='USD';if(!to.value)to.value=codes.includes('EUR')?'EUR':codes[1]||'USD';}
       function convert(){ const value=Math.max(0,Number(amount.value)||0); const converted=value/rates[from.value]*rates[to.value]; output.value=converted.toFixed(2); result.textContent=`${to.value} ${converted.toFixed(2)}`; summary.textContent=`1 ${from.value} = ${(rates[to.value]/rates[from.value]).toFixed(4)} ${to.value}`; }
       document.getElementById('convertButton').addEventListener('click',convert); [amount,from,to].forEach(el=>el.addEventListener('input',convert));
       document.getElementById('swapCurrencies').addEventListener('click',()=>{const current=from.value;from.value=to.value;to.value=current;convert();});
-      convert();
+      async function loadRates(){try{const response=await fetch('https://open.er-api.com/v6/latest/USD');if(!response.ok)throw new Error('Rate service unavailable');const data=await response.json();if(data.result!=='success'||!data.rates)throw new Error('Rates unavailable');rates=data.rates;populateCurrencies();status.innerHTML='<i class="fas fa-circle-info mr-1"></i> Live reference rates loaded. Final rates and fees may vary.';}catch(error){populateCurrencies();status.innerHTML='<i class="fas fa-circle-info mr-1"></i> Showing fallback reference rates. Final rates and fees may vary.';}convert();}
+      populateCurrencies();loadRates();
     })();
   </script>
 </body>
