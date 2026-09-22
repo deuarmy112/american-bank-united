@@ -11,7 +11,7 @@ function injectSidebar() {
         <div id="abu-sidebar" class="fixed inset-y-0 right-0 z-50 w-80 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out">
             <div class="flex flex-col h-full">
                 <!-- Sidebar Header -->
-                <div class="bg-indigo-600 text-white p-6">
+                <div class="abu-sidebar-header bg-indigo-600 text-white p-6">
                     <div class="flex items-center justify-between">
                         <h2 class="text-xl font-bold">Tools & Services</h2>
                         <button onclick="closeSidebar()" class="text-white hover:text-indigo-200">
@@ -25,8 +25,8 @@ function injectSidebar() {
                 <div class="flex-1 p-6 overflow-y-auto">
                     <div class="grid grid-cols-2 gap-4">
                         <!-- Calculator -->
-                        <div onclick="openCalculator()" class="bg-slate-50 hover:bg-slate-100 p-4 rounded-lg cursor-pointer transition-colors">
-                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                        <div onclick="openCalculator()" class="abu-sidebar-tile bg-slate-50 hover:bg-slate-100 p-4 rounded-lg cursor-pointer transition-colors">
+                            <div class="abu-sidebar-icon w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3">
                                 <i class="fas fa-calculator text-blue-600 text-xl"></i>
                             </div>
                             <h3 class="font-semibold text-slate-900 mb-1">Calculator</h3>
@@ -34,8 +34,8 @@ function injectSidebar() {
                         </div>
 
                         <!-- Currency Converter -->
-                        <div onclick="openCurrencyConverter()" class="bg-slate-50 hover:bg-slate-100 p-4 rounded-lg cursor-pointer transition-colors">
-                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
+                        <div onclick="openCurrencyConverter()" class="abu-sidebar-tile bg-slate-50 hover:bg-slate-100 p-4 rounded-lg cursor-pointer transition-colors">
+                            <div class="abu-sidebar-icon w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
                                 <i class="fas fa-exchange-alt text-green-600 text-xl"></i>
                             </div>
                             <h3 class="font-semibold text-slate-900 mb-1">Exchange</h3>
@@ -43,8 +43,8 @@ function injectSidebar() {
                         </div>
 
                         <!-- ATM Locator -->
-                        <div onclick="openATMLocator()" class="bg-slate-50 hover:bg-slate-100 p-4 rounded-lg cursor-pointer transition-colors">
-                            <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-3">
+                        <div onclick="openATMLocator()" class="abu-sidebar-tile bg-slate-50 hover:bg-slate-100 p-4 rounded-lg cursor-pointer transition-colors">
+                            <div class="abu-sidebar-icon w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-3">
                                 <i class="fas fa-map-marker-alt text-red-600 text-xl"></i>
                             </div>
                             <h3 class="font-semibold text-slate-900 mb-1">ATM Locator</h3>
@@ -52,8 +52,8 @@ function injectSidebar() {
                         </div>
 
                         <!-- Budget Planner -->
-                        <div onclick="openBudgetPlanner()" class="bg-slate-50 hover:bg-slate-100 p-4 rounded-lg cursor-pointer transition-colors">
-                            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3">
+                        <div onclick="openBudgetPlanner()" class="abu-sidebar-tile bg-slate-50 hover:bg-slate-100 p-4 rounded-lg cursor-pointer transition-colors">
+                            <div class="abu-sidebar-icon w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3">
                                 <i class="fas fa-chart-pie text-purple-600 text-xl"></i>
                             </div>
                             <h3 class="font-semibold text-slate-900 mb-1">Budget</h3>
@@ -61,8 +61,8 @@ function injectSidebar() {
                         </div>
 
                         <!-- Support -->
-                        <div onclick="openSupport()" class="bg-slate-50 hover:bg-slate-100 p-4 rounded-lg cursor-pointer transition-colors">
-                            <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mb-3">
+                        <div onclick="openSupport()" class="abu-sidebar-tile bg-slate-50 hover:bg-slate-100 p-4 rounded-lg cursor-pointer transition-colors">
+                            <div class="abu-sidebar-icon w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mb-3">
                                 <i class="fas fa-headphones text-yellow-600 text-xl"></i>
                             </div>
                             <h3 class="font-semibold text-slate-900 mb-1">Support</h3>
@@ -70,8 +70,8 @@ function injectSidebar() {
                         </div>
 
                         <!-- Settings -->
-                        <div onclick="openSettings()" class="bg-slate-50 hover:bg-slate-100 p-4 rounded-lg cursor-pointer transition-colors">
-                            <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3">
+                        <div onclick="openSettings()" class="abu-sidebar-tile bg-slate-50 hover:bg-slate-100 p-4 rounded-lg cursor-pointer transition-colors">
+                            <div class="abu-sidebar-icon w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3">
                                 <i class="fas fa-cog text-slate-600 text-xl"></i>
                             </div>
                             <h3 class="font-semibold text-slate-900 mb-1">Settings</h3>
@@ -83,27 +83,27 @@ function injectSidebar() {
                     <div class="mt-8">
                         <h3 class="text-lg font-semibold text-slate-900 mb-4">Quick Actions</h3>
                         <div class="space-y-3">
-                            <button onclick="location.href='transactions.html'" class="w-full flex items-center gap-3 p-3 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
+                            <button onclick="location.href='transactions.html'" class="abu-sidebar-action w-full flex items-center gap-3 p-3 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
                                 <i class="fas fa-history text-slate-700"></i>
                                 <span class="text-slate-900">Transaction History</span>
                             </button>
-                            <button onclick="location.href='notifications.html'" class="w-full flex items-center gap-3 p-3 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors">
+                            <button onclick="location.href='notifications.html'" class="abu-sidebar-action w-full flex items-center gap-3 p-3 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors">
                                 <i class="fas fa-bell text-amber-600"></i>
                                 <span class="text-slate-900">Notifications</span>
                             </button>
-                            <button onclick="location.href='deposit.html'" class="w-full flex items-center gap-3 p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
+                            <button onclick="location.href='deposit.html'" class="abu-sidebar-action w-full flex items-center gap-3 p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
                                 <i class="fas fa-plus-circle text-green-600"></i>
                                 <span class="text-slate-900">Make a Deposit</span>
                             </button>
-                            <button onclick="location.href='transfer.html'" class="w-full flex items-center gap-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+                            <button onclick="location.href='transfer.html'" class="abu-sidebar-action w-full flex items-center gap-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
                                 <i class="fas fa-paper-plane text-blue-600"></i>
                                 <span class="text-slate-900">Transfer Money</span>
                             </button>
-                            <button onclick="location.href='withdraw.html'" class="w-full flex items-center gap-3 p-3 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
+                            <button onclick="location.href='withdraw.html'" class="abu-sidebar-action w-full flex items-center gap-3 p-3 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
                                 <i class="fas fa-minus-circle text-red-600"></i>
                                 <span class="text-slate-900">Withdraw Funds</span>
                             </button>
-                            <button onclick="location.href='cards.html'" class="w-full flex items-center gap-3 p-3 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">
+                            <button onclick="location.href='cards.html'" class="abu-sidebar-action w-full flex items-center gap-3 p-3 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">
                                 <i class="fas fa-credit-card text-indigo-600"></i>
                                 <span class="text-slate-900">Manage Cards</span>
                             </button>
@@ -133,6 +133,19 @@ function injectSidebar() {
     `;
 
     document.body.insertAdjacentHTML('beforeend', sidebarHTML);
+    const theme = document.createElement('style');
+    theme.id = 'abu-sidebar-theme';
+    theme.textContent = `
+        #abu-sidebar{background:#f8fafc!important;color:#0f172a}
+        #abu-sidebar .abu-sidebar-header{background:linear-gradient(135deg,#111827,#26364a)!important}
+        #abu-sidebar .abu-sidebar-tile{background:#fff!important;border:1px solid #dbe3ec;box-shadow:0 4px 12px rgba(15,23,42,.05)}
+        #abu-sidebar .abu-sidebar-icon{background:linear-gradient(135deg,#111827,#26364a)!important;color:#fff!important}
+        #abu-sidebar .abu-sidebar-action{background:#fff!important;border:1px solid #dbe3ec!important}
+        #abu-sidebar .abu-sidebar-action i{color:#111827!important}
+        #abu-sidebar #sidebarAvatar{width:36px!important;height:36px!important;border:2px solid #111827;border-radius:50%;object-fit:cover}
+        body.abu-sidebar-open #abu-bottom-nav{display:none!important}
+    `;
+    document.head.appendChild(theme);
 }
 
 // Sidebar functionality
@@ -163,6 +176,7 @@ function openSidebar() {
 
     sidebar.classList.remove('translate-x-full');
     overlay.classList.remove('hidden');
+    document.body.classList.add('abu-sidebar-open');
 
     // Load user info for sidebar
     loadSidebarUserInfo();
@@ -179,6 +193,7 @@ function closeSidebar() {
 
     sidebar.classList.add('translate-x-full');
     overlay.classList.add('hidden');
+    document.body.classList.remove('abu-sidebar-open');
 }
 
 async function loadSidebarUserInfo() {
