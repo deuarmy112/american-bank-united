@@ -24,8 +24,26 @@
     <section class="privacy-card"><div class="privacy-card-head"><i class="fas fa-sliders"></i><h2>Your choices</h2></div><div class="privacy-choice"><span><strong>Product updates</strong><span>Receive news about useful banking features.</span></span><button type="button" class="privacy-toggle" data-privacy-setting="productUpdates" aria-label="Toggle product updates" aria-pressed="false"></button></div><div class="privacy-choice"><span><strong>Personalized experience</strong><span>Allow recommendations based on your activity.</span></span><button type="button" class="privacy-toggle on" data-privacy-setting="personalizedExperience" aria-label="Toggle personalized experience" aria-pressed="true"></button></div></section>
     <section class="privacy-card"><div class="privacy-card-head"><i class="fas fa-envelope"></i><h2>Questions about your data?</h2></div><p>For privacy requests or questions about how your information is handled, contact our support team.</p><p class="privacy-note"><i class="fas fa-lock"></i> We keep required account and transaction records secure for as long as needed to provide services and meet legal obligations.</p><a class="privacy-link" href="support.html">Contact support <i class="fas fa-arrow-right"></i></a></section>
   </div></main>
+  <script src="js/api.js"></script>
   <script>
-    (()=>{const key='abu_privacy_settings';const settings=JSON.parse(localStorage.getItem(key)||'{}');document.querySelectorAll('[data-privacy-setting]').forEach(toggle=>{const name=toggle.dataset.privacySetting;const enabled=settings[name]??toggle.classList.contains('on');toggle.classList.toggle('on',enabled);toggle.setAttribute('aria-pressed',String(enabled));toggle.addEventListener('click',()=>{const next=!toggle.classList.contains('on');toggle.classList.toggle('on',next);toggle.setAttribute('aria-pressed',String(next));settings[name]=next;localStorage.setItem(key,JSON.stringify(settings));});});})();
+    (async()=>{
+      const toggles=[...document.querySelectorAll('[data-privacy-setting]')];
+      const setToggle=(toggle,enabled)=>{toggle.classList.toggle('on',enabled);toggle.setAttribute('aria-pressed',String(enabled));};
+      try {
+        const result=await preferencesAPI.get();
+        toggles.forEach(toggle=>setToggle(toggle,result.preferences?.[toggle.dataset.privacySetting] === true));
+      } catch (error) { console.warn('Unable to load privacy preferences',error); }
+      toggles.forEach(toggle=>toggle.addEventListener('click',async()=>{
+        const name=toggle.dataset.privacySetting;
+        const previous=toggle.classList.contains('on');
+        const next=!previous;
+        setToggle(toggle,next);
+        toggle.disabled=true;
+        try { await preferencesAPI.update({[name]:next}); }
+        catch (error) { setToggle(toggle,previous); window.alert(error.message||'Unable to save privacy preference.'); }
+        finally { toggle.disabled=false; }
+      }));
+    })();
   </script>
 </body>
 </html>

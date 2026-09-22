@@ -159,6 +159,15 @@ const notificationsAPI = {
     }
 };
 
+const preferencesAPI = {
+    async get() {
+        return apiClient.get('/preferences');
+    },
+    async update(payload) {
+        return apiClient.patch('/preferences', payload);
+    }
+};
+
 const verificationAPI = {
     async getStatus() {
         return apiClient.get('/verification');

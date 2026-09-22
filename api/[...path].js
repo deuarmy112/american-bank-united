@@ -198,6 +198,23 @@ async function transferPinRoutes(method, parts, user, body) {
     return { status: 404, body: { error: 'Transfer PIN route not found' } };
 }
 
+async function preferenceRoutes(method, user, body) {
+    const defaults = { productUpdates: false, personalizedExperience: true, activityAlerts: true };
+    if (method === 'GET') {
+        if (user.userId === GUEST_ID) return { body: { preferences: defaults } };
+        const profile = await userProfile(user.userId);
+        return { body: { preferences: { ...defaults, ...(profile?.preferences || {}) } } };
+    }
+    if (method !== 'PATCH') return { status: 405, body: { error: 'Preference method not allowed' } };
+    if (user.userId === GUEST_ID) return { status: 401, body: { error: 'Please sign in before updating preferences' } };
+    const allowed = Object.keys(defaults);
+    const updates = Object.fromEntries(allowed.filter(key => typeof body[key] === 'boolean').map(key => [key, body[key]]));
+    if (!Object.keys(updates).length) return { status: 400, body: { error: 'At least one valid preference is required' } };
+    await getDb().collection('users').doc(user.userId).set({ preferences: updates, updated_at: now() }, { merge: true });
+    const profile = await userProfile(user.userId);
+    return { body: { preferences: { ...defaults, ...(profile?.preferences || {}) } } };
+}
+
 function requireAdmin(user) {
     if (!['admin', 'super_admin'].includes(user.role)) {
         const error = new Error('Access denied. Admin privileges required.');
@@ -1399,6 +1416,7 @@ async function route(req) {
     if (restrictedResponse) return restrictedResponse;
     if (parts[0] === 'accounts') return accountRoutes(method, parts.slice(1), user, body, req.query || {});
     if (parts[0] === 'transfer-pin') return transferPinRoutes(method, parts.slice(1), user, body);
+    if (parts[0] === 'preferences' && parts.length === 1) return preferenceRoutes(method, user, body);
     if (parts[0] === 'chat') return chatRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'transactions') return transactionRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'notifications') return notificationRoutes(method, parts.slice(1), user);
