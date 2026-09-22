@@ -237,6 +237,40 @@
         .verification-file { width: 100%; padding: 10px; border: 1px dashed #cbd5e1; border-radius: 8px; background: #f8fafc; font-size: .82rem; }
         .verification-label { display: block; margin: 12px 0 6px; color: #334155; font-size: .8rem; font-weight: 700; }
         .verification-note { padding: 10px 12px; border-radius: 8px; background: #eff6ff; color: #1e40af; font-size: .8rem; line-height: 1.45; }
+        .profile-shell { max-width: 760px; padding: 24px 20px 48px; }
+        .profile-topbar { margin-bottom: 18px; }
+        .profile-header-title { gap: 8px; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: #64748b; }
+        .profile-header-title::before { content: ''; width: 8px; height: 8px; border-radius: 999px; background: #c9a85c; box-shadow: 0 0 0 4px rgba(201,168,92,.16); }
+        .profile-close { width: 40px; height: 40px; background: #fff; }
+        .profile-summary-card { padding: 0; }
+        .profile-identity { position: relative; overflow: hidden; padding: 30px 24px 26px; border-radius: 24px; background: linear-gradient(135deg,#111827 0%,#26364a 68%,#334155 100%); color: #fff; box-shadow: 0 18px 38px rgba(15,23,42,.18); }
+        .profile-identity::after { content: ''; position: absolute; width: 220px; height: 220px; right: -90px; top: -115px; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; box-shadow: 0 0 0 24px rgba(255,255,255,.035),0 0 0 48px rgba(255,255,255,.025); }
+        .profile-eyebrow { position: relative; z-index: 1; display: block; margin-bottom: 24px; color: #cbd5e1; font-size: .68rem; font-weight: 800; letter-spacing: .16em; }
+        .profile-identity .profile-avatar-wrap { position: relative; z-index: 1; width: 104px; height: 104px; margin-bottom: 15px; border: 3px solid #d5b86a; background: linear-gradient(135deg,#475569,#111827); box-shadow: 0 10px 22px rgba(0,0,0,.2); }
+        .profile-identity .profile-name { position: relative; z-index: 1; font-size: clamp(1.7rem,4vw,2.25rem); color: #fff; }
+        .profile-identity .profile-email,.profile-identity .profile-phone { position: relative; z-index: 1; color: #cbd5e1; font-size: .88rem; }
+        .profile-identity .profile-phone { margin-top: 2px; }
+        .profile-balance-box { margin-top: 16px; padding: 18px 20px; border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; text-align: left; box-shadow: 0 8px 20px rgba(15,23,42,.05); }
+        .profile-balance-label { font-size: .72rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+        .profile-balance-value { margin-top: 4px; font-size: 2rem; letter-spacing: -.03em; }
+        .tier-card { margin-top: 12px; border-radius: 16px; box-shadow: none; }
+        .profile-manage { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; padding: 14px 16px; background: #fff; border: 1px solid #dbe3ec; border-radius: 14px; color: #111827; text-decoration: none; box-shadow: 0 6px 18px rgba(15,23,42,.04); }
+        .profile-manage::after { content: '\f054'; font-family: 'Font Awesome 6 Free'; font-weight: 900; color: #94a3b8; }
+        .profile-action-grid { grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 10px; }
+        .profile-action-btn { min-height: 48px; border-radius: 12px; background: #fff; border: 1px solid #dbe3ec; color: #111827; box-shadow: 0 6px 18px rgba(15,23,42,.04); }
+        .profile-action-btn:hover { background: #f8fafc; filter: none; }
+        .profile-edit-btn { min-height: 48px; margin-top: 14px !important; border-radius: 12px; background: #111827; }
+        .profile-logout-btn { min-height: 44px; border: 0; color: #64748b; }
+        .profile-section { margin-top: 16px; padding: 20px; border-radius: 18px; box-shadow: 0 8px 22px rgba(15,23,42,.04); }
+        .profile-section-head { margin-bottom: 16px; }
+        .profile-section-title { font-size: .9rem; letter-spacing: .04em; text-transform: uppercase; }
+        .profile-section-edit,.profile-standalone-link { color: #8d763e; font-weight: 800; }
+        .profile-info-row { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #edf1f5; }
+        .profile-info-row:last-child { border-bottom: 0; padding-bottom: 0; }
+        .profile-info-label { font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+        .profile-info-value { font-size: .98rem; }
+        .profile-copy-btn { color: #8d763e; border-color: #e5dcc3; background: #fffbeb; }
+        @media (max-width: 480px) { .profile-shell { padding: 16px 12px 40px; } .profile-identity { padding: 24px 18px 20px; } .profile-balance-value { font-size: 1.75rem; } }
         @media (max-width: 480px) {
             .profile-shell {
                 padding-left: 12px;
@@ -261,7 +295,8 @@
             </button>
         </div>
         <div class="profile-summary-card">
-            <div class="flex flex-col items-center text-center pt-2">
+            <div class="profile-identity">
+                <span class="profile-eyebrow">Personal banking profile</span>
                 <div id="profileAvatar" class="profile-avatar-wrap" aria-label="User avatar">ABU</div>
                 <h2 id="profileName" class="profile-name">User</h2>
                 <p id="profileEmail" class="profile-email">email@example.com</p>
@@ -285,7 +320,7 @@
                 <button id="upgradeAccountBtn" type="button" class="tier-upgrade-btn">Upgrade account</button>
             </section>
 
-            <div class="profile-manage">Manage Cards</div>
+            <a class="profile-manage" href="cards.html">Manage Cards</a>
 
             <div class="profile-action-grid">
                 <button id="depositBtn" class="profile-action-btn">Deposit</button>

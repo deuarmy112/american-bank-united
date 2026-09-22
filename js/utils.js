@@ -34,7 +34,7 @@ refreshCurrencyRates();
 // Format USD-backed amounts in the user's selected currency.
 function formatCurrency(amount) {
     const savedSettings = JSON.parse(localStorage.getItem('abu_user_settings') || '{}');
-    const currency = ['USD', 'EUR', 'GBP', 'CAD', 'AUD'].includes(savedSettings.currency) ? savedSettings.currency : 'USD';
+    const currency = /^[A-Z]{3}$/.test(String(savedSettings.currency || '')) ? savedSettings.currency : 'USD';
     const rate = Number(window.appCurrencyRates?.[currency]) || 1;
     return new Intl.NumberFormat('en-US', {
         style: 'currency',

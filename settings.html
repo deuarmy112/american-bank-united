@@ -28,6 +28,10 @@
     (async()=>{
       const key='abu_user_settings';
       let settings=JSON.parse(localStorage.getItem(key)||'{}');
+      const currency=document.getElementById('currencyPreference');
+      const currencyCodes=typeof Intl.supportedValuesOf==='function' ? Intl.supportedValuesOf('currency') : ['USD','EUR','GBP','CAD','AUD'];
+      const currencyNames=new Intl.DisplayNames(['en'],{type:'currency'});
+      currency.innerHTML=currencyCodes.map(code=>`<option value="${code}">${code} - ${currencyNames.of(code)||code}</option>`).join('');
       const save=async updates=>{
         const previous={...settings};
         settings={...settings,...updates};
@@ -47,7 +51,6 @@
           try { await save({[name]:next}); } catch(error) { toggle.classList.toggle('on',!next); toggle.setAttribute('aria-pressed',String(!next)); if(name==='reduceMotion') document.documentElement.classList.toggle('reduce-motion',!next); }
         });
       });
-      const currency=document.getElementById('currencyPreference');
       currency.value=settings.currency||'USD';
       currency.addEventListener('change',async()=>{ const selected=currency.value; try { await save({currency:selected}); } catch(error) { currency.value=settings.currency||'USD'; } });
     })();

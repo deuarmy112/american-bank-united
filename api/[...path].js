@@ -270,7 +270,7 @@ async function preferenceRoutes(method, user, body) {
     if (user.userId === GUEST_ID) return { status: 401, body: { error: 'Please sign in before updating preferences' } };
     const booleanKeys = Object.keys(defaults).filter(key => typeof defaults[key] === 'boolean');
     const updates = Object.fromEntries(booleanKeys.filter(key => typeof body[key] === 'boolean').map(key => [key, body[key]]));
-    if (['USD', 'EUR', 'GBP', 'CAD', 'AUD'].includes(body.currency)) updates.currency = body.currency;
+    if (/^[A-Z]{3}$/.test(String(body.currency || ''))) updates.currency = body.currency;
     if (!Object.keys(updates).length) return { status: 400, body: { error: 'At least one valid preference is required' } };
     await getDb().collection('users').doc(user.userId).set({ preferences: updates, updated_at: now() }, { merge: true });
     const profile = await userProfile(user.userId);
