@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { randomUUID } = require('crypto');
+const { randomInt, randomUUID } = require('crypto');
 const { admin, getDb, getBucket } = require('../lib/firebase');
 
 const GUEST_ID = 'guest-user';
@@ -196,6 +196,67 @@ async function transferPinRoutes(method, parts, user, body) {
         return { status: 201, body: { message: 'Transfer PIN set successfully' } };
     }
     return { status: 404, body: { error: 'Transfer PIN route not found' } };
+}
+
+const securityCodeSettings = {
+    password: { label: 'password reset', subject: 'Your American Bank United password reset code' },
+    'transfer-pin': { label: 'Transfer PIN reset', subject: 'Your American Bank United Transfer PIN code' },
+    'two-step': { label: 'two-step verification', subject: 'Your American Bank United verification code' }
+};
+
+function securityCodeId(userId, purpose) {
+    return `${userId}_${purpose}`;
+}
+
+async function securityCodeRoutes(method, parts, user, body) {
+    if (user.userId === GUEST_ID) return { status: 401, body: { error: 'Please sign in before changing security settings' } };
+    const purpose = parts[0];
+    const action = parts[1];
+    const settings = securityCodeSettings[purpose];
+    if (!settings || !['request', 'confirm'].includes(action)) return { status: 404, body: { error: 'Security verification route not found' } };
+    const verificationRef = getDb().collection('security_verifications').doc(securityCodeId(user.userId, purpose));
+
+    if (method === 'POST' && action === 'request') {
+        const profile = await userProfile(user.userId);
+        if (!isValidEmail(profile?.email)) return { status: 400, body: { error: 'A valid account email is required for verification' } };
+        const code = String(randomInt(0, 1000000)).padStart(6, '0');
+        await verificationRef.set({ purpose, code_hash: await bcrypt.hash(code, 12), expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), attempts: 0, created_at: now() });
+        const delivery = await sendTransactionalEmail({
+            email: profile.email,
+            subject: settings.subject,
+            text: `Hello ${profile.first_name || 'there'},\n\nYour six-digit ${settings.label} code is: ${code}\n\nThis code expires in 10 minutes. If you did not request this, contact American Bank United support immediately.`
+        });
+        if (delivery.status !== 'sent') {
+            await verificationRef.delete();
+            return { status: 503, body: { error: 'Unable to send the verification email. Please try again later.' } };
+        }
+        return { body: { message: `Verification code sent to ${profile.email.replace(/(^.).*(@.*$)/, '$1***$2')}`, expiresIn: 600 } };
+    }
+
+    if (method !== 'POST' || action !== 'confirm') return { status: 405, body: { error: 'Security verification method not allowed' } };
+    const verification = await verificationRef.get();
+    const record = verification.exists ? verification.data() : null;
+    if (!record || !record.expires_at || Date.now() > Date.parse(record.expires_at)) return { status: 410, body: { error: 'That verification code has expired. Request a new code.' } };
+    if (Number(record.attempts || 0) >= 5) return { status: 429, body: { error: 'Too many incorrect codes. Request a new code.' } };
+    if (!/^\d{6}$/.test(String(body.code || '')) || !(await bcrypt.compare(String(body.code), record.code_hash))) {
+        await verificationRef.set({ attempts: Number(record.attempts || 0) + 1 }, { merge: true });
+        return { status: 403, body: { error: 'Incorrect verification code' } };
+    }
+
+    const userRef = getDb().collection('users').doc(user.userId);
+    if (purpose === 'password') {
+        const password = String(body.newPassword || '');
+        if (password.length < 8) return { status: 400, body: { error: 'Password must be at least 8 characters' } };
+        await userRef.set({ password_hash: await bcrypt.hash(password, 12), updated_at: now() }, { merge: true });
+    } else if (purpose === 'transfer-pin') {
+        const pin = String(body.pin || '');
+        if (!/^\d{4}$/.test(pin)) return { status: 400, body: { error: 'Transfer PIN must be exactly 4 digits' } };
+        await userRef.set({ transfer_pin_hash: await bcrypt.hash(pin, 12), transfer_pin_failures: 0, transfer_pin_locked: false, updated_at: now() }, { merge: true });
+    } else {
+        await userRef.set({ two_factor_enabled: body.enabled !== false, updated_at: now() }, { merge: true });
+    }
+    await verificationRef.delete();
+    return { body: { message: `${settings.label} updated successfully` } };
 }
 
 async function preferenceRoutes(method, user, body) {
@@ -1434,6 +1495,7 @@ async function route(req) {
 
     const user = await authenticate(req);
     await ensureGuest();
+    if (parts[0] === 'security') return securityCodeRoutes(method, parts.slice(1), user, body);
     const restrictedResponse = await restrictedCustomerResponse(user, parts);
     if (restrictedResponse) return restrictedResponse;
     if (parts[0] === 'accounts') return accountRoutes(method, parts.slice(1), user, body, req.query || {});
