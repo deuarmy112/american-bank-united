@@ -185,6 +185,7 @@
             <script>
                 // Initialize user name display
                 document.addEventListener('DOMContentLoaded', async function() {
+                    const shouldOpenSupport = new URLSearchParams(window.location.search).get('openSupport') === '1';
                     await displayUserName();
                     try {
                         const profile = await authAPI.getProfile();
@@ -193,8 +194,8 @@
                             profileIcon.innerHTML = `<img src="${profile.avatar}" alt="Profile picture">`;
                         }
                         if (profile?.status === 'suspended' || profile?.status === 'restricted' || profile?.transfer_pin_locked) document.getElementById('accountRestrictionNotice')?.classList.remove('hidden');
-                        if (new URLSearchParams(window.location.search).get('openSupport') === '1' && typeof openCustomerServiceModal === 'function') openCustomerServiceModal();
                     } catch (error) { console.warn('Unable to load account restriction status', error); }
+                    if (shouldOpenSupport && typeof openCustomerServiceModal === 'function') openCustomerServiceModal();
                 });
             </script>
 
