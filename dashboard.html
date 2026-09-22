@@ -18,6 +18,8 @@
             .dashboard-page { --dashboard-navy: #111827; --dashboard-navy-light: #26364a; --dashboard-border: #d8e0ea; }
             body.opay-ui main { padding-top: 78px; }
             body.opay-ui .opay-header { padding: 8px 0; }
+            .dashboard-profile-icon { overflow: hidden; border: 2px solid #111827; }
+            .dashboard-profile-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
             .dashboard-page .opay-balance-gradient { background: linear-gradient(135deg, var(--dashboard-navy), var(--dashboard-navy-light)) !important; }
             .dashboard-page .opay-balance-gradient button { background: rgba(255,255,255,.12) !important; border: 1px solid rgba(255,255,255,.26); color: #fff; }
             .dashboard-page .opay-balance-gradient button:hover { background: rgba(255,255,255,.22) !important; }
@@ -71,7 +73,7 @@
                     <h2 class="text-lg font-semibold truncate">Good day, <span id="userGreeting">User</span></h2>
                     <p class="text-xs text-slate-500 truncate">Smart banking at your fingertips</p>
                 </div>
-                <a href="profile.html" aria-label="View profile" title="Profile" class="w-9 h-9 shrink-0 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm hover:bg-slate-50">
+                <a id="dashboardProfileIcon" href="profile.html" aria-label="View profile" title="Profile" class="dashboard-profile-icon w-9 h-9 shrink-0 rounded-full bg-white flex items-center justify-center shadow-sm hover:bg-slate-50">
                     <i class="fas fa-user text-slate-500"></i>
                 </a>
             </div>
@@ -187,6 +189,10 @@
                     await displayUserName();
                     try {
                         const profile = await authAPI.getProfile();
+                        const profileIcon = document.getElementById('dashboardProfileIcon');
+                        if (profile?.avatar && profileIcon) {
+                            profileIcon.innerHTML = `<img src="${profile.avatar}" alt="Profile picture">`;
+                        }
                         if (profile?.status === 'suspended' || profile?.status === 'restricted' || profile?.transfer_pin_locked) document.getElementById('accountRestrictionNotice')?.classList.remove('hidden');
                     } catch (error) { console.warn('Unable to load account restriction status', error); }
                 });
