@@ -30,21 +30,15 @@
                 .support-chat-topbar { gap: 8px; }
                 .support-chat-topbar a, .support-chat-topbar button, .support-chat-topbar strong { font-size: 0.72rem; }
             }
-        </style>        <main class="max-w-md mx-auto p-4 pb-32">
-            <!-- Mobile app top area -->
-            <div class="flex items-center justify-between mb-4 flex-nowrap">
-                <div class="flex items-center gap-3 min-w-0">
-                    <!-- Small profile avatar placed before the greeting for quick access -->
-                    <button id="topProfileBtn" onclick="location.href='profile.html'" aria-label="Open profile" title="Profile" class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow">
-                        <i class="fas fa-user text-slate-700"></i>
-                    </button>
-                    <div class="min-w-0">
-                        <h2 class="text-lg font-semibold truncate">Good day, <span id="userGreeting">User</span></h2>
-                        <p class="text-xs text-slate-500 truncate">Smart banking at your fingertips</p>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-3">
+        </style>
+</head>
+<body class="opay-ui">
+        <header class="opay-header">
+            <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between gap-4">
+                <a href="dashboard.html" class="opay-brand flex items-center gap-3 min-w-0" aria-label="American Bank United home">
+                    <img src="assets/abu-logo.png" alt="American Bank United" class="w-24 h-auto">
+                </a>
+                <div class="flex items-center gap-3 shrink-0">
                     <button aria-label="Open support chat" title="Support chat" onclick="openCustomerServiceModal()" class="p-2 rounded-full hover:bg-slate-100 relative">
                         <i class="fas fa-headphones text-slate-700"></i>
                         <span id="userChatBadge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full min-w-4 h-4 px-1 flex items-center justify-center" aria-hidden="true"></span>
@@ -53,8 +47,14 @@
                         <i class="fas fa-bell text-slate-700"></i>
                         <span id="notifBadge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full min-w-4 h-4 px-1 flex items-center justify-center" aria-hidden="true"></span>
                     </button>
-                    </div>
                 </div>
+            </div>
+        </header>
+
+        <main class="max-w-md mx-auto p-4 pb-32">
+            <div class="mb-4">
+                <h2 class="text-lg font-semibold truncate">Good day, <span id="userGreeting">User</span></h2>
+                <p class="text-xs text-slate-500 truncate">Smart banking at your fingertips</p>
             </div>
 
             <div id="accountRestrictionNotice" class="hidden mb-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
@@ -529,8 +529,6 @@
 
     <script src="js/bottom-nav.js?v=20260121.1"></script>
     <script src="js/sidebar.js?v=20260121.1"></script>
-</body>
-</html>
 </body>
 </html>
 
