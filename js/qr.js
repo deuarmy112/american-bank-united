@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (showTab && showPane) showTab.addEventListener('click', () => selectTab(showTab, scanTab, showPane, scanPane));
 
   async function startScanner(){
-    if (!startBtn || !stopBtn || scannerStarting || html5QrcodeScanner) return;
+    if (!startBtn || !stopBtn || scannerStarting || html5QrcodeScanner || nativeStream) return;
     scannerStarting = true;
     startBtn.style.display = 'none'; stopBtn.style.display = 'inline-block';
     try {
@@ -198,13 +198,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (scanPane) scanPane.classList.remove('hidden');
     if (resultEl) resultEl.textContent = 'No scan yet';
     pendingRedirect = null;
-    try {
-      if (typeof Html5Qrcode === 'function' || window.Html5Qrcode) {
-        if (!html5QrcodeScanner) html5QrcodeScanner = new (window.Html5Qrcode || Html5Qrcode)(readerId);
-        await html5QrcodeScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: 250 }, onScanSuccess, onScanFailure);
-        if (startBtn && stopBtn) { startBtn.style.display = 'none'; stopBtn.style.display = 'inline-block'; }
-      }
-    } catch (err) { console.error('Resume scanner failed', err); }
+    await startScanner();
   }
 
   if (confirmBtn) confirmBtn.addEventListener('click', () => {
