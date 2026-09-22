@@ -91,11 +91,27 @@ function clean(data) {
     }));
 }
 
+function normalizeAdminTransferReceipt(transaction) {
+    const adminTransferTypes = ['internal_admin_transfer', 'other_bank_funds', 'international_transfer'];
+    if (!transaction?.receipt_data || !adminTransferTypes.includes(transaction.transfer_type)) return transaction;
+    return {
+        ...transaction,
+        receipt_data: {
+            ...transaction.receipt_data,
+            senderName: transaction.sender_name || transaction.source_name || transaction.receipt_data.senderName || 'American Bank United Admin',
+            senderBankName: transaction.sender_bank_name || transaction.bank_name || transaction.receipt_data.senderBankName || 'American Bank United',
+            senderAccountNumber: transaction.receipt_data.senderAccountNumber || 'American Bank United admin account',
+            recipientBank: 'American Bank United',
+            bank: 'American Bank United'
+        }
+    };
+}
+
 function cleanCustomerTransaction(data) {
     const cleaned = clean(data);
     if (Array.isArray(cleaned)) return cleaned.map(item => cleanCustomerTransaction(item));
     if (cleaned && typeof cleaned === 'object') {
-        const { balance_after, ...safeTransaction } = cleaned;
+        const { balance_after, ...safeTransaction } = normalizeAdminTransferReceipt(cleaned);
         return safeTransaction;
     }
     return cleaned;
@@ -584,7 +600,10 @@ async function billRoutes(method, parts, user, body) {
 }
 
 async function externalRoutes(method, parts, user, body) {
-    if (method === 'GET' && (parts[0] === 'external' || parts[0] === 'transfers')) return { body: clean(await listDocs('external_transfers', 'user_id', user.userId)) };
+    if (method === 'GET' && (parts[0] === 'external' || parts[0] === 'transfers')) {
+        const transfers = await listDocs('external_transfers', 'user_id', user.userId);
+        return { body: clean(transfers.map(normalizeAdminTransferReceipt)) };
+    }
     if (method === 'POST' && ['send-to-bank', 'send-to-user'].includes(parts[0])) {
         const pinError = await verifyTransferPin(user, body.transferPin);
         if (pinError) return pinError;
@@ -821,7 +840,7 @@ async function adminRoutes(method, parts, user, body, query) {
         const recipientPhone = String(body.recipientPhone || '').trim();
         const description = String(body.description || '').trim() || 'Admin funded transfer';
         if (!senderName || !bankName || !requestedAccountId || !recipientName || !recipientIdentifier || !Number.isFinite(amount) || amount <= 0) {
-            return { status: 400, body: { error: 'Sender name, bank name, recipient name, account number or IBAN, and a valid amount are required' } };
+            return { status: 400, body: { error: 'Sender name, sender bank, recipient name, account number or IBAN, and a valid amount are required' } };
         }
 
         const accountsSnapshot = await getDb().collection('accounts').limit(1000).get();
@@ -852,7 +871,7 @@ async function adminRoutes(method, parts, user, body, query) {
             amountSent: amount,
             senderName,
             senderBankName: bankName,
-            senderAccountNumber: 'Admin funding account',
+            senderAccountNumber: 'American Bank United admin account',
             senderEmail: '',
             senderPhone: '',
             recipientName,
@@ -1154,7 +1173,7 @@ async function adminRoutes(method, parts, user, body, query) {
 
         for (const account of accounts) {
             const tx = await listDocs('transactions', 'account_id', account.id, 'created_at', 20);
-            recentTransactions.push(...tx.map(item => ({ ...item, account_number: account.account_number })));
+            recentTransactions.push(...tx.map(item => ({ ...normalizeAdminTransferReceipt(item), account_number: account.account_number })));
         }
 
         recentTransactions.sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));

@@ -1,9 +1,14 @@
 /* 
  * Transactions Page Script
+    document.body.classList.add('abu-overlay-open');
+    const closeDetails = () => {
+        overlay.remove();
+        document.body.classList.remove('abu-overlay-open');
+    };
  */
-
+        if (event.target === overlay) closeDetails();
 let allTransactions = [];
-let filteredTransactions = [];
+    overlay.querySelectorAll('.close-transaction-detail').forEach(button => button.addEventListener('click', closeDetails));
 
 document.addEventListener('DOMContentLoaded', function() {
     // Check authentication
@@ -72,7 +77,15 @@ function mergeTransactionsWithReceipts(transactions, externalTransfers) {
         new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at)
     );
 }
-
+    document.body.classList.add('abu-overlay-open');
+    const closeReceipt = () => {
+        overlay.remove();
+        document.body.classList.remove('abu-overlay-open');
+    };
+    overlay.querySelectorAll('.close-receipt').forEach(button => button.addEventListener('click', closeReceipt));
+    overlay.addEventListener('click', event => {
+        if (event.target === overlay) closeReceipt();
+    });
 function loadAccountsFilter() {
     const accounts = window.userAccounts || [];
     const filterSelect = document.getElementById('filterAccount');

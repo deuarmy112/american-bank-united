@@ -62,9 +62,9 @@
             <div class="section-header"><h2>New transfer</h2></div>
             <div class="transfer-note"><i class="fas fa-circle-info"></i> Select the recipient and account from ABU records. The receipt format follows the selected transfer type.</div>
             <form id="adminTransferForm" class="transfer-form">
-                <div class="form-group"><label for="adminTransferSender">Sender name *</label><input id="adminTransferSender" required placeholder="Name shown to the recipient"></div>
+                <div class="form-group"><label for="adminTransferSender">Sender name *</label><input id="adminTransferSender" required placeholder="Name shown on the receipt"></div>
                 <div class="form-group"><label for="adminTransferType">Transfer type *</label><select id="adminTransferType" required><option value="abu">ABU to ABU</option><option value="other_bank">Other bank to ABU</option><option value="international">International to ABU</option></select></div>
-                <div class="form-group"><label for="adminTransferBank">Bank name *</label><input id="adminTransferBank" required placeholder="American Bank United, Chase, HSBC..."></div>
+                <div class="form-group"><label for="adminTransferBank">Sender bank *</label><input id="adminTransferBank" required placeholder="Bank shown as the sender"></div>
                 <div class="form-group"><label for="adminTransferRecipient">ABU recipient *</label><select id="adminTransferRecipient" required><option value="">Loading users...</option></select></div>
                 <div class="form-group"><label for="adminTransferAccount">Account to fund *</label><select id="adminTransferAccount" required disabled><option value="">Select a user first</option></select></div>
                 <div class="form-group"><label for="adminTransferAmount">Amount *</label><input id="adminTransferAmount" type="number" min="0.01" step="0.01" required placeholder="0.00"></div>
@@ -98,7 +98,7 @@
             const type = document.getElementById('adminTransferType').value;
             const bank = document.getElementById('adminTransferBank').value.trim();
             const labels = { abu: 'ABU to ABU', other_bank: 'Other bank to ABU', international: 'International to ABU' };
-            document.getElementById('adminTransferTypeHint').textContent = bank ? `${labels[type]} receipt will be created for the recipient.` : 'Enter a bank name to see the receipt type.';
+            document.getElementById('adminTransferTypeHint').textContent = bank ? `${labels[type]} receipt will use the entered sender name and bank. Recipient bank is American Bank United.` : 'Enter the sender bank to see the receipt type.';
             document.querySelectorAll('.international-transfer-field').forEach(field => field.style.display = type === 'international' ? '' : 'none');
         }
         async function loadTransferRecipients() {
@@ -116,7 +116,6 @@
             document.getElementById('adminTransferEmail').value = recipient?.email || '';
         }
         document.getElementById('adminTransferType').addEventListener('change', updateAdminTransferTypeHint);
-        document.getElementById('adminTransferBank').addEventListener('input', updateAdminTransferTypeHint);
         document.getElementById('adminTransferRecipient').addEventListener('change', syncRecipientAccounts);
         document.getElementById('adminTransferForm').addEventListener('submit', async event => {
             event.preventDefault();

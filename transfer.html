@@ -1129,10 +1129,12 @@
 
             receiptContent.innerHTML = receiptHTML;
             modal.classList.remove('hidden');
+            document.body.classList.add('abu-overlay-open');
         }
 
         function closeSuccessModal() {
             document.getElementById('successModal').classList.add('hidden');
+            document.body.classList.remove('abu-overlay-open');
         }
 
         function printReceipt() {
