@@ -50,7 +50,11 @@ window.apiClient = window.apiClient || {
             }
 
             if (!response.ok) {
-                const error = new Error(data.error || `HTTP error! status: ${response.status}`);
+                const rawMessage = data.error || `HTTP error! status: ${response.status}`;
+                const message = String(rawMessage).includes('RESOURCE_EXHAUSTED') || response.status === 503
+                    ? 'The banking service is temporarily unavailable because the database quota has been reached. Please try again later.'
+                    : rawMessage;
+                const error = new Error(message);
                 error.status = response.status;
                 throw error;
             }
