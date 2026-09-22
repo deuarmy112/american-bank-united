@@ -118,7 +118,7 @@ function cleanCustomerTransaction(data) {
 }
 
 function makeToken(user) {
-    return jwt.sign({ userId: user.id, email: user.email, role: user.role || 'customer' }, JWT_SECRET(), { expiresIn: '7d' });
+    return jwt.sign({ userId: user.id, email: user.email, role: user.role || 'customer', sessionVersion: Number(user.session_version || 0) }, JWT_SECRET(), { expiresIn: '7d' });
 }
 
 function readBody(req) {
@@ -157,7 +157,16 @@ async function authenticate(req) {
         return { userId: GUEST_ID, email: 'guest@americanbankunited.local', role: 'customer' };
     }
     try {
-        return jwt.verify(token, JWT_SECRET());
+        const payload = jwt.verify(token, JWT_SECRET());
+        if (payload.sessionVersion !== undefined) {
+            const profile = await userProfile(payload.userId);
+            if (Number(profile?.session_version || 0) !== Number(payload.sessionVersion)) {
+                const err = new Error('Your session has ended. Please sign in again.');
+                err.status = 401;
+                throw err;
+            }
+        }
+        return payload;
     } catch (error) {
         const err = new Error('Invalid or expired token');
         err.status = 401;
@@ -208,6 +217,14 @@ function securityCodeId(userId, purpose) {
     return `${userId}_${purpose}`;
 }
 
+async function recordSecurityEvent(user, action, purpose, metadata = {}) {
+    try {
+        await save('security_audit', { user_id: user.userId, action_type: action, purpose, metadata, created_at: now() });
+    } catch (error) {
+        console.error('Security audit write failed:', error);
+    }
+}
+
 async function securityCodeRoutes(method, parts, user, body) {
     if (user.userId === GUEST_ID) return { status: 401, body: { error: 'Please sign in before changing security settings' } };
     const purpose = parts[0];
@@ -219,8 +236,13 @@ async function securityCodeRoutes(method, parts, user, body) {
     if (method === 'POST' && action === 'request') {
         const profile = await userProfile(user.userId);
         if (!isValidEmail(profile?.email)) return { status: 400, body: { error: 'A valid account email is required for verification' } };
+        const existing = await verificationRef.get();
+        const existingRecord = existing.exists ? existing.data() : null;
+        if (existingRecord?.requested_at && Date.now() - Date.parse(existingRecord.requested_at) < 60 * 1000) {
+            return { status: 429, body: { error: 'Please wait before requesting another verification code' } };
+        }
         const code = String(randomInt(0, 1000000)).padStart(6, '0');
-        await verificationRef.set({ purpose, code_hash: await bcrypt.hash(code, 12), expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), attempts: 0, created_at: now() });
+        await verificationRef.set({ purpose, code_hash: await bcrypt.hash(code, 12), expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), attempts: 0, requested_at: now(), created_at: now() });
         const delivery = await sendTransactionalEmail({
             email: profile.email,
             subject: settings.subject,
@@ -230,6 +252,7 @@ async function securityCodeRoutes(method, parts, user, body) {
             await verificationRef.delete();
             return { status: 503, body: { error: 'Unable to send the verification email. Please try again later.' } };
         }
+        await recordSecurityEvent(user, 'SECURITY_CODE_SENT', purpose);
         return { body: { message: `Verification code sent to ${profile.email.replace(/(^.).*(@.*$)/, '$1***$2')}`, expiresIn: 600 } };
     }
 
@@ -240,6 +263,7 @@ async function securityCodeRoutes(method, parts, user, body) {
     if (Number(record.attempts || 0) >= 5) return { status: 429, body: { error: 'Too many incorrect codes. Request a new code.' } };
     if (!/^\d{6}$/.test(String(body.code || '')) || !(await bcrypt.compare(String(body.code), record.code_hash))) {
         await verificationRef.set({ attempts: Number(record.attempts || 0) + 1 }, { merge: true });
+        await recordSecurityEvent(user, 'SECURITY_CODE_FAILED', purpose, { attempts: Number(record.attempts || 0) + 1 });
         return { status: 403, body: { error: 'Incorrect verification code' } };
     }
 
@@ -247,7 +271,8 @@ async function securityCodeRoutes(method, parts, user, body) {
     if (purpose === 'password') {
         const password = String(body.newPassword || '');
         if (password.length < 8) return { status: 400, body: { error: 'Password must be at least 8 characters' } };
-        await userRef.set({ password_hash: await bcrypt.hash(password, 12), updated_at: now() }, { merge: true });
+        const profile = await userProfile(user.userId);
+        await userRef.set({ password_hash: await bcrypt.hash(password, 12), session_version: Number(profile?.session_version || 0) + 1, updated_at: now() }, { merge: true });
     } else if (purpose === 'transfer-pin') {
         const pin = String(body.pin || '');
         if (!/^\d{4}$/.test(pin)) return { status: 400, body: { error: 'Transfer PIN must be exactly 4 digits' } };
@@ -256,6 +281,7 @@ async function securityCodeRoutes(method, parts, user, body) {
         await userRef.set({ two_factor_enabled: body.enabled !== false, updated_at: now() }, { merge: true });
     }
     await verificationRef.delete();
+    await recordSecurityEvent(user, 'SECURITY_SETTING_CHANGED', purpose, purpose === 'two-step' ? { enabled: body.enabled !== false } : {});
     return { body: { message: `${settings.label} updated successfully` } };
 }
 
@@ -1433,9 +1459,10 @@ async function adminRoutes(method, parts, user, body, query) {
 
     if (method === 'GET' && parts[0] === 'audit-log') {
         const limit = Number(reqQuery(query, 'limit', 100) || 100);
-        const [transferSnapshot, actionSnapshot] = await Promise.all([
+        const [transferSnapshot, actionSnapshot, securitySnapshot] = await Promise.all([
             getDb().collection('admin_transfers').orderBy('created_at', 'desc').limit(limit).get(),
-            getDb().collection('admin_actions').limit(limit).get()
+            getDb().collection('admin_actions').limit(limit).get(),
+            getDb().collection('security_audit').orderBy('created_at', 'desc').limit(limit).get()
         ]);
         const transferActions = await Promise.all(transferSnapshot.docs.map(async doc => {
             const item = { id: doc.id, ...doc.data() };
@@ -1447,7 +1474,12 @@ async function adminRoutes(method, parts, user, body, query) {
             const admin = await getDoc('users', item.admin_id);
             return clean({ id: item.id, action_type: item.action_type, description: item.description, metadata: item.metadata || {}, created_at: item.created_at, first_name: admin?.first_name || 'Admin', last_name: admin?.last_name || '', email: admin?.email || '' });
         }));
-        const actions = [...transferActions, ...settingsActions]
+        const securityActions = await Promise.all(securitySnapshot.docs.map(async doc => {
+            const item = { id: doc.id, ...doc.data() };
+            const customer = await getDoc('users', item.user_id);
+            return clean({ id: item.id, action_type: item.action_type, description: `${item.purpose || 'Security'} security event`, metadata: item.metadata || {}, created_at: item.created_at, first_name: customer?.first_name || 'Customer', last_name: customer?.last_name || '', email: customer?.email || '' });
+        }));
+        const actions = [...transferActions, ...settingsActions, ...securityActions]
             .sort((left, right) => String(right.created_at || '').localeCompare(String(left.created_at || '')))
             .slice(0, limit);
         return { body: { actions } };
