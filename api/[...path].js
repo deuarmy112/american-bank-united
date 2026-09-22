@@ -5,6 +5,7 @@ const { admin, getDb, getBucket } = require('../lib/firebase');
 
 const GUEST_ID = 'guest-user';
 const JWT_SECRET = () => process.env.JWT_SECRET || process.env.FIREBASE_PROJECT_ID || 'development-only-secret';
+let guestCheckedAt = 0;
 
 function now() {
     return new Date().toISOString();
@@ -370,19 +371,13 @@ async function save(collection, data, id = randomUUID()) {
 }
 
 async function ensureGuest() {
+    if (Date.now() - guestCheckedAt < 5 * 60 * 1000) return;
     const ref = getDb().collection('users').doc(GUEST_ID);
     const snapshot = await ref.get();
     if (!snapshot.exists) {
         await ref.set({ id: GUEST_ID, email: 'guest@americanbankunited.local', first_name: 'Guest', last_name: 'User', role: 'customer', status: 'active', created_at: now() });
     }
-
-    const approvedAccounts = await getDb().collection('accounts').where('approval_status', '==', 'approved').get();
-    const updates = approvedAccounts.docs.filter(doc => String(doc.data().status || '').toLowerCase() !== 'active');
-    if (updates.length) {
-        const batch = getDb().batch();
-        updates.forEach(doc => batch.set(doc.ref, { status: 'active', updated_at: now() }, { merge: true }));
-        await batch.commit();
-    }
+    guestCheckedAt = Date.now();
 
     // Do not recreate a default guest account after it has been manually deleted.
     // The app should only create real accounts when the user explicitly requests one.
@@ -407,7 +402,15 @@ async function authRegister(body) {
 
 async function authLogin(body) {
     const { email, password } = body;
-    const snapshot = await getDb().collection('users').where('email', '==', String(email || '').toLowerCase()).limit(1).get();
+    let snapshot;
+    try {
+        snapshot = await getDb().collection('users').where('email', '==', String(email || '').toLowerCase()).limit(1).get();
+    } catch (error) {
+        if (String(error.code) === '8' || String(error.message || '').includes('RESOURCE_EXHAUSTED')) {
+            return { status: 503, body: { error: 'Login is temporarily unavailable because the database quota has been reached. Please try again later.' } };
+        }
+        throw error;
+    }
     if (snapshot.empty) return { status: 401, body: { error: 'Invalid email or password' } };
     const user = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
     if (user.status && !['active', 'suspended'].includes(user.status)) return { status: 403, body: { error: 'Account is inactive' } };
@@ -1559,6 +1562,9 @@ module.exports = async (req, res) => {
         res.status(result.status || 200).json(result.body);
     } catch (error) {
         console.error('Firebase API error:', error);
-        res.status(error.status || 500).json({ error: error.message || 'Internal server error' });
+        const quotaExceeded = String(error.code) === '8' || String(error.message || '').includes('RESOURCE_EXHAUSTED');
+        res.status(quotaExceeded ? 503 : (error.status || 500)).json({
+            error: quotaExceeded ? 'This service is temporarily unavailable because the database quota has been reached. Please try again later.' : (error.message || 'Internal server error')
+        });
     }
 };
