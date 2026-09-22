@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Calculator - American Bank United</title>
+  <link rel="stylesheet" href="css/tailwind.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/opay.css">
+  <link rel="icon" href="assets/abu-logo.png" type="image/png">
+  <style>
+    :root{--calc-navy:#111827;--calc-navy-light:#26364a;--calc-border:#dbe3ec}
+    body{background:#f8fafc;color:#0f172a}.calc-page{min-height:100vh;padding:20px 16px 40px}.calc-shell{width:min(100%,420px);margin:0 auto}.calc-topbar{display:flex;justify-content:flex-end;margin-bottom:24px}.calc-close{width:40px;height:40px;border:1px solid var(--calc-border);border-radius:999px;background:#fff;color:#64748b;box-shadow:0 4px 12px rgba(15,23,42,.08)}.calc-kicker{font-size:11px;color:#64748b;font-weight:700;letter-spacing:.09em;text-transform:uppercase}.calc-heading h1{font-size:28px;line-height:1.1;margin:4px 0 7px}.calc-heading p{color:#64748b;font-size:14px;margin:0 0 18px}.calc-card{background:#fff;border:1px solid var(--calc-border);border-radius:18px;padding:14px;box-shadow:0 10px 28px rgba(15,23,42,.07)}.calc-display{min-height:108px;border-radius:13px;background:linear-gradient(135deg,var(--calc-navy),var(--calc-navy-light));color:#fff;padding:16px;text-align:right;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}.calc-expression{min-height:20px;color:#cbd5e1;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.calc-result{font-size:38px;font-weight:800;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}.calc-key{min-height:54px;border:1px solid #e2e8f0;border-radius:11px;background:#f8fafc;color:#1e293b;font-size:18px;font-weight:700;cursor:pointer}.calc-key:hover{background:#eef2f7}.calc-key:active{transform:scale(.97)}.calc-key.operator{background:#e8edf3;color:var(--calc-navy)}.calc-key.equals{background:linear-gradient(135deg,var(--calc-navy),var(--calc-navy-light));color:#fff;border-color:var(--calc-navy)}.calc-key.clear{color:#b91c1c;background:#fff1f2;border-color:#fecdd3}.calc-key.wide{grid-column:span 2}.calc-tip{margin-top:14px;color:#64748b;font-size:12px;text-align:center}
+  </style>
+</head>
+<body>
+  <main class="calc-page">
+    <div class="calc-shell">
+      <div class="calc-topbar"><button type="button" class="calc-close" onclick="window.history.length > 1 ? history.back() : location.href='dashboard.html'" aria-label="Close and return" title="Close"><i class="fas fa-xmark"></i></button></div>
+      <section class="calc-heading"><div class="calc-kicker">ABU Tools</div><h1>Calculator</h1><p>Make quick calculations while managing your banking.</p></section>
+      <section class="calc-card" aria-label="Calculator">
+        <div class="calc-display" aria-live="polite"><div id="calcExpression" class="calc-expression"></div><div id="calcResult" class="calc-result">0</div></div>
+        <div class="calc-grid">
+          <button class="calc-key clear" data-action="clear">C</button><button class="calc-key" data-action="backspace" aria-label="Backspace"><i class="fas fa-delete-left"></i></button><button class="calc-key operator" data-value="%">%</button><button class="calc-key operator" data-value="/">÷</button>
+          <button class="calc-key" data-value="7">7</button><button class="calc-key" data-value="8">8</button><button class="calc-key" data-value="9">9</button><button class="calc-key operator" data-value="*">×</button>
+          <button class="calc-key" data-value="4">4</button><button class="calc-key" data-value="5">5</button><button class="calc-key" data-value="6">6</button><button class="calc-key operator" data-value="-">−</button>
+          <button class="calc-key" data-value="1">1</button><button class="calc-key" data-value="2">2</button><button class="calc-key" data-value="3">3</button><button class="calc-key operator" data-value="+">+</button>
+          <button class="calc-key wide" data-value="0">0</button><button class="calc-key" data-value=".">.</button><button class="calc-key equals" data-action="equals">=</button>
+        </div>
+        <p class="calc-tip">Use the keyboard or tap the controls to calculate.</p>
+      </section>
+    </div>
+  </main>
+  <script>
+    (() => {
+      const result = document.getElementById('calcResult');
+      const expression = document.getElementById('calcExpression');
+      let input = '';
+      let justEvaluated = false;
+      const render = () => { result.textContent = input || '0'; };
+      const calculate = () => {
+        if (!input || !/[0-9]$/.test(input)) return;
+        try {
+          const safe = input.replace(/%/g, '/100');
+          if (!/^[0-9+*/().\s-]+$/.test(safe)) throw new Error('Invalid expression');
+          const value = Function(`"use strict"; return (${safe})`)();
+          if (!Number.isFinite(value)) throw new Error('Invalid result');
+          expression.textContent = `${input} =`;
+          input = String(Number(value.toFixed(10)));
+          justEvaluated = true;
+          render();
+        } catch { result.textContent = 'Error'; input = ''; }
+      };
+      const addValue = value => {
+        if (justEvaluated && /[0-9.]/.test(value)) input = '';
+        justEvaluated = false;
+        if (value === '.' && input.split(/[+*/-]/).pop().includes('.')) return;
+        if (/[+*/-]/.test(value) && /[+*/-]$/.test(input)) input = input.slice(0, -1);
+        input += value;
+        render();
+      };
+      document.querySelectorAll('.calc-key').forEach(button => button.addEventListener('click', () => {
+        const action = button.dataset.action;
+        if (action === 'clear') { input = ''; expression.textContent = ''; justEvaluated = false; render(); }
+        else if (action === 'backspace') { input = input.slice(0, -1); justEvaluated = false; render(); }
+        else if (action === 'equals') calculate();
+        else addValue(button.dataset.value || '');
+      }));
+      document.addEventListener('keydown', event => {
+        if (/^[0-9.+*/%()-]$/.test(event.key)) addValue(event.key);
+        else if (event.key === 'Enter' || event.key === '=') calculate();
+        else if (event.key === 'Backspace') { input = input.slice(0, -1); render(); }
+        else if (event.key === 'Escape') { input = ''; expression.textContent = ''; render(); }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -232,11 +232,7 @@ function logout() {
 
 // Tool functions
 function openCalculator() {
-    if (typeof showAlert !== 'undefined') {
-        showAlert('Calculator feature coming soon!', 'info');
-    } else {
-        alert('Calculator feature coming soon!');
-    }
+    window.location.href = 'calculator.html';
 }
 
 function openCurrencyConverter() {
