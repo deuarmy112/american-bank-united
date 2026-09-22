@@ -244,11 +244,7 @@ function openATMLocator() {
 }
 
 function openBudgetPlanner() {
-    if (typeof showAlert !== 'undefined') {
-        showAlert('Budget planner feature coming soon!', 'info');
-    } else {
-        alert('Budget planner feature coming soon!');
-    }
+    window.location.href = 'budget.html';
 }
 
 function openSupport() {
