@@ -10,9 +10,8 @@
   <link rel="icon" href="assets/abu-logo.png" type="image/png">
   <style>
     body{background:#f8fafc;color:#0f172a}
-    .qr-page{max-width:520px;margin:0 auto;padding:88px 16px 104px}
-    .qr-header-inner{max-width:520px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:16px}
-    .qr-brand img{width:96px;height:auto;display:block}
+    .qr-page{max-width:520px;margin:0 auto;padding:20px 16px 104px}
+    .qr-topbar{display:flex;justify-content:flex-end;margin-bottom:18px}
     .qr-header-action{width:38px;height:38px;border:1px solid #e2e8f0;border-radius:999px;background:#fff;color:#64748b;display:flex;align-items:center;justify-content:center}
     .qr-hero{margin-bottom:18px}.qr-eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#64748b;font-weight:700}.qr-hero h1{margin:4px 0 6px;font-size:26px;line-height:1.15}.qr-hero p{margin:0;color:#64748b;font-size:14px}
     .qr-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px;box-shadow:0 8px 24px rgba(15,23,42,.06)}
@@ -21,14 +20,8 @@
   </style>
 </head>
 <body class="opay-ui">
-  <header class="opay-header">
-    <div class="qr-header-inner">
-      <a href="dashboard.html" class="qr-brand" aria-label="American Bank United home"><img src="assets/abu-logo.png" alt="American Bank United"></a>
-      <button type="button" onclick="location.href='dashboard.html'" class="qr-header-action" aria-label="Close QR Pay" title="Close"><i class="fas fa-xmark"></i></button>
-    </div>
-  </header>
-
   <main class="qr-page">
+    <div class="qr-topbar"><button type="button" onclick="location.href='dashboard.html'" class="qr-header-action" aria-label="Close QR Pay" title="Close"><i class="fas fa-xmark"></i></button></div>
     <section class="qr-hero"><div class="qr-eyebrow">ABU Payments</div><h1>QR Pay</h1><p>Scan a trusted code to pay, or show your QR code to receive funds.</p></section>
     <section class="qr-card">
       <div class="qr-tabs" role="tablist" aria-label="QR payment mode">
