@@ -19,6 +19,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let html5QrcodeScanner = null;
   let pendingRedirect = null;
+  let scannerLibraryPromise = null;
+
+  function loadScannerLibrary() {
+    if (typeof window.Html5Qrcode === 'function') return Promise.resolve();
+    if (scannerLibraryPromise) return scannerLibraryPromise;
+    scannerLibraryPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js';
+      script.async = true;
+      script.onload = () => typeof window.Html5Qrcode === 'function'
+        ? resolve()
+        : reject(new Error('Scanner library loaded without camera support'));
+      script.onerror = () => reject(new Error('Scanner library could not be loaded. Check your connection and try again.'));
+      document.head.appendChild(script);
+    });
+    return scannerLibraryPromise;
+  }
 
   function selectTab(activeTab, inactiveTab, activePane, inactivePane) {
     activePane.classList.remove('hidden');
@@ -35,12 +52,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!startBtn || !stopBtn) return;
     startBtn.style.display = 'none'; stopBtn.style.display = 'inline-block';
     try {
-      if (typeof Html5Qrcode !== 'function' && typeof window.Html5Qrcode === 'undefined') throw new Error('Html5Qrcode library not available');
-      html5QrcodeScanner = new (window.Html5Qrcode || Html5Qrcode)(readerId);
+      await loadScannerLibrary();
+      html5QrcodeScanner = new window.Html5Qrcode(readerId);
       await html5QrcodeScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: 250 }, onScanSuccess, onScanFailure);
     } catch (err) {
       console.error('Scanner start failed', err);
-      if (resultEl) resultEl.textContent = 'Unable to start camera: ' + (err.message || err);
+      const cameraHint = /permission|secure|notallowed|denied/i.test(err.message || '')
+        ? ' Allow camera access and open this page over HTTPS.'
+        : '';
+      if (resultEl) resultEl.textContent = 'Unable to start camera: ' + (err.message || err) + cameraHint;
       startBtn.style.display = 'inline-block'; stopBtn.style.display = 'none';
     }
   }
