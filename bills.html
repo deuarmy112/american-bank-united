@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>if (!localStorage.getItem('authToken')) localStorage.setItem('authToken', 'guest-token');</script>
+    <title>Pay Bills - American Bank United</title>
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/opay.css">
+    <style>
+        :root{--bill-navy:#111827;--bill-navy-light:#26364a}
+        body{background:#f8fafc;color:#0f172a}
+        .bill-page{min-height:100vh;padding:20px 16px 40px}
+        .bill-shell{width:min(100%,680px);margin:0 auto}
+        .bill-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+        .bill-kicker{color:#64748b;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+        .bill-topbar h1{margin:3px 0 0;font-size:28px;line-height:1.1}
+        .bill-close{width:40px;height:40px;border:1px solid #dbe3ec;border-radius:999px;background:#fff;color:#64748b;box-shadow:0 4px 12px rgba(15,23,42,.08)}
+        .bill-intro{margin-bottom:18px;color:#64748b;font-size:14px}
+        .bill-section{margin-top:18px}.bill-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.bill-section-head h2{font-size:17px;margin:0}.bill-add{border:0;background:var(--bill-navy);color:#fff;border-radius:9px;padding:9px 12px;font-weight:700}
+        .bill-categories{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.bill-category{display:flex;align-items:center;gap:8px;padding:12px 10px;border:1px solid #dbe3ec;border-radius:11px;background:#fff;color:#334155;font-size:13px;font-weight:600;cursor:pointer}.bill-category i{color:var(--bill-navy)}
+        .billers-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.biller-card{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #dbe3ec;border-radius:13px;padding:13px;cursor:pointer;box-shadow:0 4px 12px rgba(15,23,42,.04)}.biller-icon{width:38px;height:38px;flex:0 0 38px;border-radius:11px;background:linear-gradient(135deg,var(--bill-navy),var(--bill-navy-light));color:#fff;display:flex;align-items:center;justify-content:center}.biller-info{min-width:0;flex:1}.biller-info h3{font-size:14px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.biller-info p{margin:2px 0 0;color:#64748b;font-size:11px;text-transform:capitalize}.biller-info .biller-category{display:none}.btn-pay{border:1px solid #dbe3ec;background:#f8fafc;color:var(--bill-navy);border-radius:8px;padding:7px 9px;font-weight:700;font-size:12px}.no-data{padding:24px;text-align:center;border:1px dashed #cbd5e1;border-radius:12px;color:#64748b;background:#fff}
+        .payment-item{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #e5eaf0}.payment-item:last-child{border-bottom:0}.payment-name{font-weight:700;margin:0;font-size:14px}.payment-date{color:#64748b;font-size:12px;margin:3px 0 0}.payment-amount{margin-left:auto;color:#b91c1c;font-weight:700}
+        .bill-modal{position:fixed;inset:0;background:rgba(15,23,42,.48);display:none;align-items:flex-end;justify-content:center;padding:16px;z-index:70}.bill-modal.is-open{display:flex}.bill-modal-card{width:min(100%,520px);max-height:calc(100vh - 32px);overflow:auto;background:#fff;border-radius:18px;padding:20px;box-shadow:0 20px 60px rgba(15,23,42,.2)}.bill-modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}.bill-modal-head h2{font-size:19px;margin:0}.bill-modal-close{border:0;background:transparent;color:#64748b;font-size:20px}.bill-form{display:grid;gap:13px}.bill-form label{display:grid;gap:6px;color:#475569;font-size:12px;font-weight:700}.bill-form input,.bill-form select{width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:11px 12px;background:#fff;color:#0f172a;font-size:14px}.bill-form button[type=submit]{border:0;border-radius:10px;padding:12px;background:linear-gradient(135deg,var(--bill-navy),var(--bill-navy-light));color:#fff;font-weight:700}.biller-display{padding:12px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0}.biller-display strong{display:block}.biller-display span{color:#64748b;font-size:12px}
+        @media(max-width:520px){.bill-page{padding:16px 12px 28px}.bill-categories{grid-template-columns:repeat(2,1fr)}.billers-grid{grid-template-columns:1fr}.bill-topbar{margin-bottom:22px}}
+    </style>
+</head>
+<body>
+    <main class="bill-page">
+        <div class="bill-shell">
+            <div class="bill-topbar"><div><div class="bill-kicker">Payments</div><h1>Pay bills</h1></div><button type="button" class="bill-close" onclick="window.history.length > 1 ? history.back() : location.href='dashboard.html'" aria-label="Close and return" title="Close"><i class="fas fa-xmark"></i></button></div>
+            <p class="bill-intro">Manage saved billers and make a secure payment from any active ABU account.</p>
+
+            <section class="bill-section"><div class="bill-section-head"><h2>Quick pay</h2></div><div class="bill-categories"><button class="bill-category" onclick="filterByCategory('utilities')"><i class="fas fa-lightbulb"></i>Utilities</button><button class="bill-category" onclick="filterByCategory('internet')"><i class="fas fa-wifi"></i>Internet</button><button class="bill-category" onclick="filterByCategory('phone')"><i class="fas fa-phone"></i>Phone</button><button class="bill-category" onclick="filterByCategory('insurance')"><i class="fas fa-shield-halved"></i>Insurance</button><button class="bill-category" onclick="filterByCategory('credit-card')"><i class="fas fa-credit-card"></i>Credit card</button><button class="bill-category" onclick="filterByCategory('loan')"><i class="fas fa-building-columns"></i>Loans</button></div></section>
+
+            <section class="bill-section"><div class="bill-section-head"><h2>Saved billers</h2><button type="button" class="bill-add" onclick="showAddBillerModal()"><i class="fas fa-plus mr-1"></i>Add biller</button></div><div id="billersList" class="billers-grid"><div class="no-data">Loading saved billers...</div></div></section>
+            <section class="bill-section"><div class="bill-section-head"><h2>Recent payments</h2></div><div id="recentPaymentsList" class="bg-white border border-slate-200 rounded-xl px-4"><div class="no-data" style="border:0">Loading recent payments...</div></div></section>
+        </div>
+    </main>
+
+    <div id="addBillerModal" class="bill-modal" role="dialog" aria-modal="true" aria-labelledby="addBillerTitle"><div class="bill-modal-card"><div class="bill-modal-head"><h2 id="addBillerTitle">Add a biller</h2><button type="button" class="bill-modal-close" onclick="closeAddBillerModal()" aria-label="Close"><i class="fas fa-xmark"></i></button></div><form id="addBillerForm" class="bill-form"><label>Category<select id="billerCategory" required><option value="">Select category</option><option value="utilities">Utilities</option><option value="internet">Internet</option><option value="phone">Phone</option><option value="insurance">Insurance</option><option value="credit-card">Credit card</option><option value="loan">Loan</option></select></label><label>Biller name<input id="billerName" required placeholder="e.g. Electric Company"></label><label>Account number<input id="billerAccountNumber" required placeholder="Your account number"></label><label>Nickname <span>(optional)</span><input id="billerNickname" placeholder="e.g. Home electric"></label><button type="submit">Save biller</button></form></div></div>
+
+    <div id="payBillModal" class="bill-modal" role="dialog" aria-modal="true" aria-labelledby="payBillTitle"><div class="bill-modal-card"><div class="bill-modal-head"><h2 id="payBillTitle">Pay bill</h2><button type="button" class="bill-modal-close" onclick="closePayBillModal()" aria-label="Close"><i class="fas fa-xmark"></i></button></div><form id="payBillForm" class="bill-form"><input type="hidden" id="hiddenBillerId"><div id="selectedBillerName" class="biller-display">Select a biller</div><label>Pay from<select id="paymentAccount" required><option value="">Select account</option></select></label><label>Amount<input id="paymentAmount" type="number" min="0.01" step="0.01" required placeholder="0.00"></label><label>Payment date<input id="paymentDate" type="date" required></label><label>Memo <span>(optional)</span><input id="paymentMemo" placeholder="Payment note"></label><button type="submit">Pay securely</button></form></div></div>
+
+    <script src="js/utils.js"></script><script src="js/api.js"></script><script src="js/auth.js"></script><script src="js/bills-api.js"></script>
+</body>
+</html>

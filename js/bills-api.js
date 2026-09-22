@@ -19,6 +19,17 @@ async function loadBillers() {
     }
 }
 
+async function filterByCategory(category) {
+    try {
+        const billers = await billsAPI.getBillers();
+        const filtered = billers.filter(biller => biller.category === category);
+        displayBillers(filtered);
+        if (!filtered.length) showAlert(`No saved ${category} billers yet`, 'info');
+    } catch (error) {
+        showAlert(error.message || 'Unable to filter billers', 'error');
+    }
+}
+
 async function loadRecentPayments() {
     try {
         const payments = await billsAPI.getPayments();
