@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { randomUUID } = require('crypto');
-const { admin, getDb, getBucket } = require('./firebase');
+const { admin, getDb, getBucket } = require('../lib/firebase');
 
 const GUEST_ID = 'guest-user';
 const JWT_SECRET = () => process.env.JWT_SECRET || process.env.FIREBASE_PROJECT_ID || 'development-only-secret';
