@@ -621,7 +621,12 @@
                 const phoneEl = document.getElementById('profilePhone');
                 if (phoneEl) phoneEl.textContent = user.phone || '';
                 const avatarEl = document.getElementById('profileAvatar');
-                if (user.avatar && avatarEl) avatarEl.src = user.avatar;
+                if (avatarEl) {
+                    avatarEl.style.backgroundImage = user.avatar ? `url("${user.avatar}")` : '';
+                    avatarEl.style.backgroundSize = 'cover';
+                    avatarEl.style.backgroundPosition = 'center';
+                    avatarEl.textContent = user.avatar ? '' : 'ABU';
+                }
                 // Balance calculation moved to enhanceProfile after accounts are loaded
                 window.__currentUser = user || {};
                 try{ enhanceProfile(window.__currentUser); }catch(e){}
@@ -802,6 +807,24 @@
             return dataUrl;
         }
 
+        async function prepareAvatarFile(file) {
+            if (!file || !file.type.startsWith('image/')) throw new Error('Choose a JPG, PNG, or WEBP image');
+            const source = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => { const image = new Image(); image.onload = () => resolve(image); image.onerror = reject; image.src = reader.result; };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+            const scale = Math.min(1, 512 / Math.max(source.width, source.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(source.width * scale));
+            canvas.height = Math.max(1, Math.round(source.height * scale));
+            canvas.getContext('2d').drawImage(source, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+            if (dataUrl.length > 650000) throw new Error('Profile picture is too large after compression');
+            return dataUrl;
+        }
+
         async function loadVerificationStatus(user) {
             try { renderTierStatus(user, await verificationAPI.getStatus()); }
             catch (error) { renderTierStatus(user); console.warn('Verification status unavailable', error); }
@@ -861,16 +884,9 @@
                 try{
                     const fileInput = document.getElementById('editAvatarFile');
                     if (fileInput && fileInput.files && fileInput.files[0]){
-                        const f = fileInput.files[0];
-                        const reader = await new Promise((res, rej)=>{
-                            const r = new FileReader();
-                            r.onload = ()=> res(r.result);
-                            r.onerror = rej;
-                            r.readAsDataURL(f);
-                        });
-                        payload.avatar = reader;
+                        payload.avatar = await prepareAvatarFile(fileInput.files[0]);
                     }
-                }catch(err){ console.warn('avatar file read failed', err); }
+                }catch(err){ showToast(err.message || 'Profile picture could not be prepared'); return; }
                 const btn = e.target.querySelector('button[type=submit]');
                 if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
                 try {
@@ -904,12 +920,10 @@
                     }
                     if (fileNameEl) fileNameEl.textContent = f.name;
                     try{
-                        const data = await new Promise((res, rej)=>{
-                            const r = new FileReader(); r.onload = ()=> res(r.result); r.onerror = rej; r.readAsDataURL(f);
-                        });
+                        const data = await prepareAvatarFile(f);
                         if (preview) { preview.src = data; preview.classList.remove('hidden'); }
                         if (urlInput) urlInput.value = data;
-                    }catch(err){ console.warn('preview failed', err); }
+                    }catch(err){ if (fileNameEl) fileNameEl.textContent = err.message || 'Invalid image'; }
                 });
             }
 

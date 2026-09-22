@@ -1371,8 +1371,24 @@ async function route(req) {
     if (parts[0] === 'auth') {
         if (method === 'POST' && parts[1] === 'register') return authRegister(body);
         if (method === 'POST' && parts[1] === 'login') return authLogin(body);
-        if (method === 'GET' && parts[1] === 'profile') {
+        if ((method === 'GET' || method === 'PATCH') && parts[1] === 'profile') {
             const user = await authenticate(req);
+            if (method === 'PATCH') {
+                if (user.userId === GUEST_ID) return { status: 401, body: { error: 'Please sign in before updating your profile' } };
+                const firstName = String(body.first_name || '').trim();
+                const lastName = String(body.last_name || '').trim();
+                const email = String(body.email || '').trim().toLowerCase();
+                const phone = String(body.phone || '').trim();
+                const avatar = String(body.avatar || '').trim();
+                if (!firstName || !lastName || !isValidEmail(email)) return { status: 400, body: { error: 'First name, last name, and a valid email are required' } };
+                if (avatar && !/^data:image\/(jpeg|png|webp);base64,[a-zA-Z0-9+/=]+$/.test(avatar) && !/^https?:\/\//i.test(avatar)) {
+                    return { status: 400, body: { error: 'Profile picture must be a valid image' } };
+                }
+                if (avatar.length > 700000) return { status: 400, body: { error: 'Profile picture is too large. Choose a smaller image.' } };
+                const existing = await getDb().collection('users').where('email', '==', email).limit(2).get();
+                if (existing.docs.some(doc => doc.id !== user.userId)) return { status: 409, body: { error: 'Email is already registered' } };
+                await getDb().collection('users').doc(user.userId).set({ first_name: firstName, last_name: lastName, email, phone, ...(avatar ? { avatar } : {}), updated_at: now() }, { merge: true });
+            }
             return { body: clean(await userProfile(user.userId)) };
         }
     }
