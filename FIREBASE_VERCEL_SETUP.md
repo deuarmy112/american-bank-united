@@ -34,6 +34,8 @@ TWILIO_FROM_NUMBER=+15551234567
 
 `RESEND_API_KEY` and `EMAIL_FROM` enable full transfer confirmation emails. The Twilio variables enable SMS notifications. Without these provider variables, transfers still complete and the API reports notifications as `not_configured`.
 
+Automatic SMS alerts are sent for deposits, account transfers, external transfers, admin-funded credits, and transfers completed after approval. Store phone numbers in international E.164 format (for example, `+15551234567`) so Twilio can deliver them reliably. In Twilio trial mode, the destination number must also be verified in the Twilio console.
+
 ## 3. Deploy
 
 From the repository root:
