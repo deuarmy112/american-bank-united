@@ -178,13 +178,14 @@ document.addEventListener('DOMContentLoaded', () => {
   try {
     const LAST_PAGE_KEY = 'abu_last_path';
     // Save current path on load
-    localStorage.setItem(LAST_PAGE_KEY, location.pathname + location.search + (location.hash || ''));
+    const currentPath = location.pathname + location.search + (location.hash || '');
+    localStorage.setItem(LAST_PAGE_KEY, currentPath);
 
     // If user lands on index.html or root, attempt to restore last visited page
     const landingNames = ['/', '/index.html', '/dashboard.html'];
-    if (landingNames.includes(location.pathname)) {
+    if (landingNames.includes(location.pathname) && !location.search && !location.hash) {
       const last = localStorage.getItem(LAST_PAGE_KEY);
-      if (last && last !== location.pathname) {
+      if (last && last !== currentPath) {
         // avoid redirect loops: only redirect if last is an HTML path in site
         try {
           const u = new URL(last, location.origin);

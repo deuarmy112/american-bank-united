@@ -58,9 +58,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             showAlert('Login successful! Redirecting...', 'success');
             
-            // Redirect to dashboard
+            const returnTo = new URLSearchParams(window.location.search).get('returnTo');
             setTimeout(() => {
-                window.location.href = 'dashboard.html';
+                const destination = returnTo && returnTo.startsWith('dashboard.html') ? returnTo : 'dashboard.html';
+                window.location.href = destination;
             }, 1000);
 
         } catch (error) {

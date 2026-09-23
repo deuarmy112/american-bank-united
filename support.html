@@ -22,5 +22,12 @@
     <p class="support-note"><i class="fas fa-shield-halved"></i> Never share your password, transfer PIN, or one-time security code with anyone, including support.</p>
   </div></main>
 </body>
-<script src="js/navigation-stack.js"></script>
+    <script src="js/navigation-stack.js"></script>
+    <script>
+      const supportChatLink = document.querySelector('.support-chat');
+      const authToken = localStorage.getItem('authToken');
+      if (supportChatLink && (!authToken || authToken === 'guest-token')) {
+        supportChatLink.href = 'index.html?returnTo=dashboard.html%3FopenSupport%3D1';
+      }
+    </script>
 </html>
