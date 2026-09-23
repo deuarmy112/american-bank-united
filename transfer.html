@@ -914,7 +914,7 @@
 
             // Create receipt
             lastTransferReceipt = receiptData;
-            pendingBeneficiary = currentAbuMode === 'myAccounts' ? null : { name: accountName, accountNumber, bankName: 'American Bank United', email, phone, transferType: 'abu' };
+            pendingBeneficiary = currentAbuMode === 'myAccounts' ? null : { name: document.getElementById('otherAbuRecipientName').value.trim(), accountNumber, bankName: 'American Bank United', transferType: 'abu' };
 
             showSuccessModal();
             document.getElementById('internalAmount').value = '';
