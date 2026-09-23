@@ -36,6 +36,14 @@ async function sendTransactionalEmail({ email, subject, text, html }) {
     }
 }
 
+function verificationEmailMarkup({ firstName, label, code, subject }) {
+    const greeting = escapeEmailHtml(firstName || 'there');
+    const safeLabel = escapeEmailHtml(label);
+    const safeCode = escapeEmailHtml(code);
+    const safeSubject = escapeEmailHtml(subject);
+    return `<div style="font-family:Arial,sans-serif;background:#f4f7fb;padding:32px;color:#172033"><div style="max-width:560px;margin:auto;background:#fff;border:1px solid #dbe3ec;border-radius:16px;overflow:hidden"><div style="background:#111827;color:#fff;padding:24px 28px"><img src="https://americanbankunited.com/assets/abu-logo.png" width="150" alt="American Bank United" style="display:block;width:150px;height:auto;margin:0 0 16px"><div style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;opacity:.75">American Bank United</div><h1 style="font-size:22px;margin:10px 0 0">Secure verification</h1></div><div style="padding:28px"><p style="font-size:16px">Hello ${greeting},</p><p>Use the verification code below to complete your ${safeLabel}.</p><div style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:12px;text-align:center;padding:18px;margin:22px 0"><div style="font-size:12px;color:#64748b;text-transform:uppercase">Your verification code</div><strong style="display:block;font-size:32px;letter-spacing:8px;margin-top:8px;color:#111827">${safeCode}</strong></div><p style="color:#64748b;font-size:13px">This code expires in 10 minutes and can be used once. If you did not request this ${safeLabel}, contact American Bank United support immediately.</p><p style="color:#64748b;font-size:13px">Never share this code with anyone, including support.</p></div><div style="padding:16px 28px;background:#f8fafc;color:#64748b;font-size:12px">${safeSubject}<br>This is an automated security message from American Bank United.</div></div></div>`;
+}
+
 function escapeEmailHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 }
@@ -294,7 +302,8 @@ async function securityCodeRoutes(method, parts, user, body) {
         const delivery = await sendTransactionalEmail({
             email: profile.email,
             subject: settings.subject,
-            text: `Hello ${profile.first_name || 'there'},\n\nYour six-digit ${settings.label} code is: ${code}\n\nThis code expires in 10 minutes. If you did not request this, contact American Bank United support immediately.`
+            text: `Hello ${profile.first_name || 'there'},\n\nYour six-digit ${settings.label} code is: ${code}\n\nThis code expires in 10 minutes and can be used once. If you did not request this, contact American Bank United support immediately. Never share this code with anyone.`,
+            html: verificationEmailMarkup({ firstName: profile.first_name, label: settings.label, code, subject: settings.subject })
         });
         if (delivery.status !== 'sent') {
             await verificationRef.delete();
