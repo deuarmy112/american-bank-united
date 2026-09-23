@@ -456,7 +456,7 @@
                     <i class="fas fa-print"></i>
                     Print Receipt
                 </button>
-                <button onclick="closeSuccessModal()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                <button onclick="completeSuccessTransfer()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
                     Done
                 </button>
             </div>
@@ -506,6 +506,7 @@
         let currentTransferType = 'internal';
         let currentAbuMode = 'myAccounts';
         let lastTransferReceipt = null;
+        let pendingBeneficiary = null;
         let abuLookupTimer = null;
 
         // Initialize on page load
@@ -913,10 +914,9 @@
 
             // Create receipt
             lastTransferReceipt = receiptData;
+            pendingBeneficiary = currentAbuMode === 'myAccounts' ? null : { name: accountName, accountNumber, bankName: 'American Bank United', email, phone, transferType: 'abu' };
 
             showSuccessModal();
-            if (await handleSavedBeneficiaryRepeat()) return;
-            await offerSaveBeneficiary({ name: accountName, accountNumber, bankName: 'Other bank', email, phone, transferType: 'other_bank', swift: swiftCode });
             document.getElementById('internalAmount').value = '';
             if (currentAbuMode === 'myAccounts') {
                 document.getElementById('internalToAccount').value = '';
@@ -999,10 +999,9 @@
             }
 
             lastTransferReceipt = receiptData;
+            pendingBeneficiary = { name: accountName, accountNumber, bankName, email, phone, transferType: 'other_bank', swift: swiftCode };
 
             showSuccessModal();
-            if (await handleSavedBeneficiaryRepeat()) return;
-            await offerSaveBeneficiary({ name: accountName, accountNumber, bankName, email, phone, transferType: 'international', country, swift: swiftCode });
             document.getElementById('extAmount').value = '';
             document.getElementById('extAccountNumber').value = '';
             document.getElementById('extAccountName').value = '';
@@ -1092,6 +1091,7 @@
             }
 
             lastTransferReceipt = receiptData;
+            pendingBeneficiary = { name: accountName, accountNumber, bankName, email, phone, transferType: 'international', country, swift: swiftCode };
 
             showSuccessModal();
             document.getElementById('intlAmountUSD').value = '';
@@ -1121,6 +1121,14 @@
             const repeat = window.confirm('Transfer completed. Transfer to this beneficiary again?');
             if (repeat) closeSuccessModal();
             return repeat;
+        }
+
+        async function completeSuccessTransfer() {
+            closeSuccessModal();
+            const beneficiary = pendingBeneficiary;
+            pendingBeneficiary = null;
+            if (!beneficiary || await handleSavedBeneficiaryRepeat()) return;
+            await offerSaveBeneficiary(beneficiary);
         }
 
         function buildCompactReceipt(receipt) {
