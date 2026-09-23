@@ -840,7 +840,7 @@ async function beneficiaryRoutes(method, parts, user, body) {
         if (!name || !accountNumber || !bankName) return { status: 400, body: { error: 'Name, account number or IBAN, and bank name are required' } };
         const existing = await collection.where('user_id', '==', user.userId).where('account_number', '==', accountNumber).limit(1).get();
         if (!existing.empty) return { status: 409, body: { error: 'This beneficiary is already saved' } };
-        const beneficiary = await save('beneficiaries', { user_id: user.userId, name, account_number: accountNumber, bank_name: bankName, nickname: String(body.nickname || '').trim(), email: String(body.email || '').trim(), phone: String(body.phone || '').trim(), created_at: now(), updated_at: now() });
+        const beneficiary = await save('beneficiaries', { user_id: user.userId, name, account_number: accountNumber, bank_name: bankName, nickname: String(body.nickname || '').trim(), email: String(body.email || '').trim(), phone: String(body.phone || '').trim(), transfer_type: ['abu', 'other_bank', 'international'].includes(body.transferType) ? body.transferType : 'other_bank', country: String(body.country || '').trim(), swift: String(body.swift || '').trim(), created_at: now(), updated_at: now() });
         return { status: 201, body: { beneficiary: clean(beneficiary) } };
     }
     if (parts[0]) {
@@ -849,7 +849,7 @@ async function beneficiaryRoutes(method, parts, user, body) {
         const ref = collection.doc(parts[0]);
         if (method === 'DELETE') { await ref.delete(); return { body: { success: true } }; }
         if (method === 'PUT') {
-            const updates = { name: String(body.name || '').trim(), account_number: String(body.accountNumber || body.account_number || '').trim(), bank_name: String(body.bankName || body.bank_name || '').trim(), nickname: String(body.nickname || '').trim(), email: String(body.email || '').trim(), phone: String(body.phone || '').trim(), updated_at: now() };
+            const updates = { name: String(body.name || '').trim(), account_number: String(body.accountNumber || body.account_number || '').trim(), bank_name: String(body.bankName || body.bank_name || '').trim(), nickname: String(body.nickname || '').trim(), email: String(body.email || '').trim(), phone: String(body.phone || '').trim(), transfer_type: ['abu', 'other_bank', 'international'].includes(body.transferType) ? body.transferType : (beneficiary.transfer_type || 'other_bank'), country: String(body.country || '').trim(), swift: String(body.swift || '').trim(), updated_at: now() };
             if (!updates.name || !updates.account_number || !updates.bank_name) return { status: 400, body: { error: 'Name, account number or IBAN, and bank name are required' } };
             await ref.set(updates, { merge: true });
             return { body: { beneficiary: clean({ ...beneficiary, ...updates, id: parts[0] }) } };

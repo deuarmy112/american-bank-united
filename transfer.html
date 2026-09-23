@@ -552,6 +552,7 @@
                 populateCountries();
                 setupEventListeners();
                 applyQrRecipientParams();
+                applyBeneficiaryParams();
             } catch (e) {
                 console.error('Initialization error:', e);
             }
@@ -568,6 +569,41 @@
             const recipientInput = document.getElementById('otherAbuRecipientName');
             if (recipientInput && params.get('recipientName')) recipientInput.value = params.get('recipientName');
             lookupAbuRecipient();
+        }
+
+        function applyBeneficiaryParams() {
+            const params = new URLSearchParams(window.location.search);
+            const transferType = params.get('beneficiaryType');
+            if (!transferType) return;
+            document.body.dataset.savedBeneficiary = params.get('beneficiaryId') || '';
+            const name = params.get('beneficiaryName') || '';
+            const accountNumber = params.get('beneficiaryAccount') || '';
+            if (transferType === 'abu') {
+                switchTransferType('internal');
+                switchAbuTransferMode('otherAccounts');
+                document.getElementById('otherAbuAccountNumber').value = accountNumber;
+                document.getElementById('otherAbuRecipientName').value = name;
+                lookupAbuRecipient();
+                return;
+            }
+            if (transferType === 'international') {
+                switchTransferType('international');
+                document.getElementById('intlAccountNumber').value = accountNumber;
+                document.getElementById('intlAccountName').value = name;
+                document.getElementById('intlBankName').value = params.get('beneficiaryBank') || '';
+                document.getElementById('intlEmail').value = params.get('beneficiaryEmail') || '';
+                document.getElementById('intlPhone').value = params.get('beneficiaryPhone') || '';
+                document.getElementById('intlSwiftCode').value = params.get('beneficiarySwift') || '';
+                const country = params.get('beneficiaryCountry') || '';
+                if (country) document.getElementById('intlCountry').value = country;
+                return;
+            }
+            switchTransferType('external');
+            document.getElementById('extAccountNumber').value = accountNumber;
+            document.getElementById('extAccountName').value = name;
+            document.getElementById('extEmail').value = params.get('beneficiaryEmail') || '';
+            document.getElementById('extPhone').value = params.get('beneficiaryPhone') || '';
+            document.getElementById('extSwiftCode').value = params.get('beneficiarySwift') || '';
         }
 
         function populateAccountDropdowns() {
@@ -879,7 +915,8 @@
             lastTransferReceipt = receiptData;
 
             showSuccessModal();
-            await offerSaveBeneficiary({ name: accountName, accountNumber, bankName: 'Other bank', email, phone });
+            if (await handleSavedBeneficiaryRepeat()) return;
+            await offerSaveBeneficiary({ name: accountName, accountNumber, bankName: 'Other bank', email, phone, transferType: 'other_bank', swift: swiftCode });
             document.getElementById('internalAmount').value = '';
             if (currentAbuMode === 'myAccounts') {
                 document.getElementById('internalToAccount').value = '';
@@ -964,7 +1001,8 @@
             lastTransferReceipt = receiptData;
 
             showSuccessModal();
-            await offerSaveBeneficiary({ name: accountName, accountNumber, bankName, email, phone });
+            if (await handleSavedBeneficiaryRepeat()) return;
+            await offerSaveBeneficiary({ name: accountName, accountNumber, bankName, email, phone, transferType: 'international', country, swift: swiftCode });
             document.getElementById('extAmount').value = '';
             document.getElementById('extAccountNumber').value = '';
             document.getElementById('extAccountName').value = '';
@@ -1076,6 +1114,13 @@
                 if (error.status === 409) showAlert('This beneficiary is already saved.', 'info');
                 else showAlert(error.message || 'Unable to save beneficiary.', 'error');
             }
+        }
+
+        async function handleSavedBeneficiaryRepeat() {
+            if (!document.body.dataset.savedBeneficiary) return false;
+            const repeat = window.confirm('Transfer completed. Transfer to this beneficiary again?');
+            if (repeat) closeSuccessModal();
+            return repeat;
         }
 
         function buildCompactReceipt(receipt) {
