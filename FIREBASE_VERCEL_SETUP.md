@@ -36,6 +36,20 @@ TWILIO_FROM_NUMBER=+15551234567
 
 Automatic SMS alerts are sent for deposits, account transfers, external transfers, admin-funded credits, and transfers completed after approval. Store phone numbers in international E.164 format (for example, `+15551234567`) so Twilio can deliver them reliably. In Twilio trial mode, the destination number must also be verified in the Twilio console.
 
+### Show the bank logo beside the sender in Gmail
+
+The logo inside the email HTML does not control Gmail's sender avatar. Gmail uses sender-domain branding, so configure this in DNS after verifying `americanbankunited.com` with Resend:
+
+1. Publish a DMARC TXT record for `_dmarc.americanbankunited.com` with an enforcement policy, such as `v=DMARC1; p=quarantine; pct=100; rua=mailto:dmarc@americanbankunited.com`.
+2. Host an approved BIMI SVG logo at an HTTPS URL.
+3. Publish a TXT record for `default._bimi.americanbankunited.com`:
+
+```text
+v=BIMI1; l=https://americanbankunited.com/assets/abu-logo.svg; a=https://your-certificate-host.example/americanbankunited.pem
+```
+
+Gmail generally requires a verified mark certificate (`a=`) for BIMI logo display. The certificate and SVG must meet the BIMI specification. After DNS propagation, Gmail may take time to refresh its cached sender icon. Do not put the logo in `EMAIL_FROM`; keep that value as `American Bank United <transfers@americanbankunited.com>`.
+
 ## 3. Deploy
 
 From the repository root:
