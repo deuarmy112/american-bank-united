@@ -35,6 +35,10 @@
       "destination": "/api/[...path]?path=verification"
     },
     {
+      "source": "/api/security/:purpose/:action",
+      "destination": "/api/[...path]?path=security/:purpose/:action"
+    },
+    {
       "source": "/api/admin/verification-requests/:requestId/:action",
       "destination": "/api/[...path]?path=admin/verification-requests/:requestId/:action"
     },
