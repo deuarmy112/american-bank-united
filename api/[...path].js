@@ -5,6 +5,7 @@ const { admin, getDb, getBucket } = require('../lib/firebase');
 
 const GUEST_ID = 'guest-user';
 const JWT_SECRET = () => process.env.JWT_SECRET || process.env.FIREBASE_PROJECT_ID || 'development-only-secret';
+const CHAT_ATTACHMENT_MAX_BYTES = 512 * 1024;
 let guestCheckedAt = 0;
 
 function now() {
@@ -125,6 +126,21 @@ function makeToken(user) {
 function readBody(req) {
     if (req.body && typeof req.body === 'object') return req.body;
     return {};
+}
+
+function normalizeChatAttachment(value) {
+    if (!value) return null;
+    if (typeof value !== 'object') throw new Error('Invalid attachment');
+    const name = String(value.name || '').trim();
+    const type = String(value.type || 'application/octet-stream').trim().toLowerCase();
+    const data = String(value.data || '');
+    if (!name || name.length > 120 || !data.startsWith(`data:${type};base64,`)) throw new Error('Invalid attachment');
+    const base64 = data.slice(`data:${type};base64,`.length);
+    const allowedType = type.startsWith('image/') || ['application/pdf', 'application/json', 'text/plain', 'text/csv'].includes(type);
+    if (!allowedType || !base64 || !/^[A-Za-z0-9+/]+={0,2}$/.test(base64)) throw new Error('This file type is not supported');
+    const bytes = Buffer.from(base64, 'base64');
+    if (!bytes.length || bytes.length > CHAT_ATTACHMENT_MAX_BYTES) throw new Error('Files must be 512 KB or smaller');
+    return { name, type, size: bytes.length, data };
 }
 
 function normalizeAccountIdentifier(value) {
@@ -665,13 +681,23 @@ async function chatRoutes(method, parts, user, body) {
 
     if (method === 'POST' && parts.length === 0) {
         const text = String(body.text || '').trim();
-        if (!text || text.length > 2000) return { status: 400, body: { error: 'Message must be between 1 and 2000 characters' } };
+        let attachment;
+        try { attachment = normalizeChatAttachment(body.attachment); } catch (error) { return { status: 400, body: { error: error.message } }; }
+        if ((!text && !attachment) || text.length > 2000) return { status: 400, body: { error: 'Add a message or attachment; text must be 2000 characters or fewer' } };
         const profile = await userProfile(user.userId);
         const timestamp = now();
-        const message = { id: randomUUID(), conversation_id: user.userId, sender_id: user.userId, sender_role: 'customer', text, created_at: timestamp };
-        await conversationRef.set({ id: user.userId, user_id: user.userId, user_name: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim(), user_email: profile?.email || '', status: 'open', last_message: text, last_message_at: timestamp, admin_unread_count: Number(conversation?.data()?.admin_unread_count || 0) + 1, updated_at: timestamp }, { merge: true });
+        const message = { id: randomUUID(), conversation_id: user.userId, sender_id: user.userId, sender_role: 'customer', text, attachment, created_at: timestamp };
+        await conversationRef.set({ id: user.userId, user_id: user.userId, user_name: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim(), user_email: profile?.email || '', status: 'open', last_message: text || `Attachment: ${attachment.name}`, last_message_at: timestamp, admin_unread_count: Number(conversation?.data().admin_unread_count || 0) + 1, updated_at: timestamp }, { merge: true });
         await conversationRef.collection('messages').doc(message.id).set(message);
         return { status: 201, body: { message: clean(message) } };
+    }
+
+    if (method === 'DELETE' && parts[0] === 'messages' && parts[1]) {
+        const messageRef = conversationRef.collection('messages').doc(parts[1]);
+        const message = await messageRef.get();
+        if (!message.exists || message.data().sender_id !== user.userId) return { status: 404, body: { error: 'Message not found' } };
+        await messageRef.delete();
+        return { body: { success: true } };
     }
 
     return { status: 404, body: { error: 'Chat route not found' } };
@@ -1098,13 +1124,21 @@ async function adminRoutes(method, parts, user, body, query) {
         }
         if (method === 'POST' && parts.length === 2) {
             const text = String(body.text || '').trim();
-            if (!text || text.length > 2000) return { status: 400, body: { error: 'Message must be between 1 and 2000 characters' } };
+            let attachment;
+            try { attachment = normalizeChatAttachment(body.attachment); } catch (error) { return { status: 400, body: { error: error.message } }; }
+            if ((!text && !attachment) || text.length > 2000) return { status: 400, body: { error: 'Add a message or attachment; text must be 2000 characters or fewer' } };
             const timestamp = now();
-            const message = { id: randomUUID(), conversation_id: parts[1], sender_id: user.userId, sender_role: 'admin', text, created_at: timestamp };
+            const message = { id: randomUUID(), conversation_id: parts[1], sender_id: user.userId, sender_role: 'admin', text, attachment, created_at: timestamp };
             const current = await conversationRef.get();
-            await conversationRef.set({ status: 'open', last_message: text, last_message_at: timestamp, customer_unread_count: Number(current.data()?.customer_unread_count || 0) + 1, updated_at: timestamp }, { merge: true });
+            await conversationRef.set({ status: 'open', last_message: text || `Attachment: ${attachment.name}`, last_message_at: timestamp, customer_unread_count: Number(current.data()?.customer_unread_count || 0) + 1, updated_at: timestamp }, { merge: true });
             await conversationRef.collection('messages').doc(message.id).set(message);
             return { status: 201, body: { message: clean(message) } };
+        }
+        if (method === 'DELETE' && parts[2] === 'messages' && parts[3]) {
+            const messageRef = conversationRef.collection('messages').doc(parts[3]);
+            if (!(await messageRef.get()).exists) return { status: 404, body: { error: 'Message not found' } };
+            await messageRef.delete();
+            return { body: { success: true } };
         }
     }
 

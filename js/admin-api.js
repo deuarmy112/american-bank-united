@@ -61,12 +61,16 @@ const adminAPI = {
         return adminRequest(`${API_URL}/admin/chat`);
     },
 
-    async sendChatMessage(conversationId, text) {
+    async sendChatMessage(conversationId, text, attachment = null) {
         return adminRequest(`${API_URL}/admin/chat/${encodeURIComponent(conversationId)}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text })
+            body: JSON.stringify({ text, attachment })
         });
+    },
+
+    async deleteChatMessage(conversationId, messageId) {
+        return adminRequest(`${API_URL}/admin/chat/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}`, { method: 'DELETE' });
     },
 
     // Get dashboard statistics
