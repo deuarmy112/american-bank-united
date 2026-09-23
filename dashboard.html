@@ -40,7 +40,7 @@
             .support-chat-fullscreen #abu-bottom-nav { display: none !important; }
             .support-chat-fullscreen #modal-cs { align-items: stretch; }
             .support-chat-fullscreen #modal-cs > div { position: fixed; inset: 0; width: 100%; max-width: none; height: 100%; border-radius: 0; padding: 24px; overflow: hidden; display: flex; flex-direction: column; }
-            .support-chat-fullscreen #chatRoom { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+            .support-chat-fullscreen #chatRoom:not(.hidden) { display: flex; flex-direction: column; flex: 1; min-height: 0; }
             .support-chat-fullscreen #chatStatus { flex-shrink: 0; }
             .support-chat-fullscreen #supportChatActions { display: none; }
             @media (max-width: 640px) {

@@ -168,6 +168,7 @@
     window.closeCustomerServiceModal = function () {
         document.getElementById('modal-cs')?.classList.add('hidden');
         document.body.classList.remove('support-chat-fullscreen');
+        document.body.classList.remove('overflow-hidden');
     };
 
     document.addEventListener('DOMContentLoaded', () => {
