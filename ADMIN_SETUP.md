@@ -24,7 +24,7 @@ npm run seed-admin
 
 After migration, you can log in to the admin portal with:
 
-- **URL**: https://american-bank-united.vercel.app/admin-login.html
+- **URL**: https://americanbankunited.com/admin-login.html
 - **Email**: admin@americanbankunited.com
 - **Password**: Admin@123
 
@@ -119,7 +119,7 @@ All admin endpoints require authentication and admin role:
 ## Testing the Admin Portal
 
 1. Deploy the migration to production database
-2. Access admin login: https://american-bank-united.vercel.app/admin-login.html
+2. Access admin login: https://americanbankunited.com/admin-login.html
 3. Login with default credentials
 4. Test each feature:
    - View dashboard statistics

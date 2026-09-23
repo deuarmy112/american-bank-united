@@ -10,7 +10,8 @@ American Bank United uses Vercel for the static frontend and serverless API, wit
 4. Import this repository into Vercel.
 5. Add the Firebase variables and `JWT_SECRET` described in [FIREBASE_VERCEL_SETUP.md](FIREBASE_VERCEL_SETUP.md).
 6. Deploy with Vercel.
-7. Deploy the Firestore and Storage rules/indexes with the Firebase CLI.
+7. Add `americanbankunited.com` to the Vercel project under Settings > Domains.
+8. Deploy the Firestore and Storage rules/indexes with the Firebase CLI.
 
 The frontend calls the API through `/api`, so the deployed application does not depend on Render, a long-running Express process, or a separate CORS origin.
 
@@ -28,7 +29,7 @@ Vercel CLI serves the site at `http://localhost:3000`. Put Firebase variables in
 Open this endpoint after deployment:
 
 ```text
-https://YOUR-VERCEL-DOMAIN/api/health
+https://americanbankunited.com/api/health
 ```
 
 The response should contain `"status":"OK"` and `"provider":"firebase"`.

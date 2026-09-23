@@ -24,7 +24,7 @@ FIREBASE_STORAGE_BUCKET=your-project-id.firebasestorage.app
 JWT_SECRET=use-a-long-random-secret
 NODE_ENV=production
 RESEND_API_KEY=your-resend-api-key
-EMAIL_FROM=American Bank United <transfers@your-domain.com>
+EMAIL_FROM=American Bank United <transfers@americanbankunited.com>
 TWILIO_ACCOUNT_SID=your-twilio-account-sid
 TWILIO_AUTH_TOKEN=your-twilio-auth-token
 TWILIO_FROM_NUMBER=+15551234567
@@ -89,7 +89,7 @@ firebase deploy --only firestore:rules,firestore:indexes,storage
 After deployment, check:
 
 ```text
-https://YOUR-VERCEL-DOMAIN/api/health
+https://americanbankunited.com/api/health
 ```
 
 The response should include `"status":"OK"` and `"provider":"firebase"`.

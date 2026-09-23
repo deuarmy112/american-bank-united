@@ -31,10 +31,10 @@ POST   /api/external-transfers/requests/:id/decline - Decline request
 ## 🔧 Deployment Steps:
 
 ### **Step 1: Wait for Auto-Deploy**
-Render will automatically deploy the new code (1-2 minutes). Watch for "Your service is live 🎉"
+Vercel automatically deploys changes pushed to the connected repository. Open the Vercel deployment for `americanbankunited.com` after it completes.
 
 ### **Step 2: Add New Database Tables**
-Once deployed, in **Render Shell**, run:
+Once deployed, run the database migration from a trusted local environment with the required Firebase credentials:
 ```bash
 node scripts/add-external-transfers.js
 ```
@@ -48,7 +48,7 @@ You should see:
 ```
 
 ### **Step 3: Test the Features**
-Visit: `https://american-bank-united.vercel.app/send-money.html`
+Visit: `https://americanbankunited.com/send-money.html`
 
 ---
 
@@ -142,7 +142,7 @@ Update your dashboard navigation to include the new page:
 - Check account balance before transfer
 
 **"Failed to process"**
-- Check Render logs for database errors
+- Check Vercel function logs for database errors
 - Ensure tables were created properly
 
 ---
