@@ -9,6 +9,25 @@
   <link rel="stylesheet" href="css/opay.css">
   <link rel="icon" href="assets/abu-logo.png" type="image/png">
   <style>
+    .support-chat-panel{display:none;min-height:calc(100vh - 80px);flex-direction:column}
+    .support-chat-panel.is-open{display:flex}
+    .support-chat-panel-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+    .support-chat-panel-head button{border:0;background:transparent;color:#475569;padding:8px}
+    .support-chat-panel-head h1{font-size:22px;margin:0}
+    .support-chat-panel-body{flex:1}
+    .support-chat-messages{min-height:280px;max-height:calc(100vh - 280px);overflow-y:auto;background:#f1f5f9;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+    .support-chat-message{max-width:86%;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid #e2e8f0}
+    .support-chat-message.customer{align-self:flex-end;background:#111827;color:#fff;border-color:#111827}
+    .support-chat-message small{display:block;margin-top:6px;opacity:.7}
+    .support-chat-form{display:flex;gap:8px;align-items:center;margin-top:12px}
+    .support-chat-form input[type=text]{flex:1;min-width:0;border:1px solid var(--support-border);border-radius:10px;padding:11px 12px}
+    .support-chat-form button,.support-chat-primary{border:0;border-radius:10px;background:var(--support-navy);color:#fff;padding:11px 14px;font-weight:700}
+    .support-chat-primary{width:100%;margin-top:14px}
+    .support-chat-file{border:1px solid var(--support-border);border-radius:10px;padding:10px 12px;cursor:pointer}
+    .support-chat-status{min-height:20px;color:#64748b;font-size:12px;margin-top:8px}
+    .support-chat-open #supportOverviewHeading,.support-chat-open #supportOverviewCard,.support-chat-open #supportTopics,.support-chat-open #supportOverviewNote{display:none}
+  </style>
+  <style>
     :root{--support-navy:#111827;--support-light:#26364a;--support-border:#dbe3ec}
     body{background:#f8fafc;color:#0f172a}.support-page{min-height:100vh;padding:20px 16px 40px}.support-shell{width:min(100%,680px);margin:0 auto}.support-topbar{display:flex;justify-content:flex-end;margin-bottom:24px}.support-close{width:40px;height:40px;border:1px solid var(--support-border);border-radius:999px;background:#fff;color:#64748b;box-shadow:0 4px 12px rgba(15,23,42,.08)}.support-kicker{font-size:11px;color:#64748b;font-weight:700;letter-spacing:.09em;text-transform:uppercase}.support-heading h1{font-size:28px;line-height:1.1;margin:4px 0 7px}.support-heading p{font-size:14px;color:#64748b;margin:0 0 18px}.support-card{background:#fff;border:1px solid var(--support-border);border-radius:18px;padding:18px;box-shadow:0 10px 28px rgba(15,23,42,.06)}.support-card+.support-card{margin-top:14px}.support-card h2{font-size:17px;margin:0}.support-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}.support-action{display:flex;align-items:center;gap:10px;padding:13px;border:1px solid var(--support-border);border-radius:12px;background:#fff;color:#0f172a;text-decoration:none}.support-action i{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--support-navy),var(--support-light));color:#fff;display:flex;align-items:center;justify-content:center}.support-action strong{display:block;font-size:13px}.support-action span{display:block;color:#64748b;font-size:11px;margin-top:2px}.support-chat{display:flex;align-items:center;gap:13px;padding:16px;border-radius:13px;background:linear-gradient(135deg,var(--support-navy),var(--support-light));color:#fff;text-decoration:none}.support-chat-icon{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:19px}.support-chat-copy{flex:1}.support-chat-copy strong{display:block}.support-chat-copy span{display:block;color:#cbd5e1;font-size:12px;margin-top:3px}.support-chat-arrow{color:#cbd5e1}.support-topic{padding:13px 0;border-bottom:1px solid #edf1f5}.support-topic:last-child{border-bottom:0;padding-bottom:0}.support-topic strong{font-size:14px}.support-topic p{color:#64748b;font-size:12px;line-height:1.5;margin:4px 0 0}.support-note{color:#64748b;font-size:12px;line-height:1.5;margin-top:14px}.support-note i{color:var(--support-navy);margin-right:5px}@media(max-width:480px){.support-page{padding:16px 12px 32px}.support-actions{grid-template-columns:1fr}}
   </style>
@@ -16,18 +35,19 @@
 <body>
   <main class="support-page"><div class="support-shell">
     <div class="support-topbar"><button type="button" class="support-close" data-nav-back="dashboard.html" aria-label="Close and return" title="Close"><i class="fas fa-xmark"></i></button></div>
-    <section class="support-heading"><div class="support-kicker">ABU Care</div><h1>How can we help?</h1><p>Reach American Bank United support through the channel that works best for you.</p></section>
-    <section class="support-card"><a class="support-chat" href="dashboard.html?openSupport=1"><span class="support-chat-icon"><i class="fas fa-comments"></i></span><span class="support-chat-copy"><strong>Start secure support chat</strong><span>Connect with a bank support specialist</span></span><i class="fas fa-chevron-right support-chat-arrow"></i></a><div class="support-actions"><a class="support-action" href="tel:+18002284435"><i class="fas fa-phone"></i><span><strong>Call support</strong><span>+1 (800) 228-4435</span></span></a><a class="support-action" href="mailto:support@americanbankunited.com"><i class="fas fa-envelope"></i><span><strong>Email support</strong><span>We reply as soon as possible</span></span></a></div></section>
-    <section class="support-card"><h2>Common topics</h2><div class="support-topic"><strong>Account access</strong><p>For login issues, profile updates, verification, or account restrictions.</p></div><div class="support-topic"><strong>Transfer issue</strong><p>For delayed transfers, recipient details, or payment confirmation questions.</p></div><div class="support-topic"><strong>Card support</strong><p>For card activation, blocked cards, replacement, or transaction concerns.</p></div><div class="support-topic"><strong>Fraud or suspicious activity</strong><p>Contact support immediately if you do not recognize activity on your account.</p></div></section>
-    <p class="support-note"><i class="fas fa-shield-halved"></i> Never share your password, transfer PIN, or one-time security code with anyone, including support.</p>
+    <section class="support-heading" id="supportOverviewHeading"><div class="support-kicker">ABU Care</div><h1>How can we help?</h1><p>Reach American Bank United support through the channel that works best for you.</p></section>
+    <section class="support-card" id="supportOverviewCard"><a class="support-chat" id="supportChatLink" href="#chat"><span class="support-chat-icon"><i class="fas fa-comments"></i></span><span class="support-chat-copy"><strong>Start secure support chat</strong><span>Connect with a bank support specialist</span></span><i class="fas fa-chevron-right support-chat-arrow"></i></a><div class="support-actions"><a class="support-action" href="tel:+18002284435"><i class="fas fa-phone"></i><span><strong>Call support</strong><span>+1 (800) 228-4435</span></span></a><a class="support-action" href="mailto:support@americanbankunited.com"><i class="fas fa-envelope"></i><span><strong>Email support</strong><span>We reply as soon as possible</span></span></a></div></section>
+    <section class="support-card" id="supportTopics"><h2>Common topics</h2><div class="support-topic"><strong>Account access</strong><p>For login issues, profile updates, verification, or account restrictions.</p></div><div class="support-topic"><strong>Transfer issue</strong><p>For delayed transfers, recipient details, or payment confirmation questions.</p></div><div class="support-topic"><strong>Card support</strong><p>For card activation, blocked cards, replacement, or transaction concerns.</p></div><div class="support-topic"><strong>Fraud or suspicious activity</strong><p>Contact support immediately if you do not recognize activity on your account.</p></div></section>
+    <p class="support-note" id="supportOverviewNote"><i class="fas fa-shield-halved"></i> Never share your password, transfer PIN, or one-time security code with anyone, including support.</p>
+    <section id="supportChatPanel" class="support-chat-panel support-card" aria-live="polite">
+      <div class="support-chat-panel-head"><button type="button" id="supportChatBack" aria-label="Go back"><i class="fas fa-arrow-left"></i></button><h1 id="supportChatTitle">Support chat</h1></div>
+      <div id="supportInquiryScreen" class="support-chat-panel-body"><p>Choose an inquiry to open a saved support conversation.</p><select id="supportInquiry" class="w-full border rounded px-3 py-2" aria-label="Select inquiry type"><option value="">Select an inquiry</option><option>Account access</option><option>Transfer issue</option><option>Deposit or withdrawal</option><option>Card support</option><option>Fraud or suspicious activity</option><option>Other question</option></select><button type="button" id="supportStartChat" class="support-chat-primary">Continue to chat</button><button type="button" id="supportOpenExisting" class="support-chat-primary" style="background:#fff;color:#111827;border:1px solid var(--support-border)">Open saved conversation</button><div id="supportExistingList" style="display:grid;gap:8px;margin-top:14px"></div></div>
+      <div id="supportConversationScreen" class="support-chat-panel-body" hidden><div id="supportChatMessages" class="support-chat-messages"></div><form id="supportChatForm" class="support-chat-form"><input id="supportChatInput" type="text" maxlength="2000" placeholder="Write a message..." autocomplete="off"><label for="supportChatFile" class="support-chat-file" title="Attach a file"><i class="fas fa-paperclip"></i><span class="sr-only">Attach a file</span></label><input id="supportChatFile" type="file" hidden accept="image/*,application/pdf,application/json,text/plain,text/csv"><button type="submit">Send</button></form></div>
+      <div id="supportChatStatus" class="support-chat-status"></div>
+    </section>
   </div></main>
 </body>
+    <script src="js/api.js"></script>
+    <script src="js/support-chat.js"></script>
     <script src="js/navigation-stack.js"></script>
-    <script>
-      const supportChatLink = document.querySelector('.support-chat');
-      const authToken = localStorage.getItem('authToken');
-      if (supportChatLink && (!authToken || authToken === 'guest-token')) {
-        supportChatLink.href = 'index.html?returnTo=dashboard.html%3FopenSupport%3D1';
-      }
-    </script>
 </html>

@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const returnTo = new URLSearchParams(window.location.search).get('returnTo');
             setTimeout(() => {
-                const destination = returnTo && returnTo.startsWith('dashboard.html') ? returnTo : 'dashboard.html';
+                const destination = returnTo && (returnTo.startsWith('dashboard.html') || returnTo.startsWith('support.html')) ? returnTo : 'dashboard.html';
                 window.location.href = destination;
             }, 1000);
 

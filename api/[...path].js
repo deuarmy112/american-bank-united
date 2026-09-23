@@ -647,10 +647,22 @@ async function notificationRoutes(method, parts, user) {
     }).slice(0, 100) };
 }
 
-async function chatRoutes(method, parts, user, body) {
+async function chatRoutes(method, parts, user, body, query = {}) {
     const db = getDb();
-    const conversationRef = db.collection('chat_conversations').doc(user.userId);
-    const conversation = await conversationRef.get();
+    const conversationsSnapshot = await db.collection('chat_conversations').where('user_id', '==', user.userId).get();
+    const conversations = conversationsSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((left, right) => String(right.last_message_at || right.updated_at || '').localeCompare(String(left.last_message_at || left.updated_at || '')));
+    const requestedConversationId = String(body.conversationId || body.conversation_id || query.conversationId || '').trim();
+    const selectedConversation = conversations.find(item => item.id === requestedConversationId) || conversations[0] || null;
+    const conversationRef = selectedConversation ? db.collection('chat_conversations').doc(selectedConversation.id) : null;
+    const conversation = conversationRef ? await conversationRef.get() : null;
+
+    async function messagesFor(ref) {
+        if (!ref) return [];
+        const snapshot = await ref.collection('messages').get();
+        return snapshot.docs.map(doc => clean({ id: doc.id, ...doc.data() })).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+    }
 
     if (method === 'POST' && parts[0] === 'start') {
         const inquiry = String(body.inquiry || '').trim();
@@ -658,41 +670,47 @@ async function chatRoutes(method, parts, user, body) {
         if (!allowedInquiries.includes(inquiry)) return { status: 400, body: { error: 'Select a valid inquiry type' } };
         const profile = await userProfile(user.userId);
         const timestamp = now();
-        await conversationRef.set({ id: user.userId, user_id: user.userId, user_name: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim(), user_email: profile?.email || '', inquiry, status: 'open', updated_at: timestamp }, { merge: true });
-        const messages = await conversationRef.collection('messages').get();
-        return { body: { conversation: clean({ id: user.userId, ...((await conversationRef.get()).data()) }), messages: clean(messages.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))) } };
+        const existing = conversations.find(item => item.inquiry === inquiry && item.status !== 'closed');
+        const ref = existing ? db.collection('chat_conversations').doc(existing.id) : db.collection('chat_conversations').doc(randomUUID());
+        const data = { id: ref.id, user_id: user.userId, user_name: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim(), user_email: profile?.email || '', inquiry, status: 'open', updated_at: timestamp };
+        await ref.set(data, { merge: true });
+        return { body: { conversation: clean({ ...data, ...(existing || {}) }), conversationId: ref.id, messages: await messagesFor(ref) } };
     }
 
     if (method === 'GET' && parts.length === 0) {
-        const messages = conversation.exists ? await conversationRef.collection('messages').get() : { docs: [] };
+        const selected = requestedConversationId ? conversations.find(item => item.id === requestedConversationId) : conversations[0];
+        const selectedRef = selected ? db.collection('chat_conversations').doc(selected.id) : null;
         return {
             body: {
-                conversation: conversation.exists ? clean({ id: conversation.id, ...conversation.data() }) : null,
-                unreadCount: conversation.exists ? Number(conversation.data().customer_unread_count || 0) : 0,
-                messages: messages.docs.map(doc => clean({ id: doc.id, ...doc.data() })).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))
+                conversations: clean(conversations),
+                conversation: selected ? clean(selected) : null,
+                unreadCount: selected ? Number(selected.customer_unread_count || 0) : 0,
+                messages: await messagesFor(selectedRef)
             }
         };
     }
 
     if (method === 'POST' && parts[0] === 'read') {
-        if (conversation.exists) await conversationRef.set({ customer_unread_count: 0, updated_at: now() }, { merge: true });
+        if (conversationRef && conversation?.exists) await conversationRef.set({ customer_unread_count: 0, updated_at: now() }, { merge: true });
         return { body: { success: true } };
     }
 
     if (method === 'POST' && parts.length === 0) {
+        if (!conversationRef || !conversation?.exists) return { status: 400, body: { error: 'Start or select a conversation first' } };
         const text = String(body.text || '').trim();
         let attachment;
         try { attachment = normalizeChatAttachment(body.attachment); } catch (error) { return { status: 400, body: { error: error.message } }; }
         if ((!text && !attachment) || text.length > 2000) return { status: 400, body: { error: 'Add a message or attachment; text must be 2000 characters or fewer' } };
         const profile = await userProfile(user.userId);
         const timestamp = now();
-        const message = { id: randomUUID(), conversation_id: user.userId, sender_id: user.userId, sender_role: 'customer', text, attachment, created_at: timestamp };
-        await conversationRef.set({ id: user.userId, user_id: user.userId, user_name: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim(), user_email: profile?.email || '', status: 'open', last_message: text || `Attachment: ${attachment.name}`, last_message_at: timestamp, admin_unread_count: Number(conversation?.data().admin_unread_count || 0) + 1, updated_at: timestamp }, { merge: true });
+        const message = { id: randomUUID(), conversation_id: conversationRef.id, sender_id: user.userId, sender_role: 'customer', text, attachment, created_at: timestamp };
+        await conversationRef.set({ id: conversationRef.id, user_id: user.userId, user_name: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim(), user_email: profile?.email || '', status: 'open', last_message: text || `Attachment: ${attachment.name}`, last_message_at: timestamp, admin_unread_count: Number(conversation.data().admin_unread_count || 0) + 1, updated_at: timestamp }, { merge: true });
         await conversationRef.collection('messages').doc(message.id).set(message);
         return { status: 201, body: { message: clean(message) } };
     }
 
     if (method === 'DELETE' && parts[0] === 'messages' && parts[1]) {
+        if (!conversationRef) return { status: 404, body: { error: 'Message not found' } };
         const messageRef = conversationRef.collection('messages').doc(parts[1]);
         const message = await messageRef.get();
         if (!message.exists || message.data().sender_id !== user.userId) return { status: 404, body: { error: 'Message not found' } };
@@ -1570,7 +1588,7 @@ async function route(req) {
     if (parts[0] === 'accounts') return accountRoutes(method, parts.slice(1), user, body, req.query || {});
     if (parts[0] === 'transfer-pin') return transferPinRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'preferences' && parts.length === 1) return preferenceRoutes(method, user, body);
-    if (parts[0] === 'chat') return chatRoutes(method, parts.slice(1), user, body);
+    if (parts[0] === 'chat') return chatRoutes(method, parts.slice(1), user, body, req.query || {});
     if (parts[0] === 'transactions') return transactionRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'notifications') return notificationRoutes(method, parts.slice(1), user);
     if (parts[0] === 'cards') return cardRoutes(method, parts.slice(1), user, body);
