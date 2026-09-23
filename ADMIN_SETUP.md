@@ -26,9 +26,7 @@ After migration, you can log in to the admin portal with:
 
 - **URL**: https://americanbankunited.com/admin-login.html
 - **Email**: admin@americanbankunited.com
-- **Password**: Admin@123
-
-⚠️ **IMPORTANT**: Change the admin password after first login!
+- **Password**: Set during the admin seed/reset process. Do not store it in the repository.
 
 ## Admin Portal Features
 

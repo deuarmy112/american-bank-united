@@ -70,8 +70,8 @@ npm run seed-admin
 ```
 
 The command creates or updates `admin@americanbankunited.com` with the password
-from `ADMIN_PASSWORD`, or the documented default `Admin@123` when that variable
-is not set. Change the password before using the application publicly.
+from `ADMIN_PASSWORD`. Always set a strong password explicitly before running
+the command; do not rely on a default password.
 
 ## 5. Firebase CLI rules and indexes
 

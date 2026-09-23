@@ -41,7 +41,11 @@ if (serviceAccountPath) {
 }
 
 const email = (process.env.ADMIN_EMAIL || 'admin@americanbankunited.com').toLowerCase();
-const password = process.env.ADMIN_PASSWORD || 'Admin@123';
+const password = process.env.ADMIN_PASSWORD;
+if (!password) {
+    console.error('ADMIN_PASSWORD is required. Set a strong password before seeding the admin user.');
+    process.exit(1);
+}
 const app = admin.initializeApp({
     credential
 });
