@@ -19,7 +19,7 @@ function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-async function sendTransactionalEmail({ email, subject, text }) {
+async function sendTransactionalEmail({ email, subject, text, html }) {
     if (!isValidEmail(email)) return { status: 'invalid_email' };
     if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) return { status: 'not_configured' };
 
@@ -27,13 +27,40 @@ async function sendTransactionalEmail({ email, subject, text }) {
         const response = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [email], subject, text })
+            body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [email], subject, text, ...(html ? { html } : {}) })
         });
         return response.ok ? { status: 'sent' } : { status: 'failed', httpStatus: response.status };
     } catch (error) {
         console.error('Transactional email failed:', error);
         return { status: 'failed' };
     }
+}
+
+function escapeEmailHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+}
+
+function maskAccountNumber(value) {
+    const normalized = String(value || '').trim();
+    if (!normalized) return 'Not provided';
+    const visible = normalized.slice(-4);
+    return `${'*'.repeat(Math.max(0, normalized.length - 4))}${visible}`;
+}
+
+async function sendAccountTransactionAlert({ email, firstName, direction, amount, sender, receiver, reference, description, transferType, bankCharge = 0 }) {
+    const isCredit = direction === 'credit';
+    const amountText = `$${Number(amount || 0).toFixed(2)}`;
+    const chargeText = `$${Number(bankCharge || 0).toFixed(2)}`;
+    const title = isCredit ? 'Funds credited to your account' : 'Funds debited from your account';
+    const subject = `American Bank United ${isCredit ? 'credit' : 'debit'} alert: ${amountText}`;
+    const greeting = firstName || 'there';
+    const senderDetails = sender || {};
+    const receiverDetails = receiver || {};
+    const partyText = (label, party) => `${label}: ${party.name || 'Not provided'} | Account ${maskAccountNumber(party.accountNumber)} | Bank ${party.bank || 'American Bank United'}`;
+    const plainText = `Hello ${greeting},\n\n${title}.\n\nAmount: ${amountText}\nBank charge: ${chargeText}\nTransaction type: ${transferType || 'Account transaction'}\nDescription: ${description || 'American Bank United transaction'}\n${partyText('Sender', senderDetails)}\n${partyText('Receiver', receiverDetails)}\nReference number: ${reference || 'Pending'}\n\nIf you do not recognize this activity, contact American Bank United support immediately.\n\nAmerican Bank United`;
+    const partyRow = (label, party) => `<tr><td style="padding:7px 0;color:#64748b">${label}</td><td style="padding:7px 0;text-align:right">${escapeEmailHtml(party.name || 'Not provided')}<br>Account ${escapeEmailHtml(maskAccountNumber(party.accountNumber))}<br>${escapeEmailHtml(party.bank || 'American Bank United')}</td></tr>`;
+    const html = `<div style="font-family:Arial,sans-serif;background:#f4f7fb;padding:32px;color:#172033"><div style="max-width:560px;margin:auto;background:#fff;border:1px solid #dbe3ec;border-radius:16px;overflow:hidden"><div style="background:#111827;color:#fff;padding:24px 28px"><div style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;opacity:.75">American Bank United</div><h1 style="font-size:22px;margin:10px 0 0">${title}</h1></div><div style="padding:28px"><p style="font-size:16px">Hello ${escapeEmailHtml(greeting)},</p><p>Your ABU transaction has been recorded successfully.</p><div style="background:${isCredit ? '#ecfdf5' : '#fff7ed'};border:1px solid ${isCredit ? '#a7f3d0' : '#fed7aa'};border-radius:12px;padding:18px;margin:22px 0"><div style="font-size:12px;color:#64748b;text-transform:uppercase">${isCredit ? 'Credit' : 'Debit'} amount</div><strong style="display:block;font-size:30px;margin-top:5px;color:${isCredit ? '#047857' : '#c2410c'}">${amountText}</strong></div><table style="width:100%;border-collapse:collapse;font-size:14px"><tr><td style="padding:7px 0;color:#64748b">Transaction type</td><td style="padding:7px 0;text-align:right">${escapeEmailHtml(transferType || 'Account transaction')}</td></tr><tr><td style="padding:7px 0;color:#64748b">Description</td><td style="padding:7px 0;text-align:right">${escapeEmailHtml(description || 'ABU transaction')}</td></tr>${partyRow('Sender', senderDetails)}${partyRow('Receiver', receiverDetails)}<tr><td style="padding:7px 0;color:#64748b">Bank charge</td><td style="padding:7px 0;text-align:right">${chargeText}</td></tr><tr><td style="padding:7px 0;color:#64748b">Reference number</td><td style="padding:7px 0;text-align:right">${escapeEmailHtml(reference || 'Pending')}</td></tr></table><p style="font-size:13px;color:#64748b;margin-top:24px">If you do not recognize this activity, contact American Bank United support immediately. Never share your password or transfer PIN.</p></div><div style="padding:16px 28px;background:#f8fafc;color:#64748b;font-size:12px">This is an automated transaction alert from American Bank United.</div></div></div>`;
+    return sendTransactionalEmail({ email, subject, text: plainText, html });
 }
 
 async function sendWelcomeEmail(user, { force = false } = {}) {
@@ -491,11 +518,7 @@ async function accountRoutes(method, parts, user, body, query = {}) {
             return balance;
         });
         const profile = await userProfile(user.userId);
-        const emailResult = await sendTransactionalEmail({
-            email: profile?.email,
-            subject: 'American Bank United deposit confirmation',
-            text: `Hello ${profile?.first_name || profile?.firstName || 'there'},\n\nYour deposit of $${Number(amount).toFixed(2)} has been received and credited to your account.\n\nReference: ${receiptId}\nDate: ${new Date().toISOString()}`
-        });
+        const emailResult = await sendAccountTransactionAlert({ email: profile?.email, firstName: profile?.first_name || profile?.firstName, direction: 'credit', amount, receiver: { name: `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim(), accountNumber: account.account_number, bank: 'American Bank United' }, sender: { name: body.senderName || 'External sender', accountNumber: body.senderAccountNumber, bank: body.senderBank || 'External bank' }, reference: receiptId, description: body.description || `Deposit via ${body.method || 'bank transfer'}`, transferType: 'Deposit', bankCharge: body.bankCharge || body.fee || 0 });
         return { body: { message: 'Deposit completed successfully', transactionId, receiptId, newBalance: result, email: emailResult } };
     }
     return { status: 404, body: { error: 'Route not found' } };
@@ -576,24 +599,15 @@ async function transactionRoutes(method, parts, user, body) {
         const depositId = randomUUID();
         transaction.set(db.collection('transactions').doc(withdrawalId), { id: withdrawalId, receipt_id: `RCPT-${Date.now()}-${withdrawalId.slice(0, 8).toUpperCase()}`, receipt_data: body.receiptData || null, account_id: from.id, type: 'transfer', amount: -amount, description: body.description || 'Transfer out', related_account_id: to.id, balance_after: fromBalance, status: 'completed', approval_status: 'approved', created_at: now() });
         transaction.set(db.collection('transactions').doc(depositId), { id: depositId, receipt_id: `RCPT-${Date.now()}-${depositId.slice(0, 8).toUpperCase()}`, account_id: to.id, type: 'deposit', amount, description: body.description || 'Transfer in', related_account_id: from.id, balance_after: toBalance, status: 'completed', approval_status: 'approved', created_at: now() });
-        return { withdrawalId, depositId, fromBalance, recipientUserId: to.user_id };
+        return { withdrawalId, depositId, fromBalance, toBalance, recipientUserId: to.user_id, senderAccountNumber: from.account_number, senderAccountType: from.account_type, recipientAccountNumber: to.account_number, recipientAccountType: to.account_type };
     });
     const recipient = await userProfile(result.recipientUserId);
-    const notification = await sendTransferNotifications({
-        email: recipient?.email,
-        recipientName: `${recipient?.first_name || recipient?.firstName || ''} ${recipient?.last_name || recipient?.lastName || ''}`.trim(),
-        amount,
-        transferType: 'ABU account transfer',
-        accountNumber: body.toAccountId,
-        description: body.description || 'Transfer received'
-    });
     const senderProfile = await userProfile(user.userId);
-    const senderEmailResult = await sendTransactionalEmail({
-        email: senderProfile?.email,
-        subject: 'American Bank United transfer sent',
-        text: `Hello ${senderProfile?.first_name || senderProfile?.firstName || 'there'},\n\nYour transfer of $${Number(amount).toFixed(2)} has been sent successfully.\n\nReference: ${result.withdrawalId}\nDate: ${new Date().toISOString()}`
-    });
-    return { body: { message: 'Transfer completed successfully', status: 'approved', withdrawalId: result.withdrawalId, depositId: result.depositId, newBalance: result.fromBalance, notification, senderEmail: senderEmailResult } };
+    const [senderEmailResult, recipientEmailResult] = await Promise.all([
+        sendAccountTransactionAlert({ email: senderProfile?.email, firstName: senderProfile?.first_name || senderProfile?.firstName, direction: 'debit', amount, sender: { name: `${senderProfile?.first_name || ''} ${senderProfile?.last_name || ''}`.trim(), accountNumber: result.senderAccountNumber, bank: 'American Bank United' }, receiver: { name: `${recipient?.first_name || ''} ${recipient?.last_name || ''}`.trim(), accountNumber: result.recipientAccountNumber, bank: 'American Bank United' }, transferType: 'ABU account transfer', reference: result.withdrawalId, description: body.description || 'Transfer sent', bankCharge: body.bankCharge || body.fee || 0 }),
+        sendAccountTransactionAlert({ email: recipient?.email, firstName: recipient?.first_name || recipient?.firstName, direction: 'credit', amount, sender: { name: `${senderProfile?.first_name || ''} ${senderProfile?.last_name || ''}`.trim(), accountNumber: result.senderAccountNumber, bank: 'American Bank United' }, receiver: { name: `${recipient?.first_name || ''} ${recipient?.last_name || ''}`.trim(), accountNumber: result.recipientAccountNumber, bank: 'American Bank United' }, transferType: 'ABU account transfer', reference: result.depositId, description: body.description || 'Transfer received', bankCharge: body.bankCharge || body.fee || 0 })
+    ]);
+    return { body: { message: 'Transfer completed successfully', status: 'approved', withdrawalId: result.withdrawalId, depositId: result.depositId, newBalance: result.fromBalance, notification: recipientEmailResult, senderEmail: senderEmailResult } };
 }
 
 async function notificationRoutes(method, parts, user) {
@@ -787,10 +801,16 @@ async function externalRoutes(method, parts, user, body) {
         const newBalance = Number((Number(account.balance) - amount).toFixed(2));
         await getDb().runTransaction(async transaction => transaction.update(getDb().collection('accounts').doc(account.id), { balance: newBalance, updated_at: now() }));
         const transferType = parts[0] === 'send-to-user' ? 'p2p' : (body.transferType || 'ach');
-        const notification = await sendTransferNotifications({ email: body.recipientEmail, phone: body.recipientPhone, recipientName: body.accountHolderName, amount, transferType, bankName: body.bankName, accountNumber: body.accountNumber, description: body.description });
         const receiptId = `RCPT-${Date.now()}-${randomUUID().slice(0, 8).toUpperCase()}`;
-        const transfer = await save('external_transfers', { user_id: user.userId, account_id: account.id, transfer_type: transferType, direction: 'outgoing', amount, recipient_name: body.accountHolderName || body.recipientEmail || '', recipient_identifier: body.accountNumber || body.recipientEmail || '', recipient_email: body.recipientEmail || null, recipient_phone: body.recipientPhone || null, bank_name: body.bankName || null, status: 'completed', receipt_id: receiptId, receipt_data: body.receiptData || null, description: body.description || 'External transfer', notification_status: notification });
+        const transfer = await save('external_transfers', { user_id: user.userId, account_id: account.id, transfer_type: transferType, direction: 'outgoing', amount, recipient_name: body.accountHolderName || body.recipientEmail || '', recipient_identifier: body.accountNumber || body.recipientEmail || '', recipient_email: body.recipientEmail || null, recipient_phone: body.recipientPhone || null, bank_name: body.bankName || null, status: 'completed', receipt_id: receiptId, receipt_data: body.receiptData || null, description: body.description || 'External transfer' });
         await save('transactions', { account_id: account.id, type: 'withdrawal', amount: -amount, receipt_id: receiptId, receipt_data: body.receiptData || null, status: 'completed', description: transfer.description, balance_after: newBalance });
+        const senderProfile = await userProfile(user.userId);
+        const [senderNotification, recipientNotification] = await Promise.all([
+            sendAccountTransactionAlert({ email: senderProfile?.email, firstName: senderProfile?.first_name || senderProfile?.firstName, direction: 'debit', amount, sender: { name: `${senderProfile?.first_name || ''} ${senderProfile?.last_name || ''}`.trim(), accountNumber: account.account_number, bank: 'American Bank United' }, receiver: { name: body.accountHolderName || body.recipientEmail, accountNumber: body.accountNumber, bank: body.bankName || 'External bank' }, reference: receiptId, transferType, description: body.description || 'External transfer sent', bankCharge: body.bankCharge || body.fee || 0 }),
+            sendAccountTransactionAlert({ email: body.recipientEmail, firstName: body.accountHolderName, direction: 'credit', sender: { name: `${senderProfile?.first_name || ''} ${senderProfile?.last_name || ''}`.trim(), accountNumber: account.account_number, bank: 'American Bank United' }, receiver: { name: body.accountHolderName || body.recipientEmail, accountNumber: body.accountNumber, bank: body.bankName || 'External bank' }, reference: receiptId, transferType, description: body.description || 'External transfer received', bankCharge: body.bankCharge || body.fee || 0 })
+        ]);
+        const notification = { sender: senderNotification, recipient: recipientNotification };
+        await getDb().collection('external_transfers').doc(transfer.id).set({ notification_status: notification }, { merge: true });
         return { body: { success: true, message: 'Transfer completed successfully', transfer: { id: transfer.id, amount, status: 'completed', newBalance, notification } } };
     }
     return { status: 404, body: { error: 'Route not found' } };
@@ -1084,8 +1104,9 @@ async function adminRoutes(method, parts, user, body, query) {
             });
             return { newBalance };
         });
-        const notification = await sendTransferNotifications({ email: recipientEmail, phone: recipientPhone, recipientName, amount, transferType: isInternal ? 'internal ABU' : 'other-bank', bankName, accountNumber: recipientIdentifier, description });
-        return { status: 201, body: { message: transferType === 'international' ? 'International transfer completed successfully' : isInternal ? 'ABU transfer completed successfully' : 'Other-bank funds credited successfully', transferType, transferId, newBalance: result.newBalance, notification } };
+        const recipientProfile = await userProfile(recipient.id);
+        const creditNotification = await sendAccountTransactionAlert({ email: recipientProfile?.email || recipientEmail, firstName: recipientProfile?.first_name || recipientProfile?.firstName || recipientName, direction: 'credit', amount, sender: { name: senderName, accountNumber: 'American Bank United admin account', bank: bankName }, receiver: { name: recipientName, accountNumber: account.account_number, bank: 'American Bank United' }, reference: receiptId, transferType: transferType === 'international' ? 'International transfer' : isInternal ? 'ABU account transfer' : 'Other-bank transfer', description, bankCharge: receiptData.fee });
+        return { status: 201, body: { message: transferType === 'international' ? 'International transfer completed successfully' : isInternal ? 'ABU transfer completed successfully' : 'Other-bank funds credited successfully', transferType, transferId, newBalance: result.newBalance, notification: creditNotification } };
     }
 
     if (method === 'GET' && parts[0] === 'verification-requests') {
@@ -1215,9 +1236,15 @@ async function adminRoutes(method, parts, user, body, query) {
                 firestoreTransaction.update(fromRef, { balance: fromBalance, updated_at: now() });
                 firestoreTransaction.update(toRef, { balance: toBalance, updated_at: now() });
                 firestoreTransaction.set(db.collection('transactions').doc(parts[1]), { approval_status: 'approved', status: 'completed', approved_by: user.userId, approved_at: now(), balance_after: fromBalance, updated_at: now() }, { merge: true });
-                return fromBalance;
+                return { fromBalance, toBalance, fromAccount: { ...fromSnap.data(), id: fromSnap.id }, toAccount: { ...toSnap.data(), id: toSnap.id } };
             });
-            return { body: { message: 'Transfer approved successfully', newBalance: result } };
+            const sender = await userProfile(transaction.user_id);
+            const recipient = await userProfile(result.toAccount.user_id);
+            const [senderEmail, recipientEmail] = await Promise.all([
+                sendAccountTransactionAlert({ email: sender?.email, firstName: sender?.first_name, direction: 'debit', amount, sender: { name: `${sender?.first_name || ''} ${sender?.last_name || ''}`.trim(), accountNumber: result.fromAccount.account_number, bank: 'American Bank United' }, receiver: { name: `${recipient?.first_name || ''} ${recipient?.last_name || ''}`.trim(), accountNumber: result.toAccount.account_number, bank: 'American Bank United' }, reference: transaction.receipt_id || transaction.id, transferType: 'ABU account transfer', description: transaction.description || 'Transfer sent' }),
+                sendAccountTransactionAlert({ email: recipient?.email, firstName: recipient?.first_name, direction: 'credit', amount, sender: { name: `${sender?.first_name || ''} ${sender?.last_name || ''}`.trim(), accountNumber: result.fromAccount.account_number, bank: 'American Bank United' }, receiver: { name: `${recipient?.first_name || ''} ${recipient?.last_name || ''}`.trim(), accountNumber: result.toAccount.account_number, bank: 'American Bank United' }, reference: transaction.receipt_id || transaction.id, transferType: 'ABU account transfer', description: transaction.description || 'Transfer received' })
+            ]);
+            return { body: { message: 'Transfer approved successfully', newBalance: result.fromBalance, notifications: { sender: senderEmail, recipient: recipientEmail } } };
         }
         await getDb().collection('transactions').doc(parts[1]).set({ approval_status: 'approved', approved_by: user.userId, approved_at: now(), updated_at: now() }, { merge: true });
         return { body: { message: 'Transaction approved successfully' } };
