@@ -879,6 +879,7 @@
             lastTransferReceipt = receiptData;
 
             showSuccessModal();
+            await offerSaveBeneficiary({ name: accountName, accountNumber, bankName: 'Other bank', email, phone });
             document.getElementById('internalAmount').value = '';
             if (currentAbuMode === 'myAccounts') {
                 document.getElementById('internalToAccount').value = '';
@@ -963,6 +964,7 @@
             lastTransferReceipt = receiptData;
 
             showSuccessModal();
+            await offerSaveBeneficiary({ name: accountName, accountNumber, bankName, email, phone });
             document.getElementById('extAmount').value = '';
             document.getElementById('extAccountNumber').value = '';
             document.getElementById('extAccountName').value = '';
@@ -1063,6 +1065,17 @@
             document.getElementById('intlEmail').value = '';
             document.getElementById('intlPhone').value = '';
             document.getElementById('intlDescription').value = '';
+        }
+
+        async function offerSaveBeneficiary(data) {
+            if (!window.confirm(`Save ${data.name} as a beneficiary for faster transfers?`)) return;
+            try {
+                await apiClient.post('/beneficiaries', data);
+                showAlert('Beneficiary saved successfully.', 'success');
+            } catch (error) {
+                if (error.status === 409) showAlert('This beneficiary is already saved.', 'info');
+                else showAlert(error.message || 'Unable to save beneficiary.', 'error');
+            }
         }
 
         function buildCompactReceipt(receipt) {

@@ -829,6 +829,35 @@ async function externalRoutes(method, parts, user, body) {
     return { status: 404, body: { error: 'Route not found' } };
 }
 
+async function beneficiaryRoutes(method, parts, user, body) {
+    if (user.userId === GUEST_ID) return { status: 401, body: { error: 'Please sign in to manage beneficiaries' } };
+    const collection = getDb().collection('beneficiaries');
+    if (method === 'GET' && parts.length === 0) return { body: clean(await listDocs('beneficiaries', 'user_id', user.userId, 'created_at', 200)) };
+    if (method === 'POST' && parts.length === 0) {
+        const name = String(body.name || '').trim();
+        const accountNumber = String(body.accountNumber || body.account_number || '').trim();
+        const bankName = String(body.bankName || body.bank_name || '').trim();
+        if (!name || !accountNumber || !bankName) return { status: 400, body: { error: 'Name, account number or IBAN, and bank name are required' } };
+        const existing = await collection.where('user_id', '==', user.userId).where('account_number', '==', accountNumber).limit(1).get();
+        if (!existing.empty) return { status: 409, body: { error: 'This beneficiary is already saved' } };
+        const beneficiary = await save('beneficiaries', { user_id: user.userId, name, account_number: accountNumber, bank_name: bankName, nickname: String(body.nickname || '').trim(), email: String(body.email || '').trim(), phone: String(body.phone || '').trim(), created_at: now(), updated_at: now() });
+        return { status: 201, body: { beneficiary: clean(beneficiary) } };
+    }
+    if (parts[0]) {
+        const beneficiary = await getDoc('beneficiaries', parts[0]);
+        if (!beneficiary || beneficiary.user_id !== user.userId) return { status: 404, body: { error: 'Beneficiary not found' } };
+        const ref = collection.doc(parts[0]);
+        if (method === 'DELETE') { await ref.delete(); return { body: { success: true } }; }
+        if (method === 'PUT') {
+            const updates = { name: String(body.name || '').trim(), account_number: String(body.accountNumber || body.account_number || '').trim(), bank_name: String(body.bankName || body.bank_name || '').trim(), nickname: String(body.nickname || '').trim(), email: String(body.email || '').trim(), phone: String(body.phone || '').trim(), updated_at: now() };
+            if (!updates.name || !updates.account_number || !updates.bank_name) return { status: 400, body: { error: 'Name, account number or IBAN, and bank name are required' } };
+            await ref.set(updates, { merge: true });
+            return { body: { beneficiary: clean({ ...beneficiary, ...updates, id: parts[0] }) } };
+        }
+    }
+    return { status: 404, body: { error: 'Beneficiary route not found' } };
+}
+
 function normalizeName(value) {
     return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
 }
@@ -1634,6 +1663,7 @@ async function route(req) {
     if (parts[0] === 'cards') return cardRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'bills') return billRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'external-transfers') return externalRoutes(method, parts.slice(1), user, body);
+    if (parts[0] === 'beneficiaries') return beneficiaryRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'withdrawals') return withdrawalRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'verification') return verificationRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'admin') return adminRoutes(method, parts.slice(1), user, body, req.query || {});
