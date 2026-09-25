@@ -278,9 +278,9 @@ function showTransactionReceipt(transaction) {
     const status = transaction.status || transaction.approval_status || 'completed';
     const currentAccount = accounts.find(item => String(item.id) === String(transaction.account_id || ''));
     const relatedAccount = accounts.find(item => String(item.id) === String(transaction.related_account_id || ''));
-    const transferIsDebit = Number(transaction.amount || 0) < 0 || transaction.type === 'withdrawal' || transaction.type === 'external_out' || transaction.type === 'transfer' && !currentAccount && !relatedAccount;
-    const senderAccount = transferIsDebit ? currentAccount : (relatedAccount || currentAccount);
-    const recipientAccount = transferIsDebit ? (relatedAccount || currentAccount) : currentAccount;
+    const isOutgoingTransfer = Number(transaction.amount || 0) < 0 || transaction.type === 'withdrawal' || transaction.type === 'external_out' || transaction.type === 'transfer' && currentAccount && relatedAccount;
+    const senderAccount = isOutgoingTransfer ? currentAccount : (relatedAccount || currentAccount);
+    const recipientAccount = isOutgoingTransfer ? (relatedAccount || currentAccount) : currentAccount;
     const senderName = receipt.senderName || receipt.sender_name || (senderAccount ? `${senderAccount.account_holder_name || senderAccount.owner_name || 'Account holder'}` : 'Account holder');
     const recipientName = receipt.recipientName || receipt.recipient_name || receipt.to || (recipientAccount ? `${recipientAccount.account_holder_name || recipientAccount.owner_name || 'Recipient'}` : 'Recipient');
     const senderBank = receipt.senderBankName || receipt.senderBank || 'American Bank United';
