@@ -58,15 +58,18 @@
 
   function setPageTitleFromH1() {
     if (!document.getElementById('pageTitle')) return;
-    // Try to find an existing page title in h1/h2 elements
-    const h1 = document.querySelector('h1') || document.querySelector('h2') || document.querySelector('.page-title');
-    if (h1 && h1.textContent.trim().length > 0) {
-      document.getElementById('pageTitle').textContent = h1.textContent.trim();
-    } else {
-      // fallback to document title
-      const docTitle = document.title.replace(' - American Bank United', '').trim();
-      if (docTitle) document.getElementById('pageTitle').textContent = docTitle;
+    const explicitTitle = document.querySelector('[data-page-title], .page-title, .header-title, .screen-title, main > h1');
+    if (explicitTitle && explicitTitle.textContent.trim().length > 0) {
+      const text = explicitTitle.textContent.trim();
+      if (!/\.[a-z]+$/i.test(text) && !/[\\/][\w-]+\.html$/i.test(text)) {
+        document.getElementById('pageTitle').textContent = text;
+        return;
+      }
     }
+
+    const rawDocTitle = (document.title || '').replace(/\s*-\s*American Bank United\s*$/i, '').trim();
+    const docTitle = rawDocTitle.replace(/[\\/]*[\w-]+\.html$/i, '').trim();
+    if (docTitle) document.getElementById('pageTitle').textContent = docTitle;
   }
 
   document.addEventListener('DOMContentLoaded', () => {
