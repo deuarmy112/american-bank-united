@@ -267,6 +267,7 @@ function buildHistoryReceiptMarkup(receipt, transaction, values) {
 
 function showTransactionReceipt(transaction) {
     if (!transaction) return;
+    const accounts = window.userAccounts || [];
     const savedReceipt = transaction.receipt_data || transaction.receiptData || null;
     const receipt = savedReceipt || transaction;
     const receiptId = receipt.reference || transaction.receipt_id || transaction.receiptId || `TXN-${transaction.id || Date.now()}`;
@@ -275,18 +276,42 @@ function showTransactionReceipt(transaction) {
     const amountValue = Number(receipt.amount ?? receipt.amountSent ?? transaction.amount) || 0;
     const amount = formatCurrency(Math.abs(amountValue));
     const status = transaction.status || transaction.approval_status || 'completed';
-    const account = (window.userAccounts || []).find(item => item.id === transaction.account_id);
-    const accountType = account?.account_type || account?.accountType || '';
-    const accountNumber = account?.account_number || account?.accountNumber || '';
+    const currentAccount = accounts.find(item => String(item.id) === String(transaction.account_id || ''));
+    const relatedAccount = accounts.find(item => String(item.id) === String(transaction.related_account_id || ''));
+    const transferIsDebit = Number(transaction.amount || 0) < 0 || transaction.type === 'withdrawal' || transaction.type === 'external_out' || transaction.type === 'transfer' && !currentAccount && !relatedAccount;
+    const senderAccount = transferIsDebit ? currentAccount : (relatedAccount || currentAccount);
+    const recipientAccount = transferIsDebit ? (relatedAccount || currentAccount) : currentAccount;
+    const senderName = receipt.senderName || receipt.sender_name || (senderAccount ? `${senderAccount.account_holder_name || senderAccount.owner_name || 'Account holder'}` : 'Account holder');
+    const recipientName = receipt.recipientName || receipt.recipient_name || receipt.to || (recipientAccount ? `${recipientAccount.account_holder_name || recipientAccount.owner_name || 'Recipient'}` : 'Recipient');
+    const senderBank = receipt.senderBankName || receipt.senderBank || 'American Bank United';
+    const recipientBank = receipt.recipientBank || receipt.bank || transaction.bank_name || (transaction.isExternal ? 'External bank' : 'American Bank United');
+    const senderAccountNumber = receipt.senderAccountNumber || senderAccount?.account_number || receipt.from || 'Not available';
+    const recipientAccountNumber = receipt.recipientAccountNumber || receipt.accountNumber || recipientAccount?.account_number || transaction.recipient_identifier || transaction.recipient_account_number || 'Not available';
+    const recipientSwift = receipt.swift || transaction.swift || transaction.routing_number || '';
     const destination = receipt.recipientName || receipt.to || transaction.recipient_name || transaction.wallet_platform || transaction.bank_name || transaction.recipient_identifier || 'Account activity';
     const direction = amountValue >= 0 ? 'Credit' : 'Debit';
-    const recipientName = receipt.recipientName || receipt.to || transaction.recipient_name || destination;
-    const recipientBank = receipt.recipientBank || receipt.bank || transaction.bank_name || (transaction.isExternal ? 'External bank' : 'American Bank United');
-    const recipientAccount = receipt.recipientAccountNumber || receipt.accountNumber || transaction.recipient_identifier || transaction.recipient_account_number || 'Not available';
-    const recipientSwift = receipt.swift || transaction.swift || transaction.routing_number || '';
     const isExternal = Boolean(receipt.type === 'External Transfer' || receipt.type === 'International Transfer' || transaction.isExternal || transaction.type === 'external_out' || transaction.type === 'external_in');
     const receiptKind = isExternal ? 'Bank transfer' : type;
-    const receiptMarkup = buildHistoryReceiptMarkup(receipt, transaction, { receiptId, date, amount, amountValue, recipientName, recipientBank, recipientAccount, recipientSwift, receiptKind, direction, account, accountType, accountNumber });
+    const normalizedReceipt = {
+        ...receipt,
+        senderName,
+        senderBankName: senderBank,
+        senderAccountNumber,
+        recipientName,
+        recipientBank,
+        recipientAccountNumber,
+        recipientSwift,
+        to: recipientName,
+        from: senderAccountNumber,
+        bank: recipientBank,
+        amount: amountValue,
+        amountSent: amountValue,
+        date: receipt.date || date,
+        type: receipt.type || transaction.type || type
+    };
+    const accountType = currentAccount?.account_type || currentAccount?.accountType || '';
+    const accountNumber = currentAccount?.account_number || currentAccount?.accountNumber || '';
+    const receiptMarkup = buildHistoryReceiptMarkup(normalizedReceipt, transaction, { receiptId, date, amount, amountValue, recipientName, recipientBank, recipientAccount: recipientAccountNumber, recipientSwift, receiptKind, direction, account: currentAccount, accountType, accountNumber, senderName, senderAccountNumber, senderBank });
     const overlay = document.createElement('div');
     overlay.className = 'fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/50 p-4 pb-28 overflow-y-auto';
     overlay.innerHTML = `
