@@ -23,29 +23,22 @@
         .profile-topbar {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-end;
             margin-bottom: 8px;
             padding: 0 2px;
         }
-        .profile-header-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #0f172a;
-        }
         .profile-close {
-            width: 34px;
-            height: 34px;
+            width: 40px;
+            height: 40px;
             border-radius: 999px;
             border: 1px solid #d7dee8;
-            background: rgba(255,255,255,0.9);
+            background: #fff;
             color: #475569;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+            cursor: pointer;
         }
         .profile-card {
             background: #ffffff;
@@ -239,9 +232,6 @@
         .verification-note { padding: 10px 12px; border-radius: 8px; background: #eff6ff; color: #1e40af; font-size: .8rem; line-height: 1.45; }
         .profile-shell { max-width: 760px; padding: 24px 20px 48px; }
         .profile-topbar { margin-bottom: 18px; }
-        .profile-header-title { gap: 8px; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: #64748b; }
-        .profile-header-title::before { content: ''; width: 8px; height: 8px; border-radius: 999px; background: #c9a85c; box-shadow: 0 0 0 4px rgba(201,168,92,.16); }
-        .profile-close { width: 40px; height: 40px; background: #fff; }
         .profile-summary-card { padding: 0; }
         .profile-identity { position: relative; overflow: hidden; padding: 30px 24px 26px; border-radius: 24px; background: linear-gradient(135deg,#111827 0%,#26364a 68%,#334155 100%); color: #fff; box-shadow: 0 18px 38px rgba(15,23,42,.18); }
         .profile-identity::after { content: ''; position: absolute; width: 220px; height: 220px; right: -90px; top: -115px; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; box-shadow: 0 0 0 24px rgba(255,255,255,.035),0 0 0 48px rgba(255,255,255,.025); }
@@ -286,6 +276,7 @@
 </head>
 <body class="bg-slate-50">
     <main class="profile-shell">
+        <div class="profile-topbar"><button type="button" class="profile-close" data-nav-back="dashboard.html" aria-label="Close and return to dashboard" title="Close"><i class="fas fa-xmark"></i></button></div>
         <div class="profile-summary-card">
             <div class="profile-identity">
                 <span class="profile-eyebrow">Personal banking profile</span>
@@ -489,6 +480,7 @@
 
     <script src="js/api.js?v=20260121.1"></script>
     <script src="js/utils.js?v=20260914.15"></script>
+    <script src="js/navigation-stack.js"></script>
     <script src="js/auth.js?v=20260121.1"></script>
     <script src="js/firebase-web-config.js"></script>
     <script src="js/firebase-phone-auth.js"></script>
