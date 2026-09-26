@@ -272,28 +272,43 @@ function showTransactionReceipt(transaction) {
     const receipt = savedReceipt || transaction;
     const receiptId = receipt.reference || transaction.receipt_id || transaction.receiptId || `TXN-${transaction.id || Date.now()}`;
     const date = formatDate(receipt.date || transaction.createdAt || transaction.created_at);
-    const type = String(receipt.type || transaction.type || 'transaction').replace(/_/g, ' ');
-    const amountValue = Number(receipt.amount ?? receipt.amountSent ?? transaction.amount) || 0;
+    const transactionType = String(transaction.type || '').toLowerCase();
+    const transferType = String(transaction.transfer_type || receipt.transferType || '').toLowerCase();
+    const rawType = String(receipt.type || transferType || transactionType || 'transaction').toLowerCase();
+    const amountValue = Math.abs(Number(receipt.amount ?? receipt.amountSent ?? transaction.amount) || 0);
     const amount = formatCurrency(Math.abs(amountValue));
-    const status = transaction.status || transaction.approval_status || 'completed';
     const currentAccount = accounts.find(item => String(item.id) === String(transaction.account_id || ''));
-    const relatedAccount = accounts.find(item => String(item.id) === String(transaction.related_account_id || ''));
-    const isOutgoingTransfer = Number(transaction.amount || 0) < 0 || transaction.type === 'withdrawal' || transaction.type === 'external_out' || transaction.type === 'transfer' && currentAccount && relatedAccount;
+    const legacyFromAccountId = transaction.fromAccountId || transaction.from_account_id;
+    const legacyToAccountId = transaction.toAccountId || transaction.to_account_id;
+    const relatedAccountId = transaction.related_account_id || (legacyFromAccountId && legacyToAccountId
+        ? String(currentAccount?.id) === String(legacyFromAccountId) ? legacyToAccountId : legacyFromAccountId
+        : '');
+    const relatedAccount = accounts.find(item => String(item.id) === String(relatedAccountId));
+    const isExternal = Boolean(transaction.isExternal || transaction.direction === 'outgoing' || transaction.direction === 'incoming' || /external|other.bank|international/.test(transferType) || /external|international/.test(rawType) || transaction.type === 'external_out' || transaction.type === 'external_in');
+    const legacyTransferDirection = legacyFromAccountId && legacyToAccountId
+        ? String(currentAccount?.id) === String(legacyFromAccountId)
+        : null;
+    const isOutgoingTransfer = transaction.direction === 'outgoing' || legacyTransferDirection === true || Number(transaction.amount || 0) < 0 || ['withdrawal', 'external_out', 'bill_payment'].includes(transactionType) || transactionType === 'transfer' && Boolean(relatedAccount) && legacyTransferDirection !== false;
     const senderAccount = isOutgoingTransfer ? currentAccount : (relatedAccount || currentAccount);
     const recipientAccount = isOutgoingTransfer ? (relatedAccount || currentAccount) : currentAccount;
-    const senderName = receipt.senderName || receipt.sender_name || (senderAccount ? `${senderAccount.account_holder_name || senderAccount.owner_name || 'Account holder'}` : 'Account holder');
-    const recipientName = receipt.recipientName || receipt.recipient_name || receipt.to || (recipientAccount ? `${recipientAccount.account_holder_name || recipientAccount.owner_name || 'Recipient'}` : 'Recipient');
-    const senderBank = receipt.senderBankName || receipt.senderBank || 'American Bank United';
+    const senderName = receipt.senderName || receipt.sender_name || transaction.sender_name || transaction.source_name || (senderAccount ? `${senderAccount.account_holder_name || senderAccount.owner_name || 'Account holder'}` : isOutgoingTransfer ? 'Account holder' : 'External sender');
+    const recipientName = receipt.recipientName || receipt.recipient_name || transaction.recipient_name || receipt.to || (recipientAccount ? `${recipientAccount.account_holder_name || recipientAccount.owner_name || 'Recipient'}` : 'Recipient');
+    const senderBank = receipt.senderBankName || receipt.senderBank || transaction.sender_bank || transaction.source_bank || 'American Bank United';
     const recipientBank = receipt.recipientBank || receipt.bank || transaction.bank_name || (transaction.isExternal ? 'External bank' : 'American Bank United');
-    const senderAccountNumber = receipt.senderAccountNumber || senderAccount?.account_number || receipt.from || 'Not available';
-    const recipientAccountNumber = receipt.recipientAccountNumber || receipt.accountNumber || recipientAccount?.account_number || transaction.recipient_identifier || transaction.recipient_account_number || 'Not available';
+    const senderAccountNumber = receipt.senderAccountNumber || receipt.sender_account_number || transaction.sender_account_number || transaction.source_account_number || senderAccount?.account_number || receipt.from || 'Not available';
+    const recipientAccountNumber = receipt.recipientAccountNumber || receipt.recipient_account_number || receipt.accountNumber || recipientAccount?.account_number || transaction.recipient_identifier || transaction.recipient_account_number || 'Not available';
     const recipientSwift = receipt.swift || transaction.swift || transaction.routing_number || '';
-    const destination = receipt.recipientName || receipt.to || transaction.recipient_name || transaction.wallet_platform || transaction.bank_name || transaction.recipient_identifier || 'Account activity';
-    const direction = amountValue >= 0 ? 'Credit' : 'Debit';
-    const isExternal = Boolean(receipt.type === 'External Transfer' || receipt.type === 'International Transfer' || transaction.isExternal || transaction.type === 'external_out' || transaction.type === 'external_in');
-    const receiptKind = isExternal ? 'Bank transfer' : type;
+    const normalizedType = /international/.test(rawType) ? 'International Transfer'
+        : /external|other.bank/.test(rawType) || isExternal && transactionType !== 'external_in' ? 'External Transfer'
+            : /transfer/.test(rawType) || transactionType === 'transfer' || Boolean(relatedAccount) ? 'ABU Account Transfer'
+                : transactionType === 'deposit' ? 'Deposit'
+                    : transactionType === 'withdrawal' ? 'Withdrawal'
+                        : rawType.replace(/_/g, ' ');
+    const direction = isOutgoingTransfer ? 'Debit' : 'Credit';
+    const receiptKind = isExternal ? 'Bank transfer' : normalizedType;
     const normalizedReceipt = {
         ...receipt,
+        type: normalizedType,
         senderName,
         senderBankName: senderBank,
         senderAccountNumber,
@@ -307,7 +322,7 @@ function showTransactionReceipt(transaction) {
         amount: amountValue,
         amountSent: amountValue,
         date: receipt.date || date,
-        type: receipt.type || transaction.type || type
+        description: receipt.description || transaction.description
     };
     const accountType = currentAccount?.account_type || currentAccount?.accountType || '';
     const accountNumber = currentAccount?.account_number || currentAccount?.accountNumber || '';
