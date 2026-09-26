@@ -235,12 +235,6 @@
         .profile-shell { max-width: 760px; padding: 24px 20px 48px; }
         .profile-topbar { margin-bottom: 18px; }
         .profile-summary-card { padding: 0; }
-        .profile-identity { position: relative; overflow: hidden; padding: 30px 24px 26px; border-radius: 24px; background: linear-gradient(135deg,#111827 0%,#26364a 68%,#334155 100%); color: #fff; box-shadow: 0 18px 38px rgba(15,23,42,.18); }
-        .profile-identity::after { content: ''; position: absolute; width: 220px; height: 220px; right: -90px; top: -115px; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; box-shadow: 0 0 0 24px rgba(255,255,255,.035),0 0 0 48px rgba(255,255,255,.025); }
-        .profile-identity .profile-avatar-wrap { position: relative; z-index: 1; width: 104px; height: 104px; margin-bottom: 15px; border: 3px solid #d5b86a; background: linear-gradient(135deg,#475569,#111827); box-shadow: 0 10px 22px rgba(0,0,0,.2); }
-        .profile-identity .profile-name { position: relative; z-index: 1; font-size: clamp(1.7rem,4vw,2.25rem); color: #fff; }
-        .profile-identity .profile-email,.profile-identity .profile-phone { position: relative; z-index: 1; color: #cbd5e1; font-size: .88rem; }
-        .profile-identity .profile-phone { margin-top: 2px; }
         .profile-balance-box { margin-top: 16px; padding: 18px 20px; border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; text-align: left; box-shadow: 0 8px 20px rgba(15,23,42,.05); }
         .profile-balance-label { font-size: .72rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
         .profile-balance-value { margin-top: 4px; font-size: 2rem; letter-spacing: -.03em; }
@@ -261,7 +255,7 @@
         .profile-info-label { font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
         .profile-info-value { font-size: .98rem; }
         .profile-copy-btn { color: #8d763e; border-color: #e5dcc3; background: #fffbeb; }
-        @media (max-width: 480px) { .profile-shell { padding: 16px 12px 40px; } .profile-identity { padding: 24px 18px 20px; } .profile-balance-value { font-size: 1.75rem; } }
+        @media (max-width: 480px) { .profile-shell { padding: 16px 12px 40px; } .profile-balance-value { font-size: 1.75rem; } }
         @media (max-width: 480px) {
             .profile-shell {
                 padding-left: 12px;
@@ -279,13 +273,6 @@
     <main class="profile-shell">
         <div class="profile-topbar"><button type="button" class="profile-close" data-nav-back="dashboard.html" aria-label="Close and return to dashboard" title="Close"><i class="fas fa-xmark"></i></button></div>
         <div class="profile-summary-card">
-            <div class="profile-identity">
-                <div id="profileAvatar" class="profile-avatar-wrap" aria-label="User avatar">ABU</div>
-                <h2 id="profileName" class="profile-name">User</h2>
-                <p id="profileEmail" class="profile-email">email@example.com</p>
-                <p id="profilePhone" class="profile-phone">+1234567890</p>
-            </div>
-
             <section class="tier-card" aria-labelledby="tierTitle">
                 <div class="tier-card-head">
                     <div>
@@ -643,19 +630,6 @@
         async function loadProfile() {
             try {
                 const user = await authAPI.getProfile();
-                const nameEl = document.getElementById('profileName');
-                if (nameEl) nameEl.textContent = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User';
-                const emailEl = document.getElementById('profileEmail');
-                if (emailEl) emailEl.textContent = user.email || '';
-                const phoneEl = document.getElementById('profilePhone');
-                if (phoneEl) phoneEl.textContent = user.phone || '';
-                const avatarEl = document.getElementById('profileAvatar');
-                if (avatarEl) {
-                    avatarEl.style.backgroundImage = user.avatar ? `url("${user.avatar}")` : '';
-                    avatarEl.style.backgroundSize = 'cover';
-                    avatarEl.style.backgroundPosition = 'center';
-                    avatarEl.textContent = user.avatar ? '' : 'ABU';
-                }
                 // Balance calculation moved to enhanceProfile after accounts are loaded
                 window.__currentUser = user || {};
                 try{ enhanceProfile(window.__currentUser); }catch(e){}
