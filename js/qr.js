@@ -34,12 +34,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (scannerLibraryPromise) return scannerLibraryPromise;
     scannerLibraryPromise = new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/minified/html5-qrcode.min.js';
+      script.src = 'assets/vendor/html5-qrcode.min.js';
       script.async = true;
       script.onload = () => typeof window.Html5Qrcode === 'function'
         ? resolve()
         : reject(new Error('Scanner library loaded without camera support'));
-      script.onerror = () => reject(new Error('Scanner library could not be loaded. Check your connection and try again.'));
+      script.onerror = () => reject(new Error('Local QR scanner library could not be loaded.'));
       document.head.appendChild(script);
     });
     return scannerLibraryPromise;
