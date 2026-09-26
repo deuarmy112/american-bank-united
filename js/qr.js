@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const showPane = $('showPane');
   const startBtn = $('startScan');
   const stopBtn = $('stopScan');
+  const uploadQrButton = $('uploadQrButton');
+  const qrImageInput = $('qrImageInput');
   const resultEl = $('scanResult');
   const readerId = 'reader';
 
@@ -21,9 +23,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   let pendingRedirect = null;
   let scannerLibraryPromise = null;
   let scannerStarting = false;
+  let scannerStartCancelled = false;
   let nativeStream = null;
   let nativeVideo = null;
   let nativeScanTimer = null;
+  let imageScanInProgress = false;
 
   function loadScannerLibrary() {
     if (typeof window.Html5Qrcode === 'function') return Promise.resolve();
@@ -58,14 +62,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function startScanner(){
     if (!startBtn || !stopBtn || scannerStarting || html5QrcodeScanner || nativeStream) return;
     scannerStarting = true;
+    scannerStartCancelled = false;
     startBtn.style.display = 'none'; stopBtn.style.display = 'inline-block';
     try {
       if (typeof window.BarcodeDetector === 'function' && navigator.mediaDevices?.getUserMedia) {
         await startNativeScanner();
+        if (scannerStartCancelled) stopNativeScanner();
       } else {
         await loadScannerLibrary();
-        html5QrcodeScanner = new window.Html5Qrcode(readerId);
-        await html5QrcodeScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: 250 }, onScanSuccess, onScanFailure);
+        const cameraScanner = new window.Html5Qrcode(readerId);
+        html5QrcodeScanner = cameraScanner;
+        await cameraScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: 250 }, onScanSuccess, onScanFailure);
+        if (scannerStartCancelled) {
+          try { await cameraScanner.stop(); } catch (error) { console.warn('Unable to stop cancelled QR camera startup', error); }
+          html5QrcodeScanner = null;
+          startBtn.style.display = 'inline-block'; stopBtn.style.display = 'none';
+        }
       }
     } catch (err) {
       console.error('Scanner start failed', err);
@@ -113,6 +125,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function stopScanner(){
+    if (scannerStarting) scannerStartCancelled = true;
     if (!stopBtn || !startBtn) return;
     stopBtn.style.display = 'none'; startBtn.style.display = 'inline-block';
     stopNativeScanner();
@@ -122,9 +135,48 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (startBtn) startBtn.addEventListener('click', startScanner);
   if (stopBtn) stopBtn.addEventListener('click', stopScanner);
+  if (uploadQrButton && qrImageInput) {
+    uploadQrButton.addEventListener('click', () => qrImageInput.click());
+    qrImageInput.addEventListener('change', async () => {
+      const image = qrImageInput.files?.[0];
+      if (!image) return;
+
+      imageScanInProgress = true;
+      uploadQrButton.disabled = true;
+      uploadQrButton.setAttribute('aria-busy', 'true');
+      if (resultEl) resultEl.textContent = 'Reading QR image...';
+
+      let fileScanner = null;
+      let scannerContainer = null;
+      try {
+        await stopScanner();
+        await loadScannerLibrary();
+        scannerContainer = document.createElement('div');
+        scannerContainer.id = `qr-image-reader-${Date.now()}`;
+        scannerContainer.style.cssText = 'position:fixed;left:-10000px;top:0;width:1px;height:1px;overflow:hidden;';
+        document.body.appendChild(scannerContainer);
+        fileScanner = new window.Html5Qrcode(scannerContainer.id);
+        const decodedText = await fileScanner.scanFile(image, true);
+        await onScanSuccess(decodedText);
+      } catch (error) {
+        console.warn('Unable to decode uploaded QR image', error);
+        if (resultEl) resultEl.textContent = 'Could not read a QR code from that image. Choose a clear image with a visible QR code.';
+      } finally {
+        if (fileScanner) {
+          try { await fileScanner.clear(); } catch {}
+        }
+        scannerContainer?.remove();
+        imageScanInProgress = false;
+        uploadQrButton.disabled = false;
+        uploadQrButton.removeAttribute('aria-busy');
+        qrImageInput.value = '';
+      }
+    });
+  }
 
   // scan success must be async if we await inside
   async function onScanSuccess(decodedText, decodedResult) {
+    if (imageScanInProgress && decodedResult) return;
     if (resultEl) resultEl.textContent = decodedText;
     let payload = null;
     try { payload = JSON.parse(decodedText); } catch (e) { payload = null; }
