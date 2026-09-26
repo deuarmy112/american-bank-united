@@ -19,7 +19,8 @@
         const href = escapeChatText(attachment.data);
         const name = escapeChatText(attachment.name || 'Attached file');
         const size = `${Math.max(1, Math.round(Number(attachment.size || 0) / 1024))} KB`;
-        return `<a class="block mt-2 underline" href="${href}" download="${name}" target="_blank" rel="noopener">${name} <span class="text-xs opacity-75">(${size})</span></a>`;
+        const preview = /^image\/(jpeg|png|webp|gif)$/i.test(attachment.type || '') ? `<img class="block mt-2 max-w-full max-h-60 rounded object-contain" src="${href}" alt="${name}" loading="lazy">` : '';
+        return `${preview}<a class="block mt-2 underline" href="${href}" download="${name}" target="_blank" rel="noopener">${name} <span class="text-xs opacity-75">(${size})</span></a>`;
     }
 
     function renderChatMessages(messages) {

@@ -21,8 +21,10 @@
         const attachment = message.attachment;
         if (!attachment?.data) return '';
         const name = escapeText(attachment.name || 'Attached file');
+        const data = escapeText(attachment.data);
         const size = `${Math.max(1, Math.round(Number(attachment.size || 0) / 1024))} KB`;
-        return `<a href="${escapeText(attachment.data)}" download="${name}" target="_blank" rel="noopener" style="display:block;text-decoration:underline;margin-top:6px">${name} <small>(${size})</small></a>`;
+        const preview = /^image\/(jpeg|png|webp|gif)$/i.test(attachment.type || '') ? `<img src="${data}" alt="${name}" loading="lazy" style="display:block;max-width:min(100%,320px);max-height:240px;object-fit:contain;border-radius:8px;margin-top:8px">` : '';
+        return `${preview}<a href="${data}" download="${name}" target="_blank" rel="noopener" style="display:block;text-decoration:underline;margin-top:6px">${name} <small>(${size})</small></a>`;
     }
 
     function renderMessages() {
