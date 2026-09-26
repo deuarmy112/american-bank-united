@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const showPane = $('showPane');
   const startBtn = $('startScan');
   const stopBtn = $('stopScan');
+  const cameraSelect = $('cameraSelect');
+  const cameraSelectWrap = $('cameraSelectWrap');
   const uploadQrButton = $('uploadQrButton');
   const qrImageInput = $('qrImageInput');
   const resultEl = $('scanResult');
@@ -24,10 +26,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   let scannerLibraryPromise = null;
   let scannerStarting = false;
   let scannerStartCancelled = false;
+  let selectedCameraId = '';
   let nativeStream = null;
   let nativeVideo = null;
   let nativeScanTimer = null;
   let imageScanInProgress = false;
+
+  async function refreshCameraList(devices, preferredId = selectedCameraId) {
+    if (!cameraSelect || !cameraSelectWrap) return;
+    try {
+      const availableDevices = devices || await navigator.mediaDevices?.enumerateDevices() || [];
+      const cameras = availableDevices
+        .filter(device => device.kind === 'videoinput' || (device.id && !device.kind))
+        .map((device, index) => ({ id: device.deviceId || device.id, label: device.label || `Camera ${index + 1}` }))
+        .filter(device => device.id);
+      cameraSelect.replaceChildren(...cameras.map(camera => {
+        const option = document.createElement('option');
+        option.value = camera.id;
+        option.textContent = camera.label;
+        return option;
+      }));
+      cameraSelectWrap.hidden = cameras.length < 2;
+      if (!cameras.length) return;
+      const selected = cameras.find(camera => camera.id === preferredId)
+        || cameras.find(camera => /back|rear|environment/i.test(camera.label))
+        || cameras[0];
+      cameraSelect.value = selected.id;
+      selectedCameraId = selected.id;
+    } catch (error) {
+      console.warn('Unable to list available cameras', error);
+    }
+  }
+
+  refreshCameraList();
 
   function loadScannerLibrary() {
     if (typeof window.Html5Qrcode === 'function') return Promise.resolve();
@@ -63,6 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!startBtn || !stopBtn || scannerStarting || html5QrcodeScanner || nativeStream) return;
     scannerStarting = true;
     scannerStartCancelled = false;
+    if (cameraSelect) cameraSelect.disabled = true;
     startBtn.style.display = 'none'; stopBtn.style.display = 'inline-block';
     try {
       if (typeof window.BarcodeDetector === 'function' && navigator.mediaDevices?.getUserMedia) {
@@ -70,9 +102,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (scannerStartCancelled) stopNativeScanner();
       } else {
         await loadScannerLibrary();
+        const cameras = await window.Html5Qrcode.getCameras();
+        if (!cameras.length) throw new Error('No camera was found on this device.');
+        await refreshCameraList(cameras);
+        const selectedCamera = cameras.find(camera => camera.id === selectedCameraId)
+          || cameras.find(camera => /back|rear|environment/i.test(camera.label))
+          || cameras[0];
+        selectedCameraId = selectedCamera.id;
         const cameraScanner = new window.Html5Qrcode(readerId);
         html5QrcodeScanner = cameraScanner;
-        await cameraScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: 250 }, onScanSuccess, onScanFailure);
+        await cameraScanner.start(selectedCamera.id, { fps: 10, qrbox: 250 }, onScanSuccess, onScanFailure);
         if (scannerStartCancelled) {
           try { await cameraScanner.stop(); } catch (error) { console.warn('Unable to stop cancelled QR camera startup', error); }
           html5QrcodeScanner = null;
@@ -89,12 +128,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       startBtn.style.display = 'inline-block'; stopBtn.style.display = 'none';
     } finally {
       scannerStarting = false;
+      if (cameraSelect) cameraSelect.disabled = false;
     }
   }
 
   async function startNativeScanner() {
     const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
-    nativeStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+    const video = selectedCameraId ? { deviceId: { exact: selectedCameraId } } : true;
+    nativeStream = await navigator.mediaDevices.getUserMedia({ video, audio: false });
     const reader = $(readerId);
     if (!reader) throw new Error('Scanner display is unavailable');
     reader.innerHTML = '';
@@ -106,6 +147,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     nativeVideo.srcObject = nativeStream;
     reader.appendChild(nativeVideo);
     await nativeVideo.play();
+    const activeDeviceId = nativeStream.getVideoTracks()[0]?.getSettings().deviceId || selectedCameraId;
+    await refreshCameraList(null, activeDeviceId);
     nativeScanTimer = window.setInterval(async () => {
       if (!nativeVideo || nativeVideo.readyState < 2) return;
       try {
@@ -135,6 +178,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (startBtn) startBtn.addEventListener('click', startScanner);
   if (stopBtn) stopBtn.addEventListener('click', stopScanner);
+  if (cameraSelect) cameraSelect.addEventListener('change', async () => {
+    selectedCameraId = cameraSelect.value;
+    if (!nativeStream && !html5QrcodeScanner) return;
+    await stopScanner();
+    await startScanner();
+  });
   if (uploadQrButton && qrImageInput) {
     uploadQrButton.addEventListener('click', () => qrImageInput.click());
     qrImageInput.addEventListener('change', async () => {
