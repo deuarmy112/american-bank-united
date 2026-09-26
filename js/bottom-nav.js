@@ -94,6 +94,79 @@
       }
     }
     markActive();
+
+    if (!nav.classList.contains('secondary-page-nav')) {
+      let idleTimer = null;
+      const IDLE_DELAY = 800;
+      const activePointers = new Set();
+      const activeTouches = new Set();
+      const activeKeys = new Set();
+
+      function showBottomNav() {
+        nav.classList.remove('abu-nav-idle-hidden');
+        nav.removeAttribute('aria-hidden');
+        nav.inert = false;
+      }
+
+      function hideBottomNav() {
+        nav.classList.add('abu-nav-idle-hidden');
+        nav.setAttribute('aria-hidden', 'true');
+        nav.inert = true;
+      }
+
+      function hideDuringActivity() {
+        hideBottomNav();
+        window.clearTimeout(idleTimer);
+      }
+
+      function revealWhenIdle() {
+        window.clearTimeout(idleTimer);
+        if (activePointers.size || activeTouches.size || activeKeys.size) return;
+        idleTimer = window.setTimeout(showBottomNav, IDLE_DELAY);
+      }
+
+      function isNavInteraction(event) {
+        return event.target && nav.contains(event.target);
+      }
+
+      function registerActivity(event) {
+        if (isNavInteraction(event)) return;
+        hideDuringActivity();
+        revealWhenIdle();
+      }
+
+      window.addEventListener('pointerdown', event => {
+        if (isNavInteraction(event)) return;
+        activePointers.add(event.pointerId);
+        hideDuringActivity();
+      }, { passive: true });
+      ['pointerup', 'pointercancel'].forEach(type => window.addEventListener(type, event => {
+        activePointers.delete(event.pointerId);
+        revealWhenIdle();
+      }, { passive: true }));
+      window.addEventListener('touchstart', event => {
+        if (isNavInteraction(event)) return;
+        Array.from(event.changedTouches, touch => activeTouches.add(touch.identifier));
+        hideDuringActivity();
+      }, { passive: true });
+      ['touchend', 'touchcancel'].forEach(type => window.addEventListener(type, event => {
+        Array.from(event.changedTouches, touch => activeTouches.delete(touch.identifier));
+        revealWhenIdle();
+      }, { passive: true }));
+      window.addEventListener('keydown', event => {
+        if (isNavInteraction(event)) return;
+        activeKeys.add(event.code);
+        hideDuringActivity();
+      }, { passive: true });
+      window.addEventListener('keyup', event => {
+        activeKeys.delete(event.code);
+        revealWhenIdle();
+      }, { passive: true });
+      ['scroll', 'wheel', 'touchmove', 'pointermove', 'input', 'change', 'focusin'].forEach(type => {
+        window.addEventListener(type, registerActivity, { passive: type !== 'focusin', capture: type === 'scroll' });
+      });
+    }
+
     // handle history changes
     window.addEventListener('popstate', markActive);
   });
