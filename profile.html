@@ -284,11 +284,6 @@
                 <p id="profilePhone" class="profile-phone">+1234567890</p>
             </div>
 
-            <div class="profile-balance-box">
-                <div class="profile-balance-label">Total Balance</div>
-                <div id="balance" class="profile-balance-value">$0.00</div>
-            </div>
-
             <section class="tier-card" aria-labelledby="tierTitle">
                 <div class="tier-card-head">
                     <div>
@@ -302,12 +297,6 @@
             </section>
 
             <a class="profile-manage" href="cards.html">Manage Cards</a>
-
-            <div class="profile-action-grid">
-                <button id="depositBtn" class="profile-action-btn">Deposit</button>
-                <button id="transferBtn" class="profile-action-btn">Transfer</button>
-                <button id="withdrawBtn" class="profile-action-btn">Withdraw</button>
-            </div>
 
             <button id="editProfileBtn" class="profile-edit-btn w-full mt-3">Edit Profile</button>
             <button id="logoutBtn" class="profile-logout-btn w-full mt-3">Logout</button>
@@ -345,7 +334,7 @@
 
         <section class="profile-section">
             <div class="profile-section-head">
-                <h3 class="profile-section-title">Linked Accounts</h3>
+                <h3 class="profile-section-title">My Accounts</h3>
                 <a href="accounts.html" class="profile-standalone-link">Manage</a>
             </div>
             <ul id="linkedAccountsList" class="space-y-2 text-sm text-slate-700">
@@ -676,21 +665,15 @@
 
         // enhance profile rendering for redesigned layout
         const enhanceProfile = async (user)=>{
-            // Fetch accounts if not available in user object
             let accounts = (user.accounts && user.accounts.length) ? user.accounts : [];
             if (accounts.length === 0) {
                 try {
                     accounts = await accountsAPI.getAll() || [];
                 } catch (err) {
-                    console.warn('Failed to fetch accounts for balance calculation', err);
+                    console.warn('Failed to load accounts for profile', err);
                     accounts = [];
                 }
             }
-
-            // Calculate total balance from all accounts (same as dashboard)
-            const totalBalance = accounts.reduce((sum, acc) => sum + (parseFloat(acc.balance) || 0), 0);
-            const balanceEl = document.getElementById('balance');
-            if (balanceEl) balanceEl.textContent = formatCurrency(totalBalance);
 
             const acctNameEl = document.getElementById('accountName');
             if (acctNameEl) acctNameEl.textContent = ((user.first_name||'') + ' ' + (user.last_name||'')).trim() || '—';
@@ -704,12 +687,26 @@
             if (la) {
                 la.innerHTML = '';
                 if (accounts.length === 0) {
-                    la.innerHTML = '<li class="p-3 border rounded">No linked accounts yet.</li>';
+                    la.innerHTML = '<li class="p-3 border rounded">No accounts found for this profile.</li>';
                 } else {
-                    accounts.forEach(a=>{
+                    accounts.forEach(account=>{
                         const li = document.createElement('li');
-                        li.className = 'p-3 border rounded flex justify-between items-center';
-                        li.innerHTML = `<div><div class="font-medium">${a.name || a.bank || 'Account'}</div><div class="text-xs text-slate-500">${a.masked || a.number || ''}</div></div><div class="text-xs text-slate-500">${a.type||''}</div>`;
+                        li.className = 'p-3 border rounded flex justify-between items-center gap-3';
+                        const accountType = String(account.account_type || 'Account').replace(/^./, character => character.toUpperCase());
+                        const accountNumber = String(account.account_number || '');
+                        const accountStatus = String(account.approval_status || account.status || '').replace(/_/g, ' ');
+                        const info = document.createElement('div');
+                        const name = document.createElement('div');
+                        name.className = 'font-medium';
+                        name.textContent = account.account_nickname || `${accountType} account`;
+                        const number = document.createElement('div');
+                        number.className = 'text-xs text-slate-500';
+                        number.textContent = accountNumber ? `Account ending in ${accountNumber.slice(-4)}` : 'Account number unavailable';
+                        info.append(name, number);
+                        const meta = document.createElement('div');
+                        meta.className = 'text-xs text-slate-500 text-right';
+                        meta.textContent = accountStatus ? `${accountType} · ${accountStatus}` : accountType;
+                        li.append(info, meta);
                         la.appendChild(li);
                     });
                 }
