@@ -7,6 +7,7 @@
   const primaryPages = new Set(['dashboard.html', 'accounts.html', 'transfer.html', 'cards.html', 'more.html']);
   const currentPage = (window.location.pathname || '/dashboard.html').replace(/\\/g, '/').split('/').pop() || 'dashboard.html';
   const pageCloseSelector = '.qr-header-action, .bill-close, .invest-close, .account-close, .profile-close, .transactions-close, [data-page-close]';
+  const pagesWithoutClose = new Set(['transactions.html']);
   const pageStyle = document.createElement('style');
   pageStyle.textContent = `#abu-bottom-nav.secondary-page-nav{display:none!important}.abu-overlay-open #abu-bottom-nav{display:none!important}.abu-page-close,.qr-header-action,.bill-close,.invest-close,.account-close,.profile-close,.transactions-close{cursor:pointer}.abu-page-close:focus,.abu-page-close:hover,.qr-header-action:hover,.bill-close:hover,.invest-close:hover,.account-close:hover,.profile-close:hover,.transactions-close:hover{color:#0f172a;background:#f8fafc}`;
 
@@ -74,7 +75,7 @@
       nav.setAttribute('aria-hidden', 'true');
       nav.style.display = 'none';
 
-      if (!document.querySelector(pageCloseSelector)) {
+      if (!pagesWithoutClose.has(currentPage) && !document.querySelector(pageCloseSelector)) {
         const close = document.createElement('button');
         close.type = 'button';
         close.className = 'abu-page-close';
