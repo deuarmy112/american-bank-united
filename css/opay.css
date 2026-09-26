@@ -20,13 +20,40 @@ body{
   padding-block-start:0 !important;
 }
 
-:is(.account-topbar,.atm-topbar,.topbar,.bill-topbar,.budget-topbar,.calc-topbar,.exchange-topbar,.invest-topbar,.menu-topbar,.privacy-topbar,.qr-topbar,.security-action-topbar,.security-topbar,.settings-topbar,.support-topbar){
+:is(.account-topbar,.atm-topbar,.topbar,.bill-topbar,.budget-topbar,.calc-topbar,.exchange-topbar,.invest-topbar,.menu-topbar,.privacy-topbar,.qr-topbar,.security-action-topbar,.security-topbar,.settings-topbar,.support-topbar,.profile-topbar,.transactions-topbar,.abu-page-topbar){
+  min-height:40px !important;
   margin-block-end:4px !important;
+  align-items:flex-start !important;
 }
 
-.profile-close{
+:is(.transactions-topbar,.abu-page-topbar){
+  display:flex !important;
+  justify-content:flex-end !important;
+}
+
+:is(.abu-page-close,.account-close,.atm-close,.topbar-action,.bill-close,.budget-close,.calc-close,.exchange-close,.invest-close,.menu-close,.privacy-close,.qr-header-action,.security-action-close,.security-close,.settings-close,.support-close,.profile-close,.transactions-close,[data-page-close]){
   position:static !important;
-  margin:0 0 4px auto;
+  inset:auto !important;
+  display:grid !important;
+  place-items:center !important;
+  flex:0 0 40px !important;
+  width:40px !important;
+  height:40px !important;
+  margin:0 0 0 auto !important;
+  padding:0 !important;
+  border:1px solid #e2e8f0 !important;
+  border-radius:50% !important;
+  background:#fff !important;
+  color:#64748b !important;
+  box-shadow:0 4px 12px rgba(15,23,42,.1) !important;
+  font-size:16px !important;
+  line-height:1 !important;
+  cursor:pointer;
+}
+
+:is(.abu-page-close,.account-close,.atm-close,.topbar-action,.bill-close,.budget-close,.calc-close,.exchange-close,.invest-close,.menu-close,.privacy-close,.qr-header-action,.security-action-close,.security-close,.settings-close,.support-close,.profile-close,.transactions-close,[data-page-close]):hover{
+  background:#f8fafc !important;
+  color:#0f172a !important;
 }
 
 .opay-gradient{
