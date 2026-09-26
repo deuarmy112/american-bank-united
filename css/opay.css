@@ -15,6 +15,20 @@ body{
   background: linear-gradient(180deg,#fafafa 0%, #f3f4f6 100%);
   -webkit-font-smoothing:antialiased;
 }
+
+:is(.account-page,.atm-page,.beneficiary-page,.bill-page,.budget-page,.calc-page,.exchange-page,.invest-page,.menu-page,.privacy-page,.qr-page,.security-action-page,.security-page,.settings-page,.support-page,.profile-shell){
+  padding-block-start:0 !important;
+}
+
+:is(.account-topbar,.atm-topbar,.topbar,.bill-topbar,.budget-topbar,.calc-topbar,.exchange-topbar,.invest-topbar,.menu-topbar,.privacy-topbar,.qr-topbar,.security-action-topbar,.security-topbar,.settings-topbar,.support-topbar){
+  margin-block-end:4px !important;
+}
+
+.profile-close{
+  position:static !important;
+  margin:0 0 4px auto;
+}
+
 .opay-gradient{
   background: linear-gradient(135deg,var(--opay-start),var(--opay-end));
 }
