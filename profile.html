@@ -270,10 +270,10 @@
         }
         body.profile-page-body { background: #f5f6f8; color: #202124; }
         .profile-shell { width: min(100%, 520px); max-width: 520px; min-height: 100vh; margin: 0 auto; padding: 0 0 calc(82px + env(safe-area-inset-bottom)); background: #f5f6f8; }
-        .profile-topbar { position: sticky; top: 0; z-index: 20; display: grid; grid-template-columns: 42px 1fr 42px; align-items: center; height: 58px; margin: 0; padding: 0 12px; background: #fff; border-bottom: 1px solid #e4e6e9; }
-        .profile-page-title { margin: 0; color: #202124; font-size: 1rem; font-weight: 600; }
+        .profile-topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: flex-end; height: 58px; margin: 0; padding: 0 12px; background: #fff; }
         .profile-close { width: 40px; height: 40px; border: 0; background: transparent; color: #42464d; box-shadow: none; font-size: 1rem; }
-        .profile-summary-card { margin: 14px 12px 12px; padding: 18px 16px 14px; background: #fff; border: 1px solid #e2e5e9; border-radius: 12px; }
+        .profile-summary-card { position: relative; margin: 14px 12px 12px; padding: 18px 16px 14px; background: #fff; border: 1px solid #e2e5e9; border-radius: 12px; }
+        .profile-card-logout { position: absolute; top: 10px; right: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 5px; border: 0; background: transparent; color: #686d75; font-size: .75rem; font-weight: 600; cursor: pointer; }
         .profile-identity { display: flex; flex-direction: column; align-items: center; padding: 2px 0 18px; background: transparent; border-radius: 0; box-shadow: none; color: #202124; }
         .profile-identity::after { display: none; }
         .profile-avatar-shell { position: relative; width: 82px; height: 82px; margin-bottom: 10px; }
@@ -311,12 +311,9 @@
 </head>
 <body class="profile-page-body">
     <main class="profile-shell">
-        <header class="profile-topbar">
-            <button type="button" class="profile-close" data-nav-back="dashboard.html" aria-label="Cancel and close profile" title="Close"><i class="fas fa-xmark"></i></button>
-            <h1 class="profile-page-title">My Profile</h1>
-            <button id="logoutBtn" type="button" class="profile-close" aria-label="Log out" title="Log out"><i class="fas fa-right-from-bracket"></i></button>
-        </header>
+        <div class="profile-topbar"><button type="button" class="profile-close" data-nav-back="dashboard.html" aria-label="Cancel and close profile" title="Close"><i class="fas fa-xmark"></i></button></div>
         <div class="profile-summary-card">
+            <button id="logoutBtn" type="button" class="profile-card-logout" aria-label="Log out"><i class="fas fa-right-from-bracket" aria-hidden="true"></i><span>Log out</span></button>
             <div class="profile-identity">
                 <div class="profile-avatar-shell">
                     <div id="profileAvatar" class="profile-avatar-wrap" aria-label="User avatar">ABU</div>
