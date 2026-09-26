@@ -799,11 +799,12 @@
         }
 
         const tierLabels = { tier1: 'Tier 1 · Essential', tier2: 'Tier 2 · Plus', tier3: 'Tier 3 · Premier' };
+        const tierRanks = { tier1: 1, tier2: 2, tier3: 3 };
         const identityOptions = { tier1: [['national_id', 'National ID card']], tier2: [['drivers_license', "Driver's license"], ['ssn_proof', 'SSN proof']], tier3: [['international_passport', 'International passport']] };
 
         function renderTierStatus(user, requests = []) {
             const tier = user.account_tier || 'tier1';
-            const currentRank = ACCOUNT_TIER_RANK[tier] || 1;
+            const currentRank = tierRanks[tier] || 1;
             const title = document.getElementById('tierTitle');
             const status = document.getElementById('tierStatus');
             const button = document.getElementById('upgradeAccountBtn');
@@ -817,7 +818,7 @@
                 ? `Documents for ${tierLabels[pendingRequest.tier] || 'your selected tier'} are under review. The tier activates after bank approval.`
                 : (verified ? 'Verified account. Your current tier benefits are active.' : (rejectedRequest ? `The last request was declined: ${rejectedRequest.rejection_reason || 'Documents could not be verified'}. You may submit again.` : 'Choose a tier and submit your documents for bank review.'));
             document.querySelectorAll('input[name="upgradeTier"]').forEach(input => {
-                const passed = verified && (ACCOUNT_TIER_RANK[input.value] || 0) <= currentRank;
+                const passed = verified && (tierRanks[input.value] || 0) <= currentRank;
                 input.disabled = pending || passed;
                 input.closest('.tier-option')?.setAttribute('aria-disabled', String(input.disabled));
             });
