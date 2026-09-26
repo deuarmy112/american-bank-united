@@ -494,9 +494,16 @@ async function authRegister(body) {
     const { email, password, firstName, lastName, dateOfBirth } = body;
     const normalizedEmail = String(email || '').trim().toLowerCase();
     const phone = normalizePhoneNumber(body.phone);
+    const tier = ACCOUNT_TIERS[body.tier] ? body.tier : '';
+    const identityType = String(body.identityType || '');
+    const documents = body.documents || {};
     if (!email || !password || !firstName || !lastName) return { status: 400, body: { error: 'Required fields are missing' } };
     if (!isValidEmail(normalizedEmail)) return { status: 400, body: { error: 'Enter a valid email address' } };
     if (!phone) return { status: 400, body: { error: 'Enter a phone number in international format, such as +12025550123' } };
+    if (!tier || !ACCOUNT_TIERS[tier].documentTypes.includes(identityType)) return { status: 400, body: { error: 'Choose a valid account tier and identity document' } };
+    if (!validVerificationPath(documents.identity, 'registration') || !validVerificationPath(documents.address, 'registration')) {
+        return { status: 400, body: { error: 'Upload a valid identity document and proof of address' } };
+    }
     const existing = await getDb().collection('users').where('email', '==', normalizedEmail).limit(1).get();
     if (!existing.empty) return { status: 400, body: { error: 'Email already registered' } };
     const existingPhone = await getDb().collection('users').where('phone', '==', phone).limit(1).get();
@@ -513,10 +520,48 @@ async function authRegister(body) {
     }
 
     const id = randomUUID();
-    const user = { id, email: normalizedEmail, first_name: firstName, last_name: lastName, phone, phone_verified: phoneVerified, phone_verification_method: phoneVerificationMethod, ...(phoneVerified ? { phone_verified_at: now() } : { email_verified_at: now() }), date_of_birth: dateOfBirth || null, password_hash: await bcrypt.hash(password, 10), role: 'customer', status: 'active', created_at: now() };
-    await getDb().collection('users').doc(id).set(user);
+    const timestamp = now();
+    const database = getDb();
+    const userRef = database.collection('users').doc(id);
+    const requestRef = database.collection('verification_requests').doc(randomUUID());
+    const user = {
+        id,
+        email: normalizedEmail,
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+        phone_verified: phoneVerified,
+        phone_verification_method: phoneVerificationMethod,
+        ...(phoneVerified ? { phone_verified_at: timestamp } : { email_verified_at: timestamp }),
+        date_of_birth: dateOfBirth || null,
+        password_hash: await bcrypt.hash(password, 10),
+        role: 'customer',
+        status: 'active',
+        account_tier: 'tier1',
+        selected_tier: tier,
+        verification_status: 'pending',
+        created_at: timestamp,
+        updated_at: timestamp
+    };
+    const verificationRequest = {
+        id: requestRef.id,
+        user_id: id,
+        request_type: 'registration',
+        tier,
+        identity_type: identityType,
+        documents: { identity: documents.identity, address: documents.address },
+        status: 'pending',
+        review_eta_hours: 48,
+        submitted_at: timestamp,
+        created_at: timestamp,
+        updated_at: timestamp
+    };
+    await database.runTransaction(async transaction => {
+        transaction.set(userRef, user);
+        transaction.set(requestRef, verificationRequest);
+    });
     const welcomeResult = await sendWelcomeEmail(user);
-    return { status: 201, body: { message: 'User registered successfully', token: makeToken(user), user: { id, email: user.email, firstName, lastName, role: 'customer' }, welcomeEmail: welcomeResult } };
+    return { status: 201, body: { message: 'Registration submitted. Your selected account tier is pending bank review.', token: makeToken(user), user: { id, email: user.email, firstName, lastName, role: 'customer', accountTier: user.account_tier, selectedTier: tier, verificationStatus: user.verification_status }, welcomeEmail: welcomeResult } };
 }
 
 function normalizePhoneNumber(value) {
@@ -1206,6 +1251,7 @@ async function verificationRoutes(method, parts, user, body) {
 
         const request = await save('verification_requests', {
             user_id: user.userId,
+            request_type: 'upgrade',
             tier: body.tier,
             identity_type: identityType,
             documents: { identity: documents.identity, address: documents.address },
@@ -1213,6 +1259,7 @@ async function verificationRoutes(method, parts, user, body) {
             review_eta_hours: 48,
             submitted_at: now()
         });
+        await getDb().collection('users').doc(user.userId).set({ selected_tier: body.tier, verification_status: 'pending', updated_at: now() }, { merge: true });
         return { status: 201, body: { message: 'Documents submitted. Bank verification usually takes up to 48 hours.', request: clean(request) } };
     }
     return { status: 404, body: { error: 'Verification route not found' } };
@@ -1372,14 +1419,19 @@ async function adminRoutes(method, parts, user, body, query) {
         if (!request || request.status !== 'pending') return { status: 404, body: { error: 'Pending verification request not found' } };
         const timestamp = now();
         await getDb().collection('verification_requests').doc(request.id).set({ status: 'approved', reviewed_by: user.userId, reviewed_at: timestamp, updated_at: timestamp }, { merge: true });
-        await getDb().collection('users').doc(request.user_id).set({ account_tier: request.tier, verification_status: 'verified', verified_at: timestamp, verified_by: user.userId, updated_at: timestamp }, { merge: true });
+        await getDb().collection('users').doc(request.user_id).set({ account_tier: request.tier, selected_tier: request.tier, verification_status: 'verified', verified_at: timestamp, verified_by: user.userId, verification_rejection_reason: admin.firestore.FieldValue.delete(), updated_at: timestamp }, { merge: true });
         return { body: { message: 'Account tier approved successfully' } };
     }
 
     if (method === 'POST' && parts[0] === 'verification-requests' && parts[1] && parts[2] === 'reject') {
         const request = await getDoc('verification_requests', parts[1]);
         if (!request || request.status !== 'pending') return { status: 404, body: { error: 'Pending verification request not found' } };
-        await getDb().collection('verification_requests').doc(request.id).set({ status: 'rejected', rejection_reason: String(body.reason || 'Documents could not be verified'), reviewed_by: user.userId, reviewed_at: now(), updated_at: now() }, { merge: true });
+        const reason = String(body.reason || 'Documents could not be verified');
+        const timestamp = now();
+        const currentUser = await userProfile(request.user_id);
+        const wasVerified = currentUser?.verification_status === 'verified';
+        await getDb().collection('verification_requests').doc(request.id).set({ status: 'rejected', rejection_reason: reason, reviewed_by: user.userId, reviewed_at: timestamp, updated_at: timestamp }, { merge: true });
+        await getDb().collection('users').doc(request.user_id).set({ selected_tier: request.tier, verification_status: wasVerified ? 'verified' : 'rejected', verification_rejection_reason: reason, updated_at: timestamp }, { merge: true });
         return { body: { message: 'Verification request rejected' } };
     }
 

@@ -224,7 +224,9 @@
         .tier-options { display: grid; gap: 10px; margin: 14px 0 18px; }
         .tier-option { display: block; padding: 14px; border: 1px solid #dbe3ec; border-radius: 10px; cursor: pointer; }
         .tier-option:has(input:checked) { border-color: #9b8350; background: #fffbeb; box-shadow: 0 0 0 2px rgba(155,131,80,.15); }
+        .tier-option:has(input:disabled) { opacity: .58; cursor: not-allowed; background: #f8fafc; box-shadow: none; }
         .tier-option input { accent-color: #8d763e; }
+        .tier-option input:disabled { cursor: not-allowed; }
         .tier-option-title { font-weight: 800; color: #0f172a; }
         .tier-option-copy { margin-top: 7px; color: #64748b; font-size: .82rem; line-height: 1.45; }
         .verification-file { width: 100%; padding: 10px; border: 1px dashed #cbd5e1; border-radius: 8px; background: #f8fafc; font-size: .82rem; }
@@ -801,15 +803,29 @@
 
         function renderTierStatus(user, requests = []) {
             const tier = user.account_tier || 'tier1';
+            const currentRank = ACCOUNT_TIER_RANK[tier] || 1;
             const title = document.getElementById('tierTitle');
             const status = document.getElementById('tierStatus');
             const button = document.getElementById('upgradeAccountBtn');
-            const pending = requests.some(request => request.status === 'pending');
+            const pendingRequest = requests.find(request => request.status === 'pending');
+            const rejectedRequest = requests.find(request => request.status === 'rejected');
+            const pending = Boolean(pendingRequest);
             const verified = user.verification_status === 'verified';
-            if (title) title.textContent = tierLabels[tier] || tierLabels.tier1;
+            if (title) title.textContent = pendingRequest?.tier ? `${tierLabels[pendingRequest.tier]} - Pending review` : (tierLabels[tier] || tierLabels.tier1);
             document.getElementById('tierVerifiedBadge')?.classList.toggle('hidden', !verified);
-            if (status) status.textContent = pending ? 'Documents received. Bank verification is in progress and may take up to 48 hours.' : (verified ? 'Verified account. Your current tier benefits are active.' : 'Upgrade your verification level for higher limits and more account benefits.');
-            if (button) { button.disabled = pending || tier === 'tier3'; button.textContent = pending ? 'Verification in progress' : (tier === 'tier3' ? 'Highest tier reached' : 'Upgrade account'); }
+            if (status) status.textContent = pending
+                ? `Documents for ${tierLabels[pendingRequest.tier] || 'your selected tier'} are under review. The tier activates after bank approval.`
+                : (verified ? 'Verified account. Your current tier benefits are active.' : (rejectedRequest ? `The last request was declined: ${rejectedRequest.rejection_reason || 'Documents could not be verified'}. You may submit again.` : 'Choose a tier and submit your documents for bank review.'));
+            document.querySelectorAll('input[name="upgradeTier"]').forEach(input => {
+                const passed = verified && (ACCOUNT_TIER_RANK[input.value] || 0) <= currentRank;
+                input.disabled = pending || passed;
+                input.closest('.tier-option')?.setAttribute('aria-disabled', String(input.disabled));
+            });
+            const availableTier = [...document.querySelectorAll('input[name="upgradeTier"]')].find(input => !input.disabled && input.checked)
+                || [...document.querySelectorAll('input[name="upgradeTier"]')].find(input => !input.disabled);
+            if (availableTier) availableTier.checked = true;
+            updateIdentityOptions();
+            if (button) { button.disabled = pending || (verified && tier === 'tier3'); button.textContent = pending ? 'Verification in progress' : (verified && tier === 'tier3' ? 'Highest tier reached' : (rejectedRequest ? 'Resubmit verification' : 'Upgrade account')); }
         }
 
         function updateIdentityOptions() {
@@ -907,10 +923,11 @@
                     const identityFile = document.getElementById('identityFile').files[0];
                     const addressFile = document.getElementById('addressFile').files[0];
                     const [identity, address] = await Promise.all([uploadVerificationFile(identityFile), uploadVerificationFile(addressFile)]);
-                    await verificationAPI.submit({ tier: document.querySelector('input[name="upgradeTier"]:checked').value, identityType: document.getElementById('identityType').value, documents: { identity, address } });
+                    const selectedTier = document.querySelector('input[name="upgradeTier"]:checked').value;
+                    await verificationAPI.submit({ tier: selectedTier, identityType: document.getElementById('identityType').value, documents: { identity, address } });
                     showToast('Documents submitted. Verification may take up to 48 hours.');
                     closeUpgradeModal();
-                    renderTierStatus(window.__currentUser || {}, [{ status: 'pending' }]);
+                    renderTierStatus(window.__currentUser || {}, [{ status: 'pending', tier: selectedTier }]);
                     event.target.reset();
                     updateIdentityOptions();
                 } catch (error) {

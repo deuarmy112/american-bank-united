@@ -47,6 +47,32 @@
             </div>
           </div>
           <input id="dateOfBirth" name="dateOfBirth" type="date" required class="w-full rounded-md border px-3 py-2">
+          <section class="space-y-3 rounded-md border p-3 text-left" aria-labelledby="registrationTierTitle">
+            <div>
+              <h2 id="registrationTierTitle" class="text-sm font-semibold">Choose your account tier</h2>
+              <p class="text-xs text-slate-600">Tier 1 is selected by default. Your chosen tier activates after bank review.</p>
+            </div>
+            <div class="grid gap-2">
+              <label class="flex cursor-pointer items-start gap-2 rounded border p-2">
+                <input type="radio" name="registrationTier" value="tier1" checked>
+                <span><strong class="block text-sm">Tier 1 - Essential</strong><span class="text-xs text-slate-600">National ID card</span></span>
+              </label>
+              <label class="flex cursor-pointer items-start gap-2 rounded border p-2">
+                <input type="radio" name="registrationTier" value="tier2">
+                <span><strong class="block text-sm">Tier 2 - Plus</strong><span class="text-xs text-slate-600">Driver's license or SSN proof</span></span>
+              </label>
+              <label class="flex cursor-pointer items-start gap-2 rounded border p-2">
+                <input type="radio" name="registrationTier" value="tier3">
+                <span><strong class="block text-sm">Tier 3 - Premier</strong><span class="text-xs text-slate-600">International passport</span></span>
+              </label>
+            </div>
+            <label for="registrationIdentityType" class="block text-xs font-medium text-slate-700">Means of identification</label>
+            <select id="registrationIdentityType" required class="w-full rounded-md border px-3 py-2 text-sm"></select>
+            <label for="registrationIdentityFile" class="block text-xs font-medium text-slate-700">Upload identity document</label>
+            <input id="registrationIdentityFile" type="file" required accept=".pdf,.jpg,.jpeg,.png,.webp" class="w-full rounded-md border px-3 py-2 text-sm">
+            <label for="registrationAddressFile" class="block text-xs font-medium text-slate-700">Upload proof of address</label>
+            <input id="registrationAddressFile" type="file" required accept=".pdf,.jpg,.jpeg,.png,.webp" class="w-full rounded-md border px-3 py-2 text-sm">
+          </section>
           <input id="password" name="password" type="password" required minlength="6" class="w-full rounded-md border px-3 py-2" placeholder="Password">
           <input id="confirmPassword" name="confirmPassword" type="password" required minlength="6" class="w-full rounded-md border px-3 py-2" placeholder="Confirm Password">
 

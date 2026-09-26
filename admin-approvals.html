@@ -273,7 +273,7 @@
                     <article class="verification-card">
                         <div style="display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap;">
                             <div style="flex:1;min-width:240px;">
-                                <h3 style="margin:0 0 8px;color:#0f172a;"><i class="fas fa-shield-halved" style="color:#9b8350;"></i> ${request.tier.toUpperCase()} upgrade</h3>
+                                <h3 style="margin:0 0 8px;color:#0f172a;"><i class="fas fa-shield-halved" style="color:#9b8350;"></i> ${request.request_type === 'registration' ? 'New account tier request' : 'Account tier upgrade'} - ${request.tier.toUpperCase()}</h3>
                                 <p class="verification-meta"><strong>Customer:</strong> ${request.user?.first_name || ''} ${request.user?.last_name || ''} (${request.user?.email || 'Unknown'})</p>
                                 <p class="verification-meta"><strong>Identity method:</strong> ${request.identity_type.replaceAll('_', ' ')}</p>
                                 <p class="verification-meta"><strong>Submitted:</strong> ${formatDate(request.created_at)} · <strong>Review window:</strong> up to 48 hours</p>

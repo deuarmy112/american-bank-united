@@ -259,7 +259,7 @@
                 const upgradeRows = verificationData.requests.map(request => `
                     <tr>
                         <td><strong>${request.user ? `${request.user.first_name} ${request.user.last_name}` : 'Unknown'}</strong><br><small>${request.user?.email || ''}</small></td>
-                        <td><strong><i class="fas fa-shield-halved"></i> Account upgrade</strong><br><small>${request.tier.toUpperCase()} · ${request.identity_type.replaceAll('_', ' ')}</small></td>
+                        <td><strong><i class="fas fa-shield-halved"></i> ${request.request_type === 'registration' ? 'New account tier request' : 'Account upgrade'}</strong><br><small>Selected tier: ${request.tier.toUpperCase()} · ${request.identity_type.replaceAll('_', ' ')}</small></td>
                         <td><a href="${request.documents?.identity || '#'}" target="_blank" rel="noopener">Identity</a><br><a href="${request.documents?.address || '#'}" target="_blank" rel="noopener">Residential proof</a></td>
                         <td>${formatDate(request.submitted_at || request.created_at)}</td>
                         <td><button onclick="approveVerificationRequest('${request.id}')" class="btn btn-sm btn-primary"><i class="fas fa-check"></i> Approve tier</button> <button onclick="rejectVerificationRequest('${request.id}')" class="btn btn-sm btn-danger"><i class="fas fa-times"></i> Reject</button></td>

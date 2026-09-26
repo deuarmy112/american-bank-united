@@ -19,6 +19,56 @@ document.addEventListener('DOMContentLoaded', function() {
     let emailPhoneProof = '';
     let verifiedPhone = '';
     let verifiedEmail = '';
+    const registrationIdentityOptions = {
+        tier1: [['national_id', 'National ID card']],
+        tier2: [['drivers_license', "Driver's license"], ['ssn_proof', 'SSN proof']],
+        tier3: [['international_passport', 'International passport']]
+    };
+
+    function updateRegistrationIdentityType() {
+        const tier = document.querySelector('input[name="registrationTier"]:checked')?.value || 'tier1';
+        const select = document.getElementById('registrationIdentityType');
+        select.innerHTML = registrationIdentityOptions[tier].map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
+    }
+
+    async function uploadVerificationFile(file) {
+        if (!file || !['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+            throw new Error('Upload a PDF, JPG, PNG, or WEBP document.');
+        }
+        if (file.type.startsWith('image/')) {
+            const sourceImage = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const image = new Image();
+                    image.onload = () => resolve(image);
+                    image.onerror = reject;
+                    image.src = reader.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+            const scale = Math.min(1, 1400 / Math.max(sourceImage.width, sourceImage.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(sourceImage.width * scale));
+            canvas.height = Math.max(1, Math.round(sourceImage.height * scale));
+            canvas.getContext('2d').drawImage(sourceImage, 0, 0, canvas.width, canvas.height);
+            const compressed = canvas.toDataURL('image/jpeg', 0.68);
+            if (compressed.length > 450000) throw new Error('Each document must be a clear image under 450 KB after compression.');
+            return compressed;
+        }
+
+        const dataUrl = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+        if (dataUrl.length > 450000) throw new Error('Each PDF document must be 450 KB or smaller.');
+        return dataUrl;
+    }
+
+    document.querySelectorAll('input[name="registrationTier"]').forEach(input => input.addEventListener('change', updateRegistrationIdentityType));
+    updateRegistrationIdentityType();
 
     document.getElementById('sendPhoneCode').addEventListener('click', async function() {
         try {
@@ -102,6 +152,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const dateOfBirth = document.getElementById('dateOfBirth').value;
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
+        const selectedTier = document.querySelector('input[name="registrationTier"]:checked')?.value || 'tier1';
 
         const normalizedPhone = phone.replace(/[()\s.-]/g, '');
         if (!verifiedPhone || verifiedPhone !== normalizedPhone || (!firebasePhoneAuthToken && (!emailPhoneProof || verifiedEmail !== email.toLowerCase()))) {
@@ -148,8 +199,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show loading state
             const submitBtn = registerForm.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Creating account...';
+            submitBtn.textContent = 'Preparing verification documents...';
             submitBtn.disabled = true;
+
+            const [identity, address] = await Promise.all([
+                uploadVerificationFile(document.getElementById('registrationIdentityFile').files[0]),
+                uploadVerificationFile(document.getElementById('registrationAddressFile').files[0])
+            ]);
+            submitBtn.textContent = 'Creating account...';
 
             // Call register API
             const response = await authAPI.register({
@@ -157,6 +214,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 lastName,
                 email,
                 phone: phone || null,
+                tier: selectedTier,
+                identityType: document.getElementById('registrationIdentityType').value,
+                documents: { identity, address },
                 firebasePhoneAuthToken: firebasePhoneAuthToken || undefined,
                 emailPhoneProof: emailPhoneProof || undefined,
                 dateOfBirth: dateOfBirth || null,
