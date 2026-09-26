@@ -270,10 +270,9 @@
         }
         body.profile-page-body { background: #f5f6f8; color: #202124; }
         .profile-shell { width: min(100%, 520px); max-width: 520px; min-height: 100vh; margin: 0 auto; padding: 0 0 calc(82px + env(safe-area-inset-bottom)); background: #f5f6f8; }
-        .profile-topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: flex-end; height: 58px; margin: 0; padding: 0 12px; background: #fff; }
-        .profile-close { width: 40px; height: 40px; border: 0; background: transparent; color: #42464d; box-shadow: none; font-size: 1rem; }
+        .profile-close { position: fixed; top: 14px; right: max(14px, calc((100vw - 520px) / 2 + 14px)); z-index: 60; display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid #e2e5e9; border-radius: 50%; background: #fff; color: #42464d; box-shadow: 0 4px 12px rgba(15,23,42,.12); font-size: 1rem; }
         .profile-summary-card { position: relative; margin: 14px 12px 12px; padding: 18px 16px 14px; background: #fff; border: 1px solid #e2e5e9; border-radius: 12px; }
-        .profile-card-logout { position: absolute; top: 10px; right: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 5px; border: 0; background: transparent; color: #686d75; font-size: .75rem; font-weight: 600; cursor: pointer; }
+        .profile-card-logout { position: absolute; top: 10px; left: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 5px; border: 0; background: transparent; color: #686d75; font-size: .75rem; font-weight: 600; cursor: pointer; }
         .profile-identity { display: flex; flex-direction: column; align-items: center; padding: 2px 0 18px; background: transparent; border-radius: 0; box-shadow: none; color: #202124; }
         .profile-identity::after { display: none; }
         .profile-avatar-shell { position: relative; width: 82px; height: 82px; margin-bottom: 10px; }
@@ -301,7 +300,16 @@
         .profile-copy-btn { flex: 0 0 auto; display: inline-grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: #777c84; }
         .profile-manage { margin: 10px 12px; padding: 14px 16px; border: 1px solid #e2e5e9; border-radius: 10px; background: #fff; color: #202124; box-shadow: 0 2px 8px rgba(20,28,38,.035); font-size: .85rem; }
         .profile-manage::after { color: #858991; }
-        @media (min-width: 760px) { .profile-topbar { border-radius: 0 0 10px 10px; } }
+        #editProfileModal { position: fixed; inset: 0; z-index: 70; align-items: stretch; justify-content: center; padding: 0; background: #f5f6f8; }
+        #editProfileModal > .profile-edit-fullscreen { display: flex; flex-direction: column; width: min(100%, 520px); height: 100vh; height: 100dvh; max-width: none; max-height: none; margin: 0 auto; padding: 0; overflow: hidden; border-radius: 0; background: #f5f6f8; }
+        .profile-edit-header { display: grid; grid-template-columns: 1fr 40px; align-items: center; flex: 0 0 auto; min-height: calc(58px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) 12px 0; border-bottom: 1px solid #e4e6e9; background: #fff; }
+        .profile-edit-header h2 { margin: 0; color: #202124; font-size: 1rem; font-weight: 600; }
+        .profile-edit-close { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: #42464d; font-size: 1rem; cursor: pointer; }
+        .profile-edit-form { display: flex; flex: 1 1 auto; flex-direction: column; gap: 14px; min-height: 0; margin: 0; padding: 16px 16px calc(12px + env(safe-area-inset-bottom)); overflow-y: auto; }
+        .profile-edit-form input, .profile-edit-form select, .profile-edit-form textarea { min-height: 44px; border-color: #d7dbe1; border-radius: 8px; background: #fff; color: #202124; }
+        .profile-edit-form label { color: #555b64; }
+        .profile-edit-actions { position: sticky; bottom: 0; z-index: 2; display: flex; flex: 0 0 auto; justify-content: flex-end; gap: 10px; margin-top: auto; padding: 12px 0; border-top: 1px solid #e2e5e9; background: #f5f6f8; }
+        body.profile-edit-open { overflow: hidden; }
     </style>
     <script>
         if (!localStorage.getItem('authToken')) {
@@ -311,7 +319,7 @@
 </head>
 <body class="profile-page-body">
     <main class="profile-shell">
-        <div class="profile-topbar"><button type="button" class="profile-close" data-nav-back="dashboard.html" aria-label="Cancel and close profile" title="Close"><i class="fas fa-xmark"></i></button></div>
+        <button type="button" class="profile-close" data-nav-back="dashboard.html" aria-label="Cancel and close profile" title="Close"><i class="fas fa-xmark"></i></button>
         <div class="profile-summary-card">
             <button id="logoutBtn" type="button" class="profile-card-logout" aria-label="Log out"><i class="fas fa-right-from-bracket" aria-hidden="true"></i><span>Log out</span></button>
             <div class="profile-identity">
@@ -429,10 +437,13 @@
     </div>
 
     <!-- Edit Profile Modal -->
-    <div id="editProfileModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center p-4">
-        <div class="bg-white max-w-md w-full rounded-lg p-4">
-            <h3 class="font-semibold mb-2">Edit Profile</h3>
-            <form id="editProfileForm" class="space-y-3">
+    <div id="editProfileModal" class="hidden fixed inset-0 flex">
+        <div class="profile-edit-fullscreen" role="dialog" aria-modal="true" aria-labelledby="editProfileTitle">
+            <header class="profile-edit-header">
+                <h2 id="editProfileTitle">Edit Profile</h2>
+                <button type="button" class="profile-edit-close" onclick="closeEditModal()" aria-label="Cancel profile editing" title="Cancel"><i class="fas fa-xmark"></i></button>
+            </header>
+            <form id="editProfileForm" class="profile-edit-form">
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="text-xs text-slate-600">First name</label>
@@ -497,7 +508,7 @@
                     </div>
                     <div class="mt-1 text-xs text-slate-500" id="editAvatarFileName">No file chosen</div>
                 </div>
-                <div class="flex justify-end gap-2">
+                <div class="profile-edit-actions">
                     <button type="button" class="border px-3 py-2 rounded" onclick="closeEditModal()">Cancel</button>
                     <button type="submit" class="opay-btn">Save</button>
                 </div>
@@ -849,6 +860,7 @@
             if (!m) return;
             m.classList.remove('hidden');
             m.classList.add('flex');
+            document.body.classList.add('profile-edit-open');
         }
 
         let editFirebasePhoneAuthToken = '';
@@ -868,6 +880,7 @@
             if (!m) return;
             m.classList.add('hidden');
             m.classList.remove('flex');
+            document.body.classList.remove('profile-edit-open');
         }
 
         const tierLabels = { tier1: 'Tier 1 · Essential', tier2: 'Tier 2 · Plus', tier3: 'Tier 3 · Premier' };

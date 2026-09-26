@@ -366,10 +366,11 @@
         <aside id="sidebarPanel" class="fixed top-0 left-0 bottom-0 w-72 bg-white shadow z-50 transform -translate-x-full transition-transform">
             <div class="p-4 h-full flex flex-col">
                 <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        </div>
-                    </div>
-                    <button onclick="closeSidebar()" class="text-slate-500"><i class="fas fa-times"></i></button>
+                    <button onclick="logoutFromMenu()" class="flex items-center gap-2 text-sm font-medium text-rose-600 hover:text-rose-700" aria-label="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
+                    <button onclick="closeSidebar()" class="text-slate-500" aria-label="Close menu"><i class="fas fa-times"></i></button>
                 </div>
                 <nav class="flex-1">
                     <ul class="space-y-2">
@@ -381,9 +382,6 @@
                         <li><a href="beneficiaries.html" onclick="closeSidebar()" class="block py-2 px-3 rounded hover:bg-slate-50">Beneficiaries</a></li>
                     </ul>
                 </nav>
-                <div class="mt-4">
-                    <button onclick="logoutFromMenu()" class="w-full bg-rose-600 text-white py-2 rounded">Logout</button>
-                </div>
             </div>
         </aside>
 
