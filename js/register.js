@@ -150,6 +150,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const email = document.getElementById('email').value.trim();
         const phone = document.getElementById('phone').value.trim();
         const dateOfBirth = document.getElementById('dateOfBirth').value;
+        const nickname = document.getElementById('nickname').value.trim();
+        const gender = document.getElementById('gender').value;
+        const address = document.getElementById('address').value.trim();
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
         const selectedTier = document.querySelector('input[name="registrationTier"]:checked')?.value || 'tier1';
@@ -214,6 +217,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 lastName,
                 email,
                 phone: phone || null,
+                nickname,
+                gender,
+                address,
                 tier: selectedTier,
                 identityType: document.getElementById('registrationIdentityType').value,
                 documents: { identity, address },

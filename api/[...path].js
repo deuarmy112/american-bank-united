@@ -6,6 +6,7 @@ const { admin, getDb, getBucket } = require('../lib/firebase');
 const GUEST_ID = 'guest-user';
 const JWT_SECRET = () => process.env.JWT_SECRET || process.env.FIREBASE_PROJECT_ID || 'development-only-secret';
 const CHAT_ATTACHMENT_MAX_BYTES = 512 * 1024;
+const PROFILE_GENDERS = new Set(['female', 'male', 'other', 'prefer_not_to_say']);
 let guestCheckedAt = 0;
 
 function now() {
@@ -494,12 +495,18 @@ async function authRegister(body) {
     const { email, password, firstName, lastName, dateOfBirth } = body;
     const normalizedEmail = String(email || '').trim().toLowerCase();
     const phone = normalizePhoneNumber(body.phone);
+    const nickname = String(body.nickname || '').trim();
+    const gender = String(body.gender || '').trim();
+    const address = String(body.address || '').trim();
     const tier = ACCOUNT_TIERS[body.tier] ? body.tier : '';
     const identityType = String(body.identityType || '');
     const documents = body.documents || {};
     if (!email || !password || !firstName || !lastName) return { status: 400, body: { error: 'Required fields are missing' } };
     if (!isValidEmail(normalizedEmail)) return { status: 400, body: { error: 'Enter a valid email address' } };
     if (!phone) return { status: 400, body: { error: 'Enter a phone number in international format, such as +12025550123' } };
+    if (nickname.length > 50) return { status: 400, body: { error: 'Nickname must be 50 characters or fewer' } };
+    if (!PROFILE_GENDERS.has(gender)) return { status: 400, body: { error: 'Select a valid gender option' } };
+    if (!address || address.length > 300) return { status: 400, body: { error: 'Enter an address of 300 characters or fewer' } };
     if (!tier || !ACCOUNT_TIERS[tier].documentTypes.includes(identityType)) return { status: 400, body: { error: 'Choose a valid account tier and identity document' } };
     if (!validVerificationPath(documents.identity, 'registration') || !validVerificationPath(documents.address, 'registration')) {
         return { status: 400, body: { error: 'Upload a valid identity document and proof of address' } };
@@ -529,6 +536,9 @@ async function authRegister(body) {
         email: normalizedEmail,
         first_name: firstName,
         last_name: lastName,
+        nickname,
+        gender,
+        address,
         phone,
         phone_verified: phoneVerified,
         phone_verification_method: phoneVerificationMethod,
@@ -688,6 +698,24 @@ async function authLogin(body) {
     return { body: { message: 'Login successful', token: makeToken(user), user: { id: user.id, email: user.email, firstName: user.first_name, lastName: user.last_name, role: user.role || 'customer' } } };
 }
 
+async function reserveUniqueAccountNumber(database) {
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+        const accountNumber = String(randomInt(1000000000, 10000000000));
+        const reservationRef = database.collection('account_number_registry').doc(accountNumber);
+        const existingAccountQuery = database.collection('accounts').where('account_number', '==', accountNumber).limit(1);
+        const reserved = await database.runTransaction(async transaction => {
+            const reservation = await transaction.get(reservationRef);
+            if (reservation.exists) return false;
+            const existingAccount = await transaction.get(existingAccountQuery);
+            if (!existingAccount.empty) return false;
+            transaction.create(reservationRef, { account_number: accountNumber, created_at: now() });
+            return true;
+        });
+        if (reserved) return accountNumber;
+    }
+    throw new Error('Unable to generate a unique 10-digit account number. Please try again.');
+}
+
 async function accountRoutes(method, parts, user, body, query = {}) {
     if (method === 'GET' && parts[0] === 'lookup') {
         const identifier = String(query.identifier || '').trim();
@@ -719,7 +747,8 @@ async function accountRoutes(method, parts, user, body, query = {}) {
     }
     if (method === 'POST' && parts.length === 0) {
         if (!['checking', 'savings', 'business'].includes(body.accountType)) return { status: 400, body: { error: 'Invalid account type' } };
-        const account = await save('accounts', { user_id: user.userId, account_number: String(Math.floor(1000000000 + Math.random() * 8999999999)), account_type: body.accountType, balance: 0, status: 'inactive', approval_status: 'pending' });
+        const accountNumber = await reserveUniqueAccountNumber(getDb());
+        const account = await save('accounts', { user_id: user.userId, account_number: accountNumber, account_type: body.accountType, balance: 0, status: 'inactive', approval_status: 'pending' });
         const profile = await userProfile(user.userId);
         const welcomeResult = await sendWelcomeEmail(profile, { force: false });
         return { status: 201, body: { message: 'Account created successfully. Pending admin approval.', account: clean(account), welcomeEmail: welcomeResult } };
@@ -1891,8 +1920,14 @@ async function route(req) {
                 const existing = await getDb().collection('users').where('email', '==', email).limit(2).get();
                 if (existing.docs.some(doc => doc.id !== user.userId)) return { status: 409, body: { error: 'Email is already registered' } };
                 const currentProfile = await userProfile(user.userId);
+                const nickname = String(body.nickname ?? currentProfile?.nickname ?? '').trim();
+                const gender = String(body.gender ?? currentProfile?.gender ?? '').trim();
+                const address = String(body.address ?? currentProfile?.address ?? '').trim();
+                if (nickname.length > 50) return { status: 400, body: { error: 'Nickname must be 50 characters or fewer' } };
+                if (gender && !PROFILE_GENDERS.has(gender)) return { status: 400, body: { error: 'Select a valid gender option' } };
+                if (address.length > 300) return { status: 400, body: { error: 'Address must be 300 characters or fewer' } };
                 const phoneChanged = requestedPhone !== String(currentProfile?.phone || '').trim();
-                const updates = { first_name: firstName, last_name: lastName, email, ...(avatar ? { avatar } : {}), updated_at: now() };
+                const updates = { first_name: firstName, last_name: lastName, email, nickname, gender, address, ...(avatar ? { avatar } : {}), updated_at: now() };
                 if (phoneChanged) {
                     const phone = normalizePhoneNumber(requestedPhone);
                     if (!phone) return { status: 400, body: { error: 'Enter a phone number in international format, such as +12025550123' } };

@@ -268,6 +268,44 @@
                 padding-right: 12px;
             }
         }
+        body.profile-page-body { background: #f5f6f8; color: #202124; }
+        .profile-shell { width: min(100%, 520px); max-width: 520px; min-height: 100vh; margin: 0 auto; padding: 0 0 calc(82px + env(safe-area-inset-bottom)); background: #f5f6f8; }
+        .profile-topbar { position: sticky; top: 0; z-index: 20; display: grid; grid-template-columns: 42px 1fr 42px; align-items: center; height: 58px; margin: 0; padding: 0 12px; background: #fff; border-bottom: 1px solid #e4e6e9; }
+        .profile-page-title { margin: 0; color: #202124; font-size: 1rem; font-weight: 600; }
+        .profile-close { width: 40px; height: 40px; border: 0; background: transparent; color: #42464d; box-shadow: none; font-size: 1rem; }
+        .profile-summary-card { margin: 14px 12px 12px; padding: 18px 16px 14px; background: #fff; border: 1px solid #e2e5e9; border-radius: 12px; }
+        .profile-identity { display: flex; flex-direction: column; align-items: center; padding: 2px 0 18px; background: transparent; border-radius: 0; box-shadow: none; color: #202124; }
+        .profile-identity::after { display: none; }
+        .profile-avatar-shell { position: relative; width: 82px; height: 82px; margin-bottom: 10px; }
+        .profile-identity .profile-avatar-wrap { width: 82px; height: 82px; margin: 0; border: 2px solid #e3e5e8; background: #e3e5e8; color: #36383d; box-shadow: none; font-size: 1.35rem; }
+        .profile-photo-button { position: absolute; right: -2px; bottom: -2px; display: grid; place-items: center; width: 28px; height: 28px; border: 2px solid #fff; border-radius: 50%; background: #45464c; color: #fff; cursor: pointer; }
+        .profile-identity .profile-name { margin: 0; color: #202124; font-size: 1rem; font-weight: 600; line-height: 1.35; }
+        .profile-account-row, .profile-tier-action { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 52px; padding: 12px 0; border: 0; border-top: 1px solid #eceef1; background: transparent; color: #555960; text-align: left; font-size: .88rem; }
+        .profile-account-value, .profile-tier-value { display: inline-flex; align-items: center; justify-content: flex-end; gap: 9px; color: #202124; text-align: right; }
+        .profile-account-value { overflow-wrap: anywhere; }
+        .profile-tier-action { width: 100%; cursor: pointer; }
+        .profile-tier-action:disabled { cursor: default; opacity: .72; }
+        .profile-tier-current { color: #443916; background: #f3e7bd; border-radius: 6px; padding: 4px 8px; font-size: .76rem; font-weight: 700; white-space: nowrap; }
+        .profile-tier-action .tier-verified-badge { padding: 3px 6px; font-size: .62rem; }
+        .profile-tier-chevron { color: #858991; font-size: .76rem; }
+        .profile-tier-status { margin: 0; color: #6d7178; font-size: .76rem; line-height: 1.45; }
+        .profile-section { margin: 12px; padding: 14px 16px; border: 1px solid #e2e5e9; border-radius: 12px; background: #fff; color: #202124; box-shadow: 0 2px 8px rgba(20,28,38,.035); }
+        .profile-section-head { margin-bottom: 4px; }
+        .profile-section-title { color: #202124; font-size: .9rem; font-weight: 600; letter-spacing: 0; text-transform: none; }
+        .profile-section-edit, .profile-standalone-link { color: #8a7133; font-size: .8rem; font-weight: 600; }
+        .profile-info-row { display: grid; grid-template-columns: minmax(98px, .8fr) minmax(0, 1.2fr); align-items: center; gap: 10px; min-height: 56px; margin: 0; padding: 10px 0; border-bottom: 1px solid #eceef1; color: #42464d; }
+        .profile-info-row:last-child { border-bottom: 0; padding-bottom: 8px; }
+        .profile-info-label { color: #646a72; font-size: .82rem; font-weight: 400; letter-spacing: 0; text-transform: none; }
+        .profile-info-value { min-width: 0; color: #25282d; font-size: .82rem; font-weight: 500; text-align: right; overflow-wrap: anywhere; }
+        .profile-standing-row { min-width: 0; justify-content: flex-end; gap: 8px; }
+        .profile-copy-btn { flex: 0 0 auto; display: inline-grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: #777c84; }
+        .profile-manage { margin: 10px 12px; padding: 14px 16px; border: 1px solid #e2e5e9; border-radius: 10px; background: #fff; color: #202124; box-shadow: 0 2px 8px rgba(20,28,38,.035); font-size: .85rem; }
+        .profile-manage::after { color: #858991; }
+        .profile-bottom-nav { position: fixed; right: 0; bottom: 0; left: 0; z-index: 25; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: min(100%, 520px); margin: 0 auto; padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid #e2e5e9; background: #fff; }
+        .profile-bottom-nav a, .profile-bottom-nav button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 44px; border: 0; background: transparent; color: #626871; text-decoration: none; font: inherit; font-size: .66rem; cursor: pointer; }
+        .profile-bottom-nav i { color: #92783a; font-size: 1rem; }
+        .profile-bottom-nav a[aria-current="page"] { color: #202124; }
+        @media (min-width: 760px) { .profile-topbar { border-radius: 0 0 10px 10px; } }
     </style>
     <script>
         if (!localStorage.getItem('authToken')) {
@@ -275,58 +313,72 @@
         }
     </script>
 </head>
-<body class="bg-slate-50">
+<body class="profile-page-body">
     <main class="profile-shell">
-        <div class="profile-topbar"><button type="button" class="profile-close" data-nav-back="dashboard.html" aria-label="Close and return to dashboard" title="Close"><i class="fas fa-xmark"></i></button></div>
+        <header class="profile-topbar">
+            <button type="button" class="profile-close" data-nav-back="dashboard.html" aria-label="Back to previous page" title="Back"><i class="fas fa-chevron-left"></i></button>
+            <h1 class="profile-page-title">My Profile</h1>
+            <span aria-hidden="true"></span>
+        </header>
         <div class="profile-summary-card">
             <div class="profile-identity">
-                <div id="profileAvatar" class="profile-avatar-wrap" aria-label="User avatar">ABU</div>
+                <div class="profile-avatar-shell">
+                    <div id="profileAvatar" class="profile-avatar-wrap" aria-label="User avatar">ABU</div>
+                    <button id="profilePhotoButton" class="profile-photo-button" type="button" aria-label="Change profile photo" title="Change profile photo"><i class="fas fa-camera"></i></button>
+                </div>
                 <h2 id="profileName" class="profile-name">User</h2>
-                <p id="profileEmail" class="profile-email">email@example.com</p>
-                <p id="profilePhone" class="profile-phone">+1234567890</p>
             </div>
 
-            <section class="tier-card" aria-labelledby="tierTitle">
-                <div class="tier-card-head">
-                    <div>
-                        <div class="tier-kicker">Account verification</div>
-                        <div class="tier-title-row"><div id="tierTitle" class="tier-current">Tier 1 · Essential</div><span id="tierVerifiedBadge" class="tier-verified-badge hidden"><i class="fas fa-check"></i> Verified</span></div>
-                    </div>
-                    <i class="fas fa-shield-halved" style="font-size:1.55rem;color:#d5b86a;"></i>
-                </div>
-                <div id="tierStatus" class="tier-status">Upgrade your verification level for higher limits and more account benefits.</div>
-                <button id="upgradeAccountBtn" type="button" class="tier-upgrade-btn">Upgrade account</button>
-            </section>
-
-            <a class="profile-manage" href="cards.html">Manage Cards</a>
-
-            <button id="editProfileBtn" class="profile-edit-btn w-full mt-3">Edit Profile</button>
-            <button id="logoutBtn" class="profile-logout-btn w-full mt-3">Logout</button>
+            <div class="profile-account-row">
+                <span>ABU Account Number</span>
+                <span class="profile-account-value"><span id="profileAccountNumber">No account yet</span><button type="button" class="copy-btn profile-copy-btn" data-copy-target="profileAccountNumber" aria-label="Copy account number" title="Copy account number"><i class="far fa-copy"></i></button></span>
+            </div>
+            <button id="upgradeAccountBtn" type="button" class="profile-tier-action" aria-label="Account tier">
+                <span>Account Tier</span>
+                <span class="profile-tier-value"><span id="tierTitle" class="profile-tier-current">Tier 1 · Essential</span><span id="tierVerifiedBadge" class="tier-verified-badge hidden"><i class="fas fa-check"></i> Verified</span><i class="fas fa-chevron-right profile-tier-chevron" aria-hidden="true"></i></span>
+            </button>
+            <p id="tierStatus" class="profile-tier-status">Choose a tier and submit your documents for bank review.</p>
         </div>
 
         <section class="profile-section">
             <div class="profile-section-head">
-                <h3 class="profile-section-title">Contact &amp; Account</h3>
-                <button class="profile-section-edit" onclick="openEditModal()">Edit</button>
+                <h2 class="profile-section-title">Personal Details</h2>
+                <button id="editProfileBtn" type="button" class="profile-section-edit">Edit</button>
             </div>
             <div class="profile-info-row">
-                <div class="profile-info-label">Account Name</div>
+                <div class="profile-info-label">Full Name</div>
                 <div id="accountName" class="profile-info-value">—</div>
             </div>
             <div class="profile-info-row">
-                <div class="profile-info-label">Primary Email</div>
-                <div class="profile-standing-row">
-                    <div id="contactEmail" class="profile-info-value">—</div>
-                    <button class="copy-btn profile-copy-btn" data-copy-target="contactEmail">Copy</button>
-                </div>
-            </div>
-            <div class="profile-info-row">
-                <div class="profile-info-label">Phone</div>
+                <div class="profile-info-label">Mobile Number</div>
                 <div class="profile-standing-row">
                     <div id="contactPhone" class="profile-info-value">—</div>
                     <span id="contactPhoneStatus" class="text-xs text-slate-500"></span>
-                    <button class="copy-btn profile-copy-btn" data-copy-target="contactPhone">Copy</button>
+                    <button class="copy-btn profile-copy-btn" data-copy-target="contactPhone" aria-label="Copy mobile number" title="Copy mobile number"><i class="far fa-copy"></i></button>
                 </div>
+            </div>
+            <div class="profile-info-row">
+                <div class="profile-info-label">Nickname</div>
+                <div id="profileNickname" class="profile-info-value">Not provided</div>
+            </div>
+            <div class="profile-info-row">
+                <div class="profile-info-label">Gender</div>
+                <div id="profileGender" class="profile-info-value">Not provided</div>
+            </div>
+            <div class="profile-info-row">
+                <div class="profile-info-label">Date of Birth</div>
+                <div id="profileDateOfBirth" class="profile-info-value">Not provided</div>
+            </div>
+            <div class="profile-info-row">
+                <div class="profile-info-label">Email</div>
+                <div class="profile-standing-row">
+                    <div id="contactEmail" class="profile-info-value">—</div>
+                    <button class="copy-btn profile-copy-btn" data-copy-target="contactEmail" aria-label="Copy email address" title="Copy email address"><i class="far fa-copy"></i></button>
+                </div>
+            </div>
+            <div class="profile-info-row">
+                <div class="profile-info-label">Address</div>
+                <div id="profileAddress" class="profile-info-value">Not provided</div>
             </div>
             <div class="profile-info-row" style="margin-bottom:0;">
                 <div class="profile-info-label">Customer ID</div>
@@ -355,6 +407,13 @@
         </section>
         </div>
     </main>
+
+    <nav class="profile-bottom-nav" aria-label="Primary navigation">
+        <a href="dashboard.html" title="Home"><i class="fas fa-house" aria-hidden="true"></i><span>Home</span></a>
+        <a href="accounts.html" title="Accounts"><i class="fas fa-building-columns" aria-hidden="true"></i><span>Accounts</span></a>
+        <a href="cards.html" title="Cards"><i class="fas fa-credit-card" aria-hidden="true"></i><span>Cards</span></a>
+        <button id="logoutBtn" type="button" title="Log out"><i class="fas fa-right-from-bracket" aria-hidden="true"></i><span>Log out</span></button>
+    </nav>
 
     <!-- Account Upgrade Modal -->
     <div id="upgradeAccountModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4" style="z-index:40;">
@@ -645,10 +704,6 @@
                 const user = await authAPI.getProfile();
                 const nameEl = document.getElementById('profileName');
                 if (nameEl) nameEl.textContent = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User';
-                const emailEl = document.getElementById('profileEmail');
-                if (emailEl) emailEl.textContent = user.email || '';
-                const phoneEl = document.getElementById('profilePhone');
-                if (phoneEl) phoneEl.textContent = user.phone || '';
                 const avatarEl = document.getElementById('profileAvatar');
                 if (avatarEl) {
                     avatarEl.style.backgroundImage = user.avatar ? `url("${user.avatar}")` : '';
@@ -683,6 +738,12 @@
             const contactPhone = document.getElementById('contactPhone'); if (contactPhone) contactPhone.textContent = user.phone || '';
             const contactPhoneStatus = document.getElementById('contactPhoneStatus'); if (contactPhoneStatus) contactPhoneStatus.textContent = user.phone_verified === true ? 'Verified by SMS' : (user.phone ? 'Not verified' : '');
             const custEl = document.getElementById('customerId'); if (custEl) custEl.textContent = user.id || user.customer_id || '—';
+            const nicknameEl = document.getElementById('profileNickname'); if (nicknameEl) nicknameEl.textContent = user.nickname || 'Not provided';
+            const genderEl = document.getElementById('profileGender'); if (genderEl) genderEl.textContent = user.gender || 'Not provided';
+            const dateOfBirthEl = document.getElementById('profileDateOfBirth'); if (dateOfBirthEl) dateOfBirthEl.textContent = user.date_of_birth ? formatDate(user.date_of_birth) : 'Not provided';
+            const addressEl = document.getElementById('profileAddress'); if (addressEl) addressEl.textContent = user.address || 'Not provided';
+            const accountNumberEl = document.getElementById('profileAccountNumber');
+            if (accountNumberEl) accountNumberEl.textContent = accounts[0]?.account_number || 'No account yet';
 
             // linked accounts
             const la = document.getElementById('linkedAccountsList');
@@ -826,7 +887,10 @@
                 || [...document.querySelectorAll('input[name="upgradeTier"]')].find(input => !input.disabled);
             if (availableTier) availableTier.checked = true;
             updateIdentityOptions();
-            if (button) { button.disabled = pending || (verified && tier === 'tier3'); button.textContent = pending ? 'Verification in progress' : (verified && tier === 'tier3' ? 'Highest tier reached' : (rejectedRequest ? 'Resubmit verification' : 'Upgrade account')); }
+            if (button) {
+                button.disabled = pending || (verified && tier === 'tier3');
+                button.setAttribute('aria-label', pending ? 'Account tier review in progress' : (verified && tier === 'tier3' ? 'Highest account tier reached' : (rejectedRequest ? 'Resubmit account tier verification' : 'Change account tier')));
+            }
         }
 
         function updateIdentityOptions() {
@@ -911,6 +975,10 @@
 
             const editBtn = document.getElementById('editProfileBtn');
             if (editBtn) editBtn.addEventListener('click', openEditModal);
+            document.getElementById('profilePhotoButton')?.addEventListener('click', () => {
+                openEditModal();
+                document.getElementById('editAvatarFile')?.click();
+            });
 
             document.querySelectorAll('input[name="upgradeTier"]').forEach(input => input.addEventListener('change', updateIdentityOptions));
             document.getElementById('upgradeAccountBtn')?.addEventListener('click', openUpgradeModal);
@@ -1073,7 +1141,13 @@
                 btn.addEventListener('click', async ()=>{
                     const target = document.getElementById(btn.dataset.copyTarget);
                     if (!target) return;
-                    try{ await navigator.clipboard.writeText(target.textContent.trim()); btn.textContent = 'Copied'; setTimeout(()=> btn.textContent = 'Copy',1400);}catch(e){}
+                    try {
+                        await navigator.clipboard.writeText(target.textContent.trim());
+                        const originalLabel = btn.getAttribute('aria-label') || btn.title || 'Copy';
+                        btn.setAttribute('aria-label', 'Copied');
+                        btn.title = 'Copied';
+                        window.setTimeout(() => { btn.setAttribute('aria-label', originalLabel); btn.title = originalLabel; }, 1400);
+                    } catch (error) {}
                 });
             });
 

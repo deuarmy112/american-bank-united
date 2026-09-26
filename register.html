@@ -47,6 +47,15 @@
             </div>
           </div>
           <input id="dateOfBirth" name="dateOfBirth" type="date" required class="w-full rounded-md border px-3 py-2">
+          <input id="nickname" name="nickname" type="text" maxlength="50" autocomplete="nickname" class="w-full rounded-md border px-3 py-2" placeholder="Nickname (optional)">
+          <select id="gender" name="gender" required class="w-full rounded-md border px-3 py-2" aria-label="Select gender">
+            <option value="">Select gender</option>
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+            <option value="other">Other</option>
+            <option value="prefer_not_to_say">Prefer not to say</option>
+          </select>
+          <textarea id="address" name="address" rows="2" maxlength="300" required autocomplete="street-address" class="w-full resize-y rounded-md border px-3 py-2" placeholder="Residential address"></textarea>
           <section class="space-y-3 rounded-md border p-3 text-left" aria-labelledby="registrationTierTitle">
             <div>
               <h2 id="registrationTierTitle" class="text-sm font-semibold">Choose your account tier</h2>
