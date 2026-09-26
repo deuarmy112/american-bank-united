@@ -301,10 +301,6 @@
         .profile-copy-btn { flex: 0 0 auto; display: inline-grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: #777c84; }
         .profile-manage { margin: 10px 12px; padding: 14px 16px; border: 1px solid #e2e5e9; border-radius: 10px; background: #fff; color: #202124; box-shadow: 0 2px 8px rgba(20,28,38,.035); font-size: .85rem; }
         .profile-manage::after { color: #858991; }
-        .profile-bottom-nav { position: fixed; right: 0; bottom: 0; left: 0; z-index: 25; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: min(100%, 520px); margin: 0 auto; padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid #e2e5e9; background: #fff; }
-        .profile-bottom-nav a, .profile-bottom-nav button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 44px; border: 0; background: transparent; color: #626871; text-decoration: none; font: inherit; font-size: .66rem; cursor: pointer; }
-        .profile-bottom-nav i { color: #92783a; font-size: 1rem; }
-        .profile-bottom-nav a[aria-current="page"] { color: #202124; }
         @media (min-width: 760px) { .profile-topbar { border-radius: 0 0 10px 10px; } }
     </style>
     <script>
@@ -316,9 +312,9 @@
 <body class="profile-page-body">
     <main class="profile-shell">
         <header class="profile-topbar">
-            <button type="button" class="profile-close" data-nav-back="dashboard.html" aria-label="Back to previous page" title="Back"><i class="fas fa-chevron-left"></i></button>
+            <button type="button" class="profile-close" data-nav-back="dashboard.html" aria-label="Cancel and close profile" title="Close"><i class="fas fa-xmark"></i></button>
             <h1 class="profile-page-title">My Profile</h1>
-            <span aria-hidden="true"></span>
+            <button id="logoutBtn" type="button" class="profile-close" aria-label="Log out" title="Log out"><i class="fas fa-right-from-bracket"></i></button>
         </header>
         <div class="profile-summary-card">
             <div class="profile-identity">
@@ -408,13 +404,6 @@
         </div>
     </main>
 
-    <nav class="profile-bottom-nav" aria-label="Primary navigation">
-        <a href="dashboard.html" title="Home"><i class="fas fa-house" aria-hidden="true"></i><span>Home</span></a>
-        <a href="accounts.html" title="Accounts"><i class="fas fa-building-columns" aria-hidden="true"></i><span>Accounts</span></a>
-        <a href="cards.html" title="Cards"><i class="fas fa-credit-card" aria-hidden="true"></i><span>Cards</span></a>
-        <button id="logoutBtn" type="button" title="Log out"><i class="fas fa-right-from-bracket" aria-hidden="true"></i><span>Log out</span></button>
-    </nav>
-
     <!-- Account Upgrade Modal -->
     <div id="upgradeAccountModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4" style="z-index:40;">
         <div class="bg-white max-w-lg w-full rounded-xl p-5 max-h-[90vh] overflow-y-auto">
@@ -481,6 +470,24 @@
                         </div>
                     </div>
                     <p id="editPhoneVerificationStatus" class="mt-2 text-xs text-slate-500" role="status">Firebase sends your number to Google for SMS verification and abuse prevention. Email fallback leaves the phone unverified.</p>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-600" for="editNickname">Nickname</label>
+                    <input id="editNickname" maxlength="50" class="w-full border rounded px-3 py-2" placeholder="Optional nickname" />
+                </div>
+                <div>
+                    <label class="text-xs text-slate-600" for="editGender">Gender</label>
+                    <select id="editGender" class="w-full border rounded px-3 py-2">
+                        <option value="">Select gender</option>
+                        <option value="female">Female</option>
+                        <option value="male">Male</option>
+                        <option value="other">Other</option>
+                        <option value="prefer_not_to_say">Prefer not to say</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-600" for="editAddress">Address</label>
+                    <textarea id="editAddress" rows="2" maxlength="300" class="w-full border rounded px-3 py-2" placeholder="Residential address"></textarea>
                 </div>
                 <div>
                     <label class="text-xs text-slate-600">Avatar</label>
@@ -739,7 +746,8 @@
             const contactPhoneStatus = document.getElementById('contactPhoneStatus'); if (contactPhoneStatus) contactPhoneStatus.textContent = user.phone_verified === true ? 'Verified by SMS' : (user.phone ? 'Not verified' : '');
             const custEl = document.getElementById('customerId'); if (custEl) custEl.textContent = user.id || user.customer_id || '—';
             const nicknameEl = document.getElementById('profileNickname'); if (nicknameEl) nicknameEl.textContent = user.nickname || 'Not provided';
-            const genderEl = document.getElementById('profileGender'); if (genderEl) genderEl.textContent = user.gender || 'Not provided';
+            const genderLabels = { female: 'Female', male: 'Male', other: 'Other', prefer_not_to_say: 'Prefer not to say' };
+            const genderEl = document.getElementById('profileGender'); if (genderEl) genderEl.textContent = genderLabels[user.gender] || user.gender || 'Not provided';
             const dateOfBirthEl = document.getElementById('profileDateOfBirth'); if (dateOfBirthEl) dateOfBirthEl.textContent = user.date_of_birth ? formatDate(user.date_of_birth) : 'Not provided';
             const addressEl = document.getElementById('profileAddress'); if (addressEl) addressEl.textContent = user.address || 'Not provided';
             const accountNumberEl = document.getElementById('profileAccountNumber');
@@ -825,6 +833,12 @@
             if (em) em.value = u.email || '';
             const ph = document.getElementById('editPhone');
             if (ph) ph.value = u.phone || '';
+            const nickname = document.getElementById('editNickname');
+            if (nickname) nickname.value = u.nickname || '';
+            const gender = document.getElementById('editGender');
+            if (gender) gender.value = u.gender || '';
+            const address = document.getElementById('editAddress');
+            if (address) address.value = u.address || '';
             const av = document.getElementById('editAvatar');
             if (av) av.value = u.avatar || '';
             const avFile = document.getElementById('editAvatarFile');
@@ -1069,6 +1083,9 @@
                     last_name: (document.getElementById('editLastName')?.value || '').trim(),
                     email: (document.getElementById('editEmail')?.value || '').trim(),
                     phone: (document.getElementById('editPhone')?.value || '').trim(),
+                    nickname: (document.getElementById('editNickname')?.value || '').trim(),
+                    gender: document.getElementById('editGender')?.value || '',
+                    address: (document.getElementById('editAddress')?.value || '').trim(),
                     avatar: (document.getElementById('editAvatar')?.value || '').trim(),
                 };
                 const currentPhone = String(window.__currentUser?.phone || '').trim();
