@@ -1,6 +1,6 @@
 # American Bank United
 
-A banking frontend with a Firebase-backed serverless API. Vercel serves the static pages and API functions; Firestore stores application data; Firebase Storage handles signed file uploads.
+A banking frontend with a Firebase-backed serverless API. Vercel serves the static pages and API functions, and Firestore stores application data. Firebase Storage is optional for signed file uploads.
 
 ## Features
 
@@ -10,8 +10,9 @@ A banking frontend with a Firebase-backed serverless API. Vercel serves the stat
 - Atomic Firestore balance transfers
 - Virtual cards and bill payments
 - External transfer records
+- Resend email, composed Firebase push alerts, and Firebase phone verification with email fallback
 - Admin dashboard statistics and user listing
-- Firebase Storage signed upload URLs
+- Optional Firebase Storage signed upload URLs (requires an enabled bucket)
 
 ## Stack
 
@@ -19,7 +20,7 @@ A banking frontend with a Firebase-backed serverless API. Vercel serves the stat
 - Vercel static hosting and serverless functions
 - Firebase Admin SDK
 - Firestore
-- Firebase Storage
+- Firebase Storage (optional)
 - bcryptjs and JSON Web Tokens
 
 ## Local development
@@ -49,6 +50,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) and [FIREBASE_VERCEL_SETUP.md](FIREBASE_VERCE
 - `POST /api/accounts`
 - `GET /api/transactions`
 - `POST /api/transactions/transfer`
+- `GET`, `POST`, and `DELETE /api/push-subscriptions`
 - `GET /api/cards`
 - `POST /api/cards`
 - `GET /api/bills/billers`

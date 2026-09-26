@@ -1,17 +1,17 @@
 # Deployment Guide
 
-American Bank United uses Vercel for the static frontend and serverless API, with Firebase Firestore for application data and Firebase Storage for uploaded files.
+American Bank United uses Vercel for the static frontend and serverless API, with Firebase Firestore for application data. Firebase Storage is optional and only needed for file uploads.
 
 ## Deploy
 
 1. Create a Firebase project.
-2. Enable Firestore and Storage.
+2. Enable Firestore. Enable Storage and create a bucket only if file uploads are needed.
 3. Create a Firebase service account and generate a private key.
 4. Import this repository into Vercel.
 5. Add the Firebase variables and `JWT_SECRET` described in [FIREBASE_VERCEL_SETUP.md](FIREBASE_VERCEL_SETUP.md).
 6. Deploy with Vercel.
 7. Add `americanbankunited.com` to the Vercel project under Settings > Domains.
-8. Deploy the Firestore and Storage rules/indexes with the Firebase CLI.
+8. Deploy the Firestore rules/indexes with the Firebase CLI. Deploy Storage rules only after enabling Storage and creating a bucket.
 
 The frontend calls the API through `/api`, so the deployed application does not depend on Render, a long-running Express process, or a separate CORS origin.
 

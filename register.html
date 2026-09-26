@@ -27,7 +27,25 @@
           </div>
 
           <input id="email" name="email" type="email" required class="w-full rounded-md border px-3 py-2" placeholder="Email">
-          <input id="phone" name="phone" type="tel" required class="w-full rounded-md border px-3 py-2" placeholder="Phone">
+          <div class="space-y-2">
+            <input id="phone" name="phone" type="tel" required class="w-full rounded-md border px-3 py-2" placeholder="Phone in international format, e.g. +12025550123">
+            <div id="registerPhoneRecaptcha"></div>
+            <button id="sendPhoneCode" type="button" class="w-full border rounded-md px-3 py-2 text-sm">Send phone verification code</button>
+            <div id="phoneCodeStep" class="hidden space-y-2">
+              <input id="phoneCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" class="w-full rounded-md border px-3 py-2" placeholder="6-digit phone code">
+              <button id="confirmPhoneCode" type="button" class="w-full border rounded-md px-3 py-2 text-sm">Verify phone</button>
+            </div>
+            <p id="phoneVerificationStatus" class="text-xs text-slate-600" role="status">Firebase sends your number to Google for SMS verification and abuse prevention. Message rates may apply.</p>
+            <button id="showEmailFallback" type="button" class="text-sm text-indigo-700 underline">Can't receive a text? Verify by email</button>
+            <div id="emailFallbackPanel" class="hidden space-y-2">
+              <button id="sendEmailCode" type="button" class="w-full border rounded-md px-3 py-2 text-sm">Send code to my email</button>
+              <div id="emailCodeStep" class="hidden space-y-2">
+                <input id="emailCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" class="w-full rounded-md border px-3 py-2" placeholder="6-digit email code">
+                <button id="confirmEmailCode" type="button" class="w-full border rounded-md px-3 py-2 text-sm">Verify email</button>
+              </div>
+              <p id="emailVerificationStatus" class="text-xs text-slate-600" role="status">Email verification confirms your account, not ownership of this phone number.</p>
+            </div>
+          </div>
           <input id="dateOfBirth" name="dateOfBirth" type="date" required class="w-full rounded-md border px-3 py-2">
           <input id="password" name="password" type="password" required minlength="6" class="w-full rounded-md border px-3 py-2" placeholder="Password">
           <input id="confirmPassword" name="confirmPassword" type="password" required minlength="6" class="w-full rounded-md border px-3 py-2" placeholder="Confirm Password">
@@ -42,6 +60,8 @@
     <script src="js/utils.js"></script>
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/firebase-web-config.js"></script>
+    <script src="js/firebase-phone-auth.js"></script>
     <script src="js/register.js"></script>
     <script src="js/ui.js"></script>
 

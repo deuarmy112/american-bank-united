@@ -113,7 +113,7 @@ const authAPI = {
     },
 
     async updateProfile(payload) {
-        // payload: { first_name, last_name, email, phone, avatar }
+        // payload: { first_name, last_name, email, phone, avatar, firebasePhoneAuthToken?, emailPhoneProof? }
         return apiClient.patch('/auth/profile', payload);
     },
 
@@ -180,6 +180,25 @@ const verificationAPI = {
         return apiClient.post('/verification', payload);
     }
 };
+
+function loadPushClientForEnabledBrowser() {
+    if (!('Notification' in window) || Notification.permission !== 'granted' || !localStorage.getItem('abu_fcm_token') || document.querySelector('[data-abu-push-client]')) return;
+    const pushConfig = document.createElement('script');
+    pushConfig.src = '/js/firebase-web-config.js';
+    pushConfig.onload = () => {
+        const pushScript = document.createElement('script');
+        pushScript.src = '/js/push-notifications.js';
+        pushScript.dataset.abuPushClient = 'true';
+        document.head.appendChild(pushScript);
+    };
+    document.head.appendChild(pushConfig);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadPushClientForEnabledBrowser, { once: true });
+} else {
+    loadPushClientForEnabledBrowser();
+}
 
 const cardsAPI = {
     async getAll() {

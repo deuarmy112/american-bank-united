@@ -19,12 +19,14 @@
     <div class="settings-topbar"><button type="button" class="settings-close" data-nav-back="dashboard.html" aria-label="Close and return" title="Close"><i class="fas fa-xmark"></i></button></div>
     <section class="settings-heading"><div class="settings-kicker">ABU Preferences</div><h1>Settings</h1><p>Manage your profile, security, and app preferences.</p></section>
     <section class="settings-card"><div class="settings-card-head"><i class="fas fa-user-gear"></i><h2>Account</h2></div><div class="settings-row"><a class="settings-link" href="profile.html"><i class="fas fa-user"></i><span><strong>Profile details</strong><span>Update your name, contact details, and picture</span></span></a><i class="fas fa-chevron-right chevron"></i></div><div class="settings-row"><a class="settings-link" href="security.html"><i class="fas fa-shield-halved"></i><span><strong>Security</strong><span>Review verification and transfer security</span></span></a><i class="fas fa-chevron-right chevron"></i></div></section>
-    <section class="settings-card"><div class="settings-card-head"><i class="fas fa-bell"></i><h2>Notifications</h2></div><div class="settings-row"><span><strong>Transaction alerts</strong><span>Receive updates about account activity</span></span><button type="button" class="settings-toggle on" data-setting="transactionAlerts" aria-label="Toggle transaction alerts" aria-pressed="true"></button></div><div class="settings-row"><span><strong>Support messages</strong><span>Be notified when support replies</span></span><button type="button" class="settings-toggle on" data-setting="supportMessages" aria-label="Toggle support messages" aria-pressed="true"></button></div></section>
+    <section class="settings-card"><div class="settings-card-head"><i class="fas fa-bell"></i><h2>Notifications</h2></div><div class="settings-row"><span><strong>Transaction alerts</strong><span>Receive updates about account activity</span></span><button type="button" class="settings-toggle on" data-setting="transactionAlerts" aria-label="Toggle transaction alerts" aria-pressed="true"></button></div><div class="settings-row"><span><strong>Support messages</strong><span>Be notified when support replies</span></span><button type="button" class="settings-toggle on" data-setting="supportMessages" aria-label="Toggle support messages" aria-pressed="true"></button></div><div class="settings-row"><span><strong>Browser push alerts</strong><span id="pushAlertsStatus">Checking this browser...</span></span><button type="button" id="pushAlertsToggle" class="settings-toggle" aria-label="Toggle browser push alerts" aria-pressed="false"></button></div></section>
     <section class="settings-card"><div class="settings-card-head"><i class="fas fa-sliders"></i><h2>App preferences</h2></div><div class="settings-row"><span><strong>Currency display</strong><span>Used across balances and transaction views</span></span><select id="currencyPreference" class="settings-select" aria-label="Currency display"><option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option><option>AUD</option></select></div><div class="settings-row"><span><strong>Reduce motion</strong><span>Use simpler transitions throughout the app</span></span><button type="button" class="settings-toggle" data-setting="reduceMotion" aria-label="Toggle reduced motion" aria-pressed="false"></button></div></section>
     <p class="settings-note"><i class="fas fa-lock mr-1"></i> Changes are saved on this device. Sensitive account and transfer security settings remain protected by American Bank United.</p>
   </div></main>
   <script src="js/api.js"></script>
   <script src="js/navigation-stack.js"></script>
+  <script src="js/firebase-web-config.js"></script>
+  <script src="js/push-notifications.js" data-abu-push-client></script>
   <script>
     (async()=>{
       const key='abu_user_settings';
@@ -54,6 +56,40 @@
       });
       currency.value=settings.currency||'USD';
       currency.addEventListener('change',async()=>{ const selected=currency.value; try { await save({currency:selected}); } catch(error) { currency.value=settings.currency||'USD'; } });
+
+      const pushToggle=document.getElementById('pushAlertsToggle');
+      const pushStatus=document.getElementById('pushAlertsStatus');
+      const refreshPushToggle=()=>{
+        const enabled=pushNotifications.isEnabledOnThisBrowser();
+        pushToggle.classList.toggle('on',enabled);
+        pushToggle.setAttribute('aria-pressed',String(enabled));
+      };
+      if(!pushNotifications.isBrowserSupported()){
+        pushToggle.disabled=true;
+        pushStatus.textContent='Browser notifications require a supported browser over HTTPS.';
+      }else if(!pushNotifications.isConfigured()){
+        pushToggle.disabled=true;
+        pushStatus.textContent='Complete Firebase web messaging setup to enable push alerts.';
+      }else{
+        refreshPushToggle();
+        pushStatus.textContent=pushNotifications.isEnabledOnThisBrowser()?'Enabled on this browser.':'Off on this browser.';
+        pushToggle.addEventListener('click',async()=>{
+          const enable=!pushNotifications.isEnabledOnThisBrowser();
+          pushToggle.disabled=true;
+          pushStatus.textContent=enable?'Requesting browser permission...':'Disabling browser alerts...';
+          try{
+            if(enable) await pushNotifications.enable();
+            else await pushNotifications.disable();
+            refreshPushToggle();
+            pushStatus.textContent=enable?'Enabled on this browser.':'Off on this browser.';
+          }catch(error){
+            refreshPushToggle();
+            pushStatus.textContent=error.message||'Unable to update browser alerts.';
+          }finally{
+            pushToggle.disabled=false;
+          }
+        });
+      }
     })();
   </script>
 </body>

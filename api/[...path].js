@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { randomInt, randomUUID } = require('crypto');
+const { createHash, randomInt, randomUUID } = require('crypto');
 const { admin, getDb, getBucket } = require('../lib/firebase');
 
 const GUEST_ID = 'guest-user';
@@ -36,21 +36,37 @@ async function sendTransactionalEmail({ email, subject, text, html }) {
     }
 }
 
-async function sendSmsNotification({ phone, body }) {
-    if (!phone) return 'not_provided';
-    if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_FROM_NUMBER) return 'not_configured';
+function pushTokenId(token) {
+    return createHash('sha256').update(token).digest('hex');
+}
+
+async function sendPushNotification(userId, { title, body }) {
+    if (!userId || userId === GUEST_ID) return 'not_available';
 
     try {
-        const params = new URLSearchParams({ To: String(phone).trim(), From: process.env.TWILIO_FROM_NUMBER, Body: body });
-        const credentials = Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64');
-        const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${process.env.TWILIO_ACCOUNT_SID}/Messages.json`, {
-            method: 'POST',
-            headers: { Authorization: `Basic ${credentials}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: params
+        const profile = await userProfile(userId);
+        if (profile?.preferences?.transactionAlerts === false) return 'disabled';
+        const snapshot = await getDb().collection('push_tokens').where('user_id', '==', userId).limit(500).get();
+        if (snapshot.empty) return 'not_subscribed';
+
+        const tokenDocs = snapshot.docs.filter(doc => typeof doc.data().token === 'string' && doc.data().token);
+        if (!tokenDocs.length) return 'not_subscribed';
+        const result = await admin.messaging().sendEachForMulticast({
+            tokens: tokenDocs.map(doc => doc.data().token),
+            data: { title, body, url: '/notifications.html' },
+            webpush: { headers: { TTL: '3600' } }
         });
-        return response.ok ? 'sent' : 'failed';
+
+        const staleCodes = new Set(['messaging/invalid-registration-token', 'messaging/registration-token-not-registered']);
+        const staleTokens = tokenDocs.filter((_, index) => staleCodes.has(result.responses[index]?.error?.code));
+        if (staleTokens.length) {
+            const batch = getDb().batch();
+            staleTokens.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+        }
+        return result.successCount ? 'sent' : 'failed';
     } catch (error) {
-        console.error('SMS notification failed:', error);
+        console.error('Push notification failed:', error);
         return 'failed';
     }
 }
@@ -74,7 +90,7 @@ function maskAccountNumber(value) {
     return `${'*'.repeat(Math.max(0, normalized.length - 4))}${visible}`;
 }
 
-async function sendAccountTransactionAlert({ email, phone, firstName, direction, amount, sender, receiver, reference, description, transferType, bankCharge = 0 }) {
+async function sendAccountTransactionAlert({ userId, email, phone, firstName, direction, amount, sender, receiver, reference, description, transferType, bankCharge = 0 }) {
     const isCredit = direction === 'credit';
     const amountText = `$${Number(amount || 0).toFixed(2)}`;
     const chargeText = `$${Number(bankCharge || 0).toFixed(2)}`;
@@ -91,12 +107,23 @@ async function sendAccountTransactionAlert({ email, phone, firstName, direction,
         '<div style="background:#111827;color:#fff;padding:24px 28px"><div style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;opacity:.75">American Bank United</div>',
         '<div style="background:#111827;color:#fff;padding:24px 28px"><img src="https://americanbankunited.com/assets/abu-logo.png" width="150" alt="American Bank United" style="display:block;width:150px;height:auto;margin:0 0 16px"><div style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;opacity:.75">American Bank United</div>'
     );
-    const smsText = `American Bank United: ${isCredit ? 'Credit' : 'Debit'} of ${amountText}. ${transferType || 'Account transaction'}. Ref ${reference || 'Pending'}. Account ending ${String((isCredit ? receiverDetails.accountNumber : senderDetails.accountNumber) || '').slice(-4)}.`;
-    const [emailStatus, smsStatus] = await Promise.all([
+    let pushUserId = userId || null;
+    if (!pushUserId && isValidEmail(email)) {
+        try {
+            const matchingUsers = await getDb().collection('users').where('email', '==', email.trim().toLowerCase()).limit(1).get();
+            pushUserId = matchingUsers.empty ? null : matchingUsers.docs[0].id;
+        } catch (error) {
+            console.warn('Could not resolve account for push alert:', error);
+        }
+    }
+    const [emailStatus, pushStatus] = await Promise.all([
         isValidEmail(email) ? sendTransactionalEmail({ email, subject, text: plainText, html: brandedHtml }).then(result => result.status === 'sent' ? 'sent' : result.status) : Promise.resolve('not_provided'),
-        sendSmsNotification({ phone, body: smsText })
+        sendPushNotification(pushUserId, {
+            title: `American Bank United ${isCredit ? 'credit' : 'debit'} alert`,
+            body: `${amountText} ${isCredit ? 'credited to' : 'debited from'} your account${transferType ? ` for ${transferType}` : ''}. Sign in to review.`
+        })
     ]);
-    return { email: emailStatus, sms: smsStatus };
+    return { email: emailStatus, sms: 'disabled', push: pushStatus };
 }
 
 async function sendWelcomeEmail(user, { force = false } = {}) {
@@ -121,9 +148,9 @@ async function sendWelcomeEmail(user, { force = false } = {}) {
     return result;
 }
 
-async function sendTransferNotifications({ email, phone, recipientName, amount, transferType, bankName, accountNumber, description }) {
+async function sendTransferNotifications({ userId, email, recipientName, amount, transferType, bankName, accountNumber, description, sendPush = false }) {
     const details = `Recipient: ${recipientName || 'Recipient'}\nAmount: $${Number(amount).toFixed(2)}\nTransfer type: ${transferType}\nBank: ${bankName || 'External bank'}\nAccount: ${accountNumber || 'Not provided'}\nDescription: ${description || 'External transfer'}\nDate: ${new Date().toLocaleString('en-US', { timeZone: 'UTC' })} UTC`;
-    const result = { email: isValidEmail(email) ? 'not_configured' : 'not_provided', sms: phone ? 'not_configured' : 'not_provided' };
+    const result = { email: isValidEmail(email) ? 'not_configured' : 'not_provided', sms: 'disabled', push: sendPush ? 'not_available' : 'not_requested' };
 
     if (isValidEmail(email)) {
         const emailResult = await sendTransactionalEmail({
@@ -134,7 +161,12 @@ async function sendTransferNotifications({ email, phone, recipientName, amount, 
         result.email = emailResult.status === 'sent' ? 'sent' : emailResult.status;
     }
 
-    result.sms = await sendSmsNotification({ phone, body: `American Bank United transfer: $${Number(amount).toFixed(2)} ${transferType} transfer for ${recipientName || 'you'}. Account ending ${String(accountNumber || '').slice(-4)}.` });
+    if (sendPush) {
+        result.push = await sendPushNotification(userId, {
+            title: 'American Bank United account alert',
+            body: 'A transaction update is available. Sign in to review your account activity.'
+        });
+    }
 
     return result;
 }
@@ -459,15 +491,137 @@ async function userProfile(userId) {
 }
 
 async function authRegister(body) {
-    const { email, password, firstName, lastName, phone, dateOfBirth } = body;
+    const { email, password, firstName, lastName, dateOfBirth } = body;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const phone = normalizePhoneNumber(body.phone);
     if (!email || !password || !firstName || !lastName) return { status: 400, body: { error: 'Required fields are missing' } };
-    const existing = await getDb().collection('users').where('email', '==', email.toLowerCase()).limit(1).get();
+    if (!isValidEmail(normalizedEmail)) return { status: 400, body: { error: 'Enter a valid email address' } };
+    if (!phone) return { status: 400, body: { error: 'Enter a phone number in international format, such as +12025550123' } };
+    const existing = await getDb().collection('users').where('email', '==', normalizedEmail).limit(1).get();
     if (!existing.empty) return { status: 400, body: { error: 'Email already registered' } };
+    const existingPhone = await getDb().collection('users').where('phone', '==', phone).limit(1).get();
+    if (!existingPhone.empty) return { status: 400, body: { error: 'Phone number already registered' } };
+
+    let phoneVerified = false;
+    let phoneVerificationMethod = 'email_fallback';
+    if (body.firebasePhoneAuthToken) {
+        if (!(await verifyFirebasePhoneToken(body.firebasePhoneAuthToken, phone))) return { status: 403, body: { error: 'Phone verification did not match this number. Request a new code.' } };
+        phoneVerified = true;
+        phoneVerificationMethod = 'firebase_auth';
+    } else if (!(await consumePhoneEmailProof(body.emailPhoneProof, { scope: 'register', email: normalizedEmail, phone }))) {
+        return { status: 403, body: { error: 'Verify your phone or confirm the email verification code before registering' } };
+    }
+
     const id = randomUUID();
-    const user = { id, email: email.toLowerCase(), first_name: firstName, last_name: lastName, phone: phone || null, date_of_birth: dateOfBirth || null, password_hash: await bcrypt.hash(password, 10), role: 'customer', status: 'active', created_at: now() };
+    const user = { id, email: normalizedEmail, first_name: firstName, last_name: lastName, phone, phone_verified: phoneVerified, phone_verification_method: phoneVerificationMethod, ...(phoneVerified ? { phone_verified_at: now() } : { email_verified_at: now() }), date_of_birth: dateOfBirth || null, password_hash: await bcrypt.hash(password, 10), role: 'customer', status: 'active', created_at: now() };
     await getDb().collection('users').doc(id).set(user);
     const welcomeResult = await sendWelcomeEmail(user);
     return { status: 201, body: { message: 'User registered successfully', token: makeToken(user), user: { id, email: user.email, firstName, lastName, role: 'customer' }, welcomeEmail: welcomeResult } };
+}
+
+function normalizePhoneNumber(value) {
+    const phone = String(value || '').trim().replace(/[()\s.-]/g, '');
+    return /^\+[1-9]\d{7,14}$/.test(phone) ? phone : '';
+}
+
+async function verifyFirebasePhoneToken(token, phone) {
+    if (!token || !phone) return false;
+    try {
+        const claims = await admin.auth().verifyIdToken(String(token));
+        return claims.phone_number === phone && Number.isFinite(claims.auth_time) && Date.now() / 1000 - claims.auth_time <= 600;
+    } catch (error) {
+        return false;
+    }
+}
+
+function phoneEmailChallengeId(scope, identity) {
+    return createHash('sha256').update(`${scope}:${identity}`).digest('hex');
+}
+
+async function phoneEmailVerificationRoutes(method, action, req, body) {
+    if (method !== 'POST' || !['request', 'confirm'].includes(action)) return { status: 405, body: { error: 'Phone verification method not allowed' } };
+    const scope = body.scope === 'profile' ? 'profile' : body.scope === 'register' ? 'register' : '';
+    const phone = normalizePhoneNumber(body.phone);
+    if (!scope || !phone) return { status: 400, body: { error: 'Choose a verification flow and enter a phone number in international format' } };
+
+    let userId = null;
+    let email = String(body.email || '').trim().toLowerCase();
+    let firstName = '';
+    if (scope === 'profile') {
+        const user = await authenticate(req);
+        if (user.userId === GUEST_ID) return { status: 401, body: { error: 'Sign in before changing your phone number' } };
+        const profile = await userProfile(user.userId);
+        userId = user.userId;
+        email = String(profile?.email || '').trim().toLowerCase();
+        firstName = profile?.first_name || '';
+    }
+    if (!isValidEmail(email)) return { status: 400, body: { error: 'A valid account email is required for verification' } };
+
+    const identity = scope === 'profile' ? userId : email;
+    const challengeRef = getDb().collection('phone_email_challenges').doc(phoneEmailChallengeId(scope, identity));
+    if (action === 'request') {
+        const [existingEmail, existingPhone] = await Promise.all([
+            scope === 'register' ? getDb().collection('users').where('email', '==', email).limit(1).get() : Promise.resolve(null),
+            getDb().collection('users').where('phone', '==', phone).limit(2).get()
+        ]);
+        if (existingEmail && !existingEmail.empty) return { status: 409, body: { error: 'Email already registered' } };
+        if (existingPhone.docs.some(doc => doc.id !== userId)) return { status: 409, body: { error: 'Phone number already registered' } };
+        const existing = await challengeRef.get();
+        const current = existing.exists ? existing.data() : null;
+        if (current?.requested_at && Date.now() - Date.parse(current.requested_at) < 60 * 1000) {
+            return { status: 429, body: { error: 'Please wait before requesting another verification code' } };
+        }
+        const code = String(randomInt(0, 1000000)).padStart(6, '0');
+        await challengeRef.set({ scope, user_id: userId, email, phone, code_hash: await bcrypt.hash(code, 12), expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), attempts: 0, requested_at: now() });
+        const delivery = await sendTransactionalEmail({
+            email,
+            subject: 'Your American Bank United verification code',
+            text: `Hello ${firstName || 'there'},\n\nYour six-digit verification code is: ${code}\n\nThis code expires in 10 minutes and can only be used once. If you did not request this code, contact support. Never share it with anyone.`
+        });
+        if (delivery.status !== 'sent') {
+            await challengeRef.delete();
+            return { status: 503, body: { error: 'Unable to send the verification email. Please try again later.' } };
+        }
+        return { body: { message: `Verification code sent to ${email.replace(/(^.).*(@.*$)/, '$1***$2')}`, expiresIn: 600 } };
+    }
+
+    const challenge = await challengeRef.get();
+    const record = challenge.exists ? challenge.data() : null;
+    if (!record || record.used || record.phone !== phone || record.email !== email || record.scope !== scope || record.user_id !== userId || Date.now() > Date.parse(record.expires_at || '')) {
+        return { status: 410, body: { error: 'That verification code has expired. Request a new code.' } };
+    }
+    if (Number(record.attempts || 0) >= 5) return { status: 429, body: { error: 'Too many incorrect codes. Request a new code.' } };
+    if (!/^\d{6}$/.test(String(body.code || '')) || !(await bcrypt.compare(String(body.code), record.code_hash))) {
+        await challengeRef.set({ attempts: Number(record.attempts || 0) + 1 }, { merge: true });
+        return { status: 403, body: { error: 'Incorrect verification code' } };
+    }
+
+    const proofId = randomUUID();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    await getDb().collection('phone_email_proofs').doc(proofId).set({ scope, user_id: userId, email, phone, expires_at: expiresAt, consumed: false });
+    await challengeRef.set({ used: true, code_hash: admin.firestore.FieldValue.delete(), verified_at: now() }, { merge: true });
+    const proof = jwt.sign({ purpose: 'phone_email_proof', scope, userId, email, phone, proofId }, JWT_SECRET(), { expiresIn: '10m' });
+    return { body: { proof, expiresIn: 600 } };
+}
+
+async function consumePhoneEmailProof(token, expected) {
+    if (!token) return false;
+    let claims;
+    try {
+        claims = jwt.verify(String(token), JWT_SECRET());
+    } catch (error) {
+        return false;
+    }
+    if (claims.purpose !== 'phone_email_proof' || claims.scope !== expected.scope || claims.email !== expected.email || claims.phone !== expected.phone || (claims.userId || null) !== (expected.userId || null) || !claims.proofId) return false;
+
+    const proofRef = getDb().collection('phone_email_proofs').doc(String(claims.proofId));
+    return getDb().runTransaction(async transaction => {
+        const snapshot = await transaction.get(proofRef);
+        const proof = snapshot.exists ? snapshot.data() : null;
+        if (!proof || proof.consumed || proof.scope !== expected.scope || proof.email !== expected.email || proof.phone !== expected.phone || proof.user_id !== (expected.userId || null) || Date.now() > Date.parse(proof.expires_at || '')) return false;
+        transaction.update(proofRef, { consumed: true, consumed_at: now() });
+        return true;
+    });
 }
 
 async function authLogin(body) {
@@ -635,6 +789,31 @@ async function transactionRoutes(method, parts, user, body) {
         sendAccountTransactionAlert({ email: recipient?.email, phone: recipient?.phone, firstName: recipient?.first_name || recipient?.firstName, direction: 'credit', amount, sender: { name: `${senderProfile?.first_name || ''} ${senderProfile?.last_name || ''}`.trim(), accountNumber: result.senderAccountNumber, bank: 'American Bank United' }, receiver: { name: `${recipient?.first_name || ''} ${recipient?.last_name || ''}`.trim(), accountNumber: result.recipientAccountNumber, bank: 'American Bank United' }, transferType: 'ABU account transfer', reference: result.depositId, description: body.description || 'Transfer received', bankCharge: body.bankCharge || body.fee || 0 })
     ]);
     return { body: { message: 'Transfer completed successfully', status: 'approved', withdrawalId: result.withdrawalId, depositId: result.depositId, newBalance: result.fromBalance, notification: recipientEmailResult, senderEmail: senderEmailResult } };
+}
+
+async function pushSubscriptionRoutes(method, parts, user, body) {
+    if (user.userId === GUEST_ID) return { status: 401, body: { error: 'Please sign in to enable browser notifications' } };
+    if (parts.length) return { status: 404, body: { error: 'Push subscription route not found' } };
+
+    const tokens = getDb().collection('push_tokens');
+    if (method === 'GET') {
+        const snapshot = await tokens.where('user_id', '==', user.userId).limit(1).get();
+        return { body: { enabled: !snapshot.empty } };
+    }
+    if (!['POST', 'DELETE'].includes(method)) return { status: 405, body: { error: 'Push subscription method not allowed' } };
+
+    const token = String(body.token || '').trim();
+    if (!token || token.length > 4096) return { status: 400, body: { error: 'A valid browser notification token is required' } };
+    const ref = tokens.doc(pushTokenId(token));
+    if (method === 'POST') {
+        const existing = await ref.get();
+        await ref.set({ user_id: user.userId, token, created_at: existing.data()?.created_at || now(), updated_at: now() }, { merge: true });
+        return { status: 201, body: { enabled: true } };
+    }
+
+    const existing = await ref.get();
+    if (existing.exists && existing.data().user_id === user.userId) await ref.delete();
+    return { body: { enabled: false } };
 }
 
 async function notificationRoutes(method, parts, user) {
@@ -1321,14 +1500,15 @@ async function adminRoutes(method, parts, user, body, query) {
         if (!customer) return { status: 404, body: { error: 'Transaction recipient not found' } };
         const channels = Array.isArray(body.channels) ? body.channels : ['email'];
         const notification = await sendTransferNotifications({
+            userId: customer.id,
             email: channels.includes('email') ? (body.email || customer.email) : '',
-            phone: channels.includes('sms') ? (body.phone || customer.phone) : '',
             recipientName: `${customer.first_name || ''} ${customer.last_name || ''}`.trim(),
             amount: transaction.amount,
             transferType: transaction.transfer_type || 'admin transaction',
             bankName: transaction.bank_name || 'American Bank United',
             accountNumber: account.account_number,
-            description: transaction.description || 'Admin transaction'
+            description: transaction.description || 'Admin transaction',
+            sendPush: channels.includes('push')
         });
         return { body: { message: 'Notification request processed', notification } };
     }
@@ -1641,6 +1821,7 @@ async function route(req) {
     if (parts[0] === 'auth') {
         if (method === 'POST' && parts[1] === 'register') return authRegister(body);
         if (method === 'POST' && parts[1] === 'login') return authLogin(body);
+        if (method === 'POST' && parts[1] === 'phone-verification') return phoneEmailVerificationRoutes(method, parts[2], req, body);
         if ((method === 'GET' || method === 'PATCH') && parts[1] === 'profile') {
             const user = await authenticate(req);
             if (method === 'PATCH') {
@@ -1648,7 +1829,7 @@ async function route(req) {
                 const firstName = String(body.first_name || '').trim();
                 const lastName = String(body.last_name || '').trim();
                 const email = String(body.email || '').trim().toLowerCase();
-                const phone = String(body.phone || '').trim();
+                const requestedPhone = String(body.phone || '').trim();
                 const avatar = String(body.avatar || '').trim();
                 if (!firstName || !lastName || !isValidEmail(email)) return { status: 400, body: { error: 'First name, last name, and a valid email are required' } };
                 if (avatar && !/^data:image\/(jpeg|png|webp);base64,[a-zA-Z0-9+/=]+$/.test(avatar) && !/^https?:\/\//i.test(avatar)) {
@@ -1657,7 +1838,30 @@ async function route(req) {
                 if (avatar.length > 700000) return { status: 400, body: { error: 'Profile picture is too large. Choose a smaller image.' } };
                 const existing = await getDb().collection('users').where('email', '==', email).limit(2).get();
                 if (existing.docs.some(doc => doc.id !== user.userId)) return { status: 409, body: { error: 'Email is already registered' } };
-                await getDb().collection('users').doc(user.userId).set({ first_name: firstName, last_name: lastName, email, phone, ...(avatar ? { avatar } : {}), updated_at: now() }, { merge: true });
+                const currentProfile = await userProfile(user.userId);
+                const phoneChanged = requestedPhone !== String(currentProfile?.phone || '').trim();
+                const updates = { first_name: firstName, last_name: lastName, email, ...(avatar ? { avatar } : {}), updated_at: now() };
+                if (phoneChanged) {
+                    const phone = normalizePhoneNumber(requestedPhone);
+                    if (!phone) return { status: 400, body: { error: 'Enter a phone number in international format, such as +12025550123' } };
+                    const registeredPhone = await getDb().collection('users').where('phone', '==', phone).limit(2).get();
+                    if (registeredPhone.docs.some(doc => doc.id !== user.userId)) return { status: 409, body: { error: 'Phone number already registered' } };
+
+                    if (body.firebasePhoneAuthToken) {
+                        if (!(await verifyFirebasePhoneToken(body.firebasePhoneAuthToken, phone))) return { status: 403, body: { error: 'Phone verification did not match this number. Request a new code.' } };
+                        updates.phone_verified = true;
+                        updates.phone_verification_method = 'firebase_auth';
+                        updates.phone_verified_at = now();
+                    } else if (await consumePhoneEmailProof(body.emailPhoneProof, { scope: 'profile', userId: user.userId, email: String(currentProfile?.email || '').trim().toLowerCase(), phone })) {
+                        updates.phone_verified = false;
+                        updates.phone_verification_method = 'email_fallback';
+                        updates.phone_verified_at = admin.firestore.FieldValue.delete();
+                    } else {
+                        return { status: 403, body: { error: 'Verify the new phone number or confirm the email verification code before saving' } };
+                    }
+                    updates.phone = phone;
+                }
+                await getDb().collection('users').doc(user.userId).set(updates, { merge: true });
             }
             return { body: clean(await userProfile(user.userId)) };
         }
@@ -1671,6 +1875,7 @@ async function route(req) {
     if (parts[0] === 'accounts') return accountRoutes(method, parts.slice(1), user, body, req.query || {});
     if (parts[0] === 'transfer-pin') return transferPinRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'preferences' && parts.length === 1) return preferenceRoutes(method, user, body);
+    if (parts[0] === 'push-subscriptions') return pushSubscriptionRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'chat') return chatRoutes(method, parts.slice(1), user, body, req.query || {});
     if (parts[0] === 'transactions') return transactionRoutes(method, parts.slice(1), user, body);
     if (parts[0] === 'notifications') return notificationRoutes(method, parts.slice(1), user);

@@ -1,12 +1,12 @@
 # Firebase + Vercel setup
 
-The frontend and API are now deployed from the same Vercel project. The API in `api/[...path].js` uses Firebase Admin to store application data in Firestore and creates signed Firebase Storage upload URLs.
+The frontend and API are deployed from the same Vercel project. The API in `api/[...path].js` uses Firebase Admin to store application data in Firestore. Firebase Storage is optional and is only needed for the signed upload URL endpoint; the current frontend does not call it.
 
 ## 1. Create Firebase resources
 
 1. Create or select a Firebase project in the Firebase console.
 2. Enable Firestore Database in production mode.
-3. Enable Storage and create the default bucket.
+3. Enable Storage and create the default bucket only if you need file uploads. You can skip this for the current app setup.
 4. Create a service account in Project settings > Service accounts.
 5. Generate a private key JSON file. Keep it private and do not commit it.
 
@@ -20,21 +20,28 @@ Add these variables to the Vercel project for Production, Preview, and Developme
 FIREBASE_PROJECT_ID=your-project-id
 FIREBASE_CLIENT_EMAIL=firebase-adminsdk-...@your-project-id.iam.gserviceaccount.com
 FIREBASE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n
-FIREBASE_STORAGE_BUCKET=your-project-id.firebasestorage.app
 JWT_SECRET=use-a-long-random-secret
 NODE_ENV=production
 RESEND_API_KEY=your-resend-api-key
 EMAIL_FROM=American Bank United <transfers@americanbankunited.com>
-TWILIO_ACCOUNT_SID=your-twilio-account-sid
-TWILIO_AUTH_TOKEN=your-twilio-auth-token
-TWILIO_FROM_NUMBER=+15551234567
 ```
 
 `FIREBASE_PRIVATE_KEY` must contain the literal `\n` sequences when entered in the Vercel dashboard. The API converts them to line breaks at runtime.
 
-`RESEND_API_KEY` and `EMAIL_FROM` enable full transfer confirmation emails. The Twilio variables enable SMS notifications. Without these provider variables, transfers still complete and the API reports notifications as `not_configured`.
+`RESEND_API_KEY` and `EMAIL_FROM` enable transfer confirmation and fallback verification emails. Firebase Cloud Messaging delivers composed browser push alerts to both transaction parties. Firebase Authentication sends phone verification codes; real phone-auth SMS requires the Blaze pay-as-you-go plan. The app keeps its JWT login and validates Firebase phone-auth tokens server-side before marking a phone verified. If SMS is unavailable, a one-use Resend email code can verify the account, but the phone remains unverified.
 
-Automatic SMS alerts are sent for deposits, account transfers, external transfers, admin-funded credits, and transfers completed after approval. Store phone numbers in international E.164 format (for example, `+15551234567`) so Twilio can deliver them reliably. In Twilio trial mode, the destination number must also be verified in the Twilio console.
+## 2a. Configure Firebase browser push
+
+1. In Firebase project settings, add a Web App and enable Firebase Cloud Messaging for the project.
+2. In **Project settings > Cloud Messaging > Web Push certificates**, generate a key pair.
+3. Copy the Web App's public configuration values into `js/firebase-web-config.js`. Replace each `REPLACE_WITH_...` value, including `projectId` and `messagingSenderId`.
+4. Set `ABU_FIREBASE_VAPID_KEY` in that same file to the public Web Push certificate key from step 2.
+5. In **Authentication > Sign-in method**, enable **Phone**. In **Authentication > Settings**, allow the SMS regions you support and add your Vercel/custom domains as authorized domains. Firebase's SDK handles reCAPTCHA during the phone verification flow.
+6. Deploy the site over HTTPS. Signed-in users can enable or disable browser push in Settings; the browser will ask for notification permission. Registration and phone changes offer Firebase SMS verification or Resend email fallback.
+
+The Firebase Web App configuration and VAPID key are public client values. Never put the Firebase service-account private key in this file; it must remain in Vercel environment variables. Push tokens are stored in the server-only `push_tokens` Firestore collection, and the service worker displays generic alerts without amounts or account numbers. Firebase Cloud Messaging has no per-message charge; delivery depends on browser support and permission.
+
+Browser push alerts are available for deposits, account transfers, external transfers, admin-funded credits, and transfers completed after approval when a signed-in user has enabled push in Settings. Credit/debit push alerts include the amount and transaction type, but not account numbers. Email alerts continue to use Resend. Firebase phone verification requires Blaze billing for real SMS, the Phone provider, an allowed SMS region policy, an authorized web domain, and working Web App configuration.
 
 ### Show the bank logo beside the sender in Gmail
 
@@ -61,7 +68,6 @@ npx vercel link
 npx vercel env add FIREBASE_PROJECT_ID production
 npx vercel env add FIREBASE_CLIENT_EMAIL production
 npx vercel env add FIREBASE_PRIVATE_KEY production
-npx vercel env add FIREBASE_STORAGE_BUCKET production
 npx vercel env add JWT_SECRET production
 npx vercel --prod
 ```
@@ -97,8 +103,10 @@ Install the Firebase CLI if needed, select the project, and deploy the rules/ind
 npm install -g firebase-tools
 firebase login
 firebase use your-project-id
-firebase deploy --only firestore:rules,firestore:indexes,storage
+firebase deploy --only firestore:rules,firestore:indexes
 ```
+
+Do not add the `storage` target unless you have enabled Firebase Storage and created a bucket. Without Storage, the rest of the app can use Firestore normally, but the `/api/storage/upload-url` endpoint will not be available.
 
 ## 6. Verify
 
