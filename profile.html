@@ -446,20 +446,20 @@
             <form id="editProfileForm" class="profile-edit-form">
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="text-xs text-slate-600">First name</label>
+                        <label class="text-xs text-slate-600" for="editFirstName">First name</label>
                         <input id="editFirstName" class="w-full border rounded px-3 py-2" />
                     </div>
                     <div>
-                        <label class="text-xs text-slate-600">Last name</label>
+                        <label class="text-xs text-slate-600" for="editLastName">Last name</label>
                         <input id="editLastName" class="w-full border rounded px-3 py-2" />
                     </div>
                 </div>
                 <div>
-                    <label class="text-xs text-slate-600">Email</label>
+                    <label class="text-xs text-slate-600" for="editEmail">Email</label>
                     <input id="editEmail" class="w-full border rounded px-3 py-2" />
                 </div>
                 <div>
-                    <label class="text-xs text-slate-600">Phone</label>
+                    <label class="text-xs text-slate-600" for="editPhone">Phone</label>
                     <input id="editPhone" type="tel" class="w-full border rounded px-3 py-2" placeholder="International format, e.g. +12025550123" />
                     <div class="mt-2 space-y-2">
                         <button id="sendEditEmailCode" type="button" class="border px-3 py-2 rounded text-sm">Send verification code to account email</button>
@@ -489,9 +489,10 @@
                     <textarea id="editAddress" rows="2" maxlength="300" class="w-full border rounded px-3 py-2" placeholder="Residential address"></textarea>
                 </div>
                 <div>
-                    <label class="text-xs text-slate-600">Avatar</label>
+                    <label class="text-xs text-slate-600" for="editAvatarFile">Avatar image</label>
                     <div class="flex items-center gap-3">
                         <input id="editAvatarFile" type="file" accept="image/*" class="text-sm" />
+                        <label class="sr-only" for="editAvatar">Avatar URL or data</label>
                         <input id="editAvatar" class="w-full border rounded px-3 py-2" placeholder="or paste image URL" />
                     </div>
                     <div id="editAvatarPreview" class="mt-2">
