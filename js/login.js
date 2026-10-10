@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const loginForm = document.getElementById('loginForm');
-    const togglePassword = document.querySelector('.toggle-password');
     const passwordInput = document.getElementById('password');
     const emailCodeStep = document.getElementById('loginEmailCodeStep');
     const emailCodeInput = document.getElementById('loginEmailCode');
@@ -34,16 +33,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             if (emailCodeStatus) emailCodeStatus.textContent = error.message || 'Could not send a sign-in code.';
         }
-    }
-
-    // Password visibility toggle
-    if (togglePassword) {
-        togglePassword.addEventListener('click', () => {
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            togglePassword.querySelector('i').classList.toggle('fa-eye');
-            togglePassword.querySelector('i').classList.toggle('fa-eye-slash');
-        });
     }
 
     // Handle login form submission
