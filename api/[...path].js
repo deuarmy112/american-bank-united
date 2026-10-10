@@ -1107,7 +1107,7 @@ async function cardRoutes(method, parts, user, body) {
             return { ...safeCard, card_last4: String(card_number || '').slice(-4), pin_configured: Boolean(card_pin_hash), pin_locked: Boolean(card_pin_locked) };
         })) };
     }
-    if (method === 'POST') {
+    if (method === 'POST' && parts.length === 0) {
         if (!['debit', 'credit'].includes(body.cardType)) return { status: 400, body: { error: 'Invalid card type' } };
         const account = await getDoc('accounts', body.linkedAccountId);
         if (!account || account.user_id !== user.userId) return { status: 404, body: { error: 'Account not found' } };
