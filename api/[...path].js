@@ -355,7 +355,7 @@ async function securityCodeRoutes(method, parts, user, body) {
     if (purpose === 'card-pin' && !/^[a-zA-Z0-9-]{1,80}$/.test(cardId)) return { status: 400, body: { error: 'Select a valid card' } };
     const card = purpose === 'card-pin' ? await getDoc('cards', cardId) : null;
     if (purpose === 'card-pin' && (!card || card.user_id !== user.userId)) return { status: 404, body: { error: 'Card not found' } };
-    if (purpose === 'card-pin' && card.status !== 'active') return { status: 409, body: { error: 'Only active cards can have a PIN set' } };
+    if (purpose === 'card-pin' && String(card.status || 'active').toLowerCase() === 'blocked') return { status: 409, body: { error: 'Blocked cards cannot have a PIN set' } };
     const verificationRef = getDb().collection('security_verifications').doc(securityCodeId(user.userId, purpose, cardId));
 
     if (method === 'POST' && action === 'request') {

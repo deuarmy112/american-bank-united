@@ -85,8 +85,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         const cards = await cardsAPI.getAll();
-        const activeCards = cards.filter(card => card.status === 'active');
-        cardSelect.replaceChildren(new Option(activeCards.length ? 'Select a card' : 'No active cards', ''));
+        const activeCards = cards.filter(card => String(card.status || 'active').toLowerCase() !== 'blocked');
+        cardSelect.replaceChildren(new Option(activeCards.length ? 'Select a card' : 'No cards available', ''));
         activeCards.forEach(card => {
             const suffix = String(card.card_number || '').slice(-4);
             const option = new Option(`${String(card.card_type || 'Card').toUpperCase()} ending in ${suffix}`, card.id);
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         if (initialCardId && activeCards.some(card => card.id === initialCardId)) cardSelect.value = initialCardId;
         updateTitle();
-        if (!activeCards.length) setStatus('You need an active card before you can set a card PIN.', 'error');
+        if (!activeCards.length) setStatus('You need an available card before you can set a card PIN.', 'error');
     } catch (error) {
         cardSelect.replaceChildren(new Option('Unable to load cards', ''));
         setStatus(error.message || 'Unable to load your cards.', 'error');
