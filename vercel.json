@@ -39,6 +39,10 @@
       "destination": "/api/[...path]?path=security/:purpose/:action"
     },
     {
+      "source": "/api/auth/phone-verification/:action",
+      "destination": "/api/[...path]?path=auth/phone-verification/:action"
+    },
+    {
       "source": "/api/admin/verification-requests/:requestId/:action",
       "destination": "/api/[...path]?path=admin/verification-requests/:requestId/:action"
     },
