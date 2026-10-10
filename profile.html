@@ -461,23 +461,14 @@
                 <div>
                     <label class="text-xs text-slate-600">Phone</label>
                     <input id="editPhone" type="tel" class="w-full border rounded px-3 py-2" placeholder="International format, e.g. +12025550123" />
-                    <div id="editPhoneRecaptcha" class="mt-2"></div>
-                    <div class="mt-2 flex flex-wrap gap-2">
-                        <button id="sendEditPhoneCode" type="button" class="border px-3 py-2 rounded text-sm">Send SMS code</button>
-                        <button id="showEditEmailFallback" type="button" class="border px-3 py-2 rounded text-sm">Use email instead</button>
-                    </div>
-                    <div id="editPhoneCodeStep" class="hidden mt-2 space-y-2">
-                        <input id="editPhoneCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" class="w-full border rounded px-3 py-2" placeholder="6-digit phone code" />
-                        <button id="confirmEditPhoneCode" type="button" class="border px-3 py-2 rounded text-sm">Verify phone</button>
-                    </div>
-                    <div id="editEmailFallbackPanel" class="hidden mt-2 space-y-2">
-                        <button id="sendEditEmailCode" type="button" class="border px-3 py-2 rounded text-sm">Send code to account email</button>
+                    <div class="mt-2 space-y-2">
+                        <button id="sendEditEmailCode" type="button" class="border px-3 py-2 rounded text-sm">Send verification code to account email</button>
                         <div id="editEmailCodeStep" class="hidden space-y-2">
                             <input id="editEmailCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" class="w-full border rounded px-3 py-2" placeholder="6-digit email code" />
                             <button id="confirmEditEmailCode" type="button" class="border px-3 py-2 rounded text-sm">Verify email</button>
                         </div>
                     </div>
-                    <p id="editPhoneVerificationStatus" class="mt-2 text-xs text-slate-500" role="status">Firebase sends your number to Google for SMS verification and abuse prevention. Email fallback leaves the phone unverified.</p>
+                    <p id="editPhoneVerificationStatus" class="mt-2 text-xs text-slate-500" role="status">A code will be sent to your account email when you change your phone number.</p>
                 </div>
                 <div>
                     <label class="text-xs text-slate-600" for="editNickname">Nickname</label>
@@ -545,8 +536,6 @@
     <script src="js/utils.js?v=20260914.15"></script>
     <script src="js/navigation-stack.js"></script>
     <script src="js/auth.js?v=20260121.1"></script>
-    <script src="js/firebase-web-config.js"></script>
-    <script src="js/firebase-phone-auth.js"></script>
     <script>
         // Quick Actions Registry
         const QUICK_ACTIONS_REGISTRY = [
@@ -863,17 +852,14 @@
             document.body.classList.add('profile-edit-open');
         }
 
-        let editFirebasePhoneAuthToken = '';
         let editEmailPhoneProof = '';
         let editProofPhone = '';
         function resetEditPhoneVerification() {
-            editFirebasePhoneAuthToken = '';
             editEmailPhoneProof = '';
             editProofPhone = '';
-            document.getElementById('editPhoneCodeStep')?.classList.add('hidden');
             document.getElementById('editEmailCodeStep')?.classList.add('hidden');
             const status = document.getElementById('editPhoneVerificationStatus');
-            if (status) status.textContent = 'Firebase sends your number to Google for SMS verification and abuse prevention. Email fallback leaves the phone unverified.';
+            if (status) status.textContent = 'A code will be sent to your account email when you change your phone number.';
         }
         function closeEditModal() {
             const m = document.getElementById('editProfileModal');
@@ -1033,34 +1019,9 @@
             const editForm = document.getElementById('editProfileForm');
             const editPhoneInput = document.getElementById('editPhone');
             const editPhoneStatus = document.getElementById('editPhoneVerificationStatus');
-            document.getElementById('sendEditPhoneCode')?.addEventListener('click', async () => {
-                try {
-                    await firebasePhoneAuth.sendCode(editPhoneInput.value, 'editPhoneRecaptcha');
-                    document.getElementById('editPhoneCodeStep').classList.remove('hidden');
-                    editPhoneStatus.textContent = 'Enter the code sent to your phone.';
-                } catch (error) {
-                    editPhoneStatus.textContent = error.message || 'Could not send a phone code. Try email verification instead.';
-                }
-            });
-            document.getElementById('confirmEditPhoneCode')?.addEventListener('click', async () => {
-                try {
-                    const verification = await firebasePhoneAuth.confirmCode(document.getElementById('editPhoneCode').value);
-                    const normalizedPhone = editPhoneInput.value.trim().replace(/[()\s.-]/g, '');
-                    if (verification.phoneNumber !== normalizedPhone) throw new Error('The verified phone does not match the number entered.');
-                    editFirebasePhoneAuthToken = verification.idToken;
-                    editEmailPhoneProof = '';
-                    editProofPhone = normalizedPhone;
-                    editPhoneStatus.textContent = 'Phone verified. Save your profile to apply it.';
-                } catch (error) {
-                    editFirebasePhoneAuthToken = '';
-                    editPhoneStatus.textContent = error.message || 'Phone verification failed.';
-                }
-            });
-            document.getElementById('showEditEmailFallback')?.addEventListener('click', () => {
-                document.getElementById('editEmailFallbackPanel').classList.toggle('hidden');
-            });
             document.getElementById('sendEditEmailCode')?.addEventListener('click', async () => {
                 try {
+                    if (!editPhoneInput.value.trim()) throw new Error('Enter your new phone number first.');
                     await apiClient.post('/auth/phone-verification/request', { scope: 'profile', phone: editPhoneInput.value.trim() });
                     document.getElementById('editEmailCodeStep').classList.remove('hidden');
                     editPhoneStatus.textContent = 'A verification code was sent to your account email.';
@@ -1076,9 +1037,8 @@
                         code: document.getElementById('editEmailCode').value
                     });
                     editEmailPhoneProof = result.proof;
-                    editFirebasePhoneAuthToken = '';
                     editProofPhone = editPhoneInput.value.trim().replace(/[()\s.-]/g, '');
-                    editPhoneStatus.textContent = 'Email verified. The new phone will remain unverified until confirmed by SMS.';
+                    editPhoneStatus.textContent = 'Email verified. Save your profile to apply the new phone number.';
                 } catch (error) {
                     editEmailPhoneProof = '';
                     editPhoneStatus.textContent = error.message || 'Email verification failed.';
@@ -1101,12 +1061,11 @@
                 const currentPhone = String(window.__currentUser?.phone || '').trim();
                 if (payload.phone !== currentPhone) {
                     const normalizedPhone = payload.phone.replace(/[()\s.-]/g, '');
-                    if (editProofPhone !== normalizedPhone || (!editFirebasePhoneAuthToken && !editEmailPhoneProof)) {
-                        showToast('Verify the new phone by SMS or use the email fallback before saving.');
+                    if (editProofPhone !== normalizedPhone || !editEmailPhoneProof) {
+                        showToast('Verify the new phone using the code sent to your account email.');
                         return;
                     }
-                    if (editFirebasePhoneAuthToken) payload.firebasePhoneAuthToken = editFirebasePhoneAuthToken;
-                    else payload.emailPhoneProof = editEmailPhoneProof;
+                    payload.emailPhoneProof = editEmailPhoneProof;
                 }
                 // If a file was selected, prefer that image (as data URL)
                 try{

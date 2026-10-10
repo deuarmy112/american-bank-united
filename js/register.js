@@ -13,11 +13,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const registerForm = document.getElementById('registerForm');
     const phoneInput = document.getElementById('phone');
     const emailInput = document.getElementById('email');
-    const phoneStatus = document.getElementById('phoneVerificationStatus');
     const emailStatus = document.getElementById('emailVerificationStatus');
-    let firebasePhoneAuthToken = '';
     let emailPhoneProof = '';
-    let verifiedPhone = '';
     let verifiedEmail = '';
     const registrationIdentityOptions = {
         tier1: [['national_id', 'National ID card']],
@@ -70,38 +67,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('input[name="registrationTier"]').forEach(input => input.addEventListener('change', updateRegistrationIdentityType));
     updateRegistrationIdentityType();
 
-    document.getElementById('sendPhoneCode').addEventListener('click', async function() {
-        try {
-            await firebasePhoneAuth.sendCode(phoneInput.value, 'registerPhoneRecaptcha');
-            document.getElementById('phoneCodeStep').classList.remove('hidden');
-            phoneStatus.textContent = 'Enter the code sent to your phone.';
-        } catch (error) {
-            phoneStatus.textContent = error.message || 'Could not send a phone code. You can verify by email instead.';
-        }
-    });
-
-    document.getElementById('confirmPhoneCode').addEventListener('click', async function() {
-        try {
-            const verification = await firebasePhoneAuth.confirmCode(document.getElementById('phoneCode').value);
-            const enteredPhone = phoneInput.value.trim().replace(/[()\s.-]/g, '');
-            if (verification.phoneNumber !== enteredPhone) throw new Error('The verified phone does not match the number entered.');
-            firebasePhoneAuthToken = verification.idToken;
-            emailPhoneProof = '';
-            verifiedPhone = enteredPhone;
-            verifiedEmail = '';
-            phoneStatus.textContent = 'Phone verified.';
-        } catch (error) {
-            firebasePhoneAuthToken = '';
-            phoneStatus.textContent = error.message || 'Phone verification failed.';
-        }
-    });
-
-    document.getElementById('showEmailFallback').addEventListener('click', function() {
-        document.getElementById('emailFallbackPanel').classList.toggle('hidden');
-    });
-
     document.getElementById('sendEmailCode').addEventListener('click', async function() {
         try {
+            if (!isValidEmail(emailInput.value.trim())) throw new Error('Enter a valid email address first.');
+            if (!phoneInput.value.trim()) throw new Error('Enter your phone number first.');
             await apiClient.post('/auth/phone-verification/request', { scope: 'register', email: emailInput.value.trim(), phone: phoneInput.value.trim() });
             document.getElementById('emailCodeStep').classList.remove('hidden');
             emailStatus.textContent = 'A verification code was sent to your email.';
@@ -119,10 +88,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 code: document.getElementById('emailCode').value
             });
             emailPhoneProof = result.proof;
-            firebasePhoneAuthToken = '';
-            verifiedPhone = phoneInput.value.trim().replace(/[()\s.-]/g, '');
             verifiedEmail = emailInput.value.trim().toLowerCase();
-            emailStatus.textContent = 'Email verified. Your phone will remain unverified until you confirm it by SMS.';
+            emailStatus.textContent = 'Email verified. You can now create your account.';
         } catch (error) {
             emailPhoneProof = '';
             emailStatus.textContent = error.message || 'Email verification failed.';
@@ -130,11 +97,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     phoneInput.addEventListener('input', function() {
-        firebasePhoneAuthToken = '';
         emailPhoneProof = '';
-        verifiedPhone = '';
-        phoneStatus.textContent = 'Firebase sends your number to Google for SMS verification and abuse prevention. Message rates may apply.';
-        emailStatus.textContent = 'Email verification confirms your account, not ownership of this phone number.';
+        emailStatus.textContent = 'Changing your phone number requires a new email verification code.';
     });
     emailInput.addEventListener('input', function() {
         emailPhoneProof = '';
@@ -157,9 +121,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const confirmPassword = document.getElementById('confirmPassword').value;
         const selectedTier = document.querySelector('input[name="registrationTier"]:checked')?.value || 'tier1';
 
-        const normalizedPhone = phone.replace(/[()\s.-]/g, '');
-        if (!verifiedPhone || verifiedPhone !== normalizedPhone || (!firebasePhoneAuthToken && (!emailPhoneProof || verifiedEmail !== email.toLowerCase()))) {
-            showAlert('Verify this phone by SMS or verify your email before creating the account.', 'error');
+        if (!emailPhoneProof || verifiedEmail !== email.toLowerCase()) {
+            showAlert('Verify your email before creating the account.', 'error');
             return;
         }
         
@@ -223,7 +186,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 tier: selectedTier,
                 identityType: document.getElementById('registrationIdentityType').value,
                 documents: { identity, address },
-                firebasePhoneAuthToken: firebasePhoneAuthToken || undefined,
                 emailPhoneProof: emailPhoneProof || undefined,
                 dateOfBirth: dateOfBirth || null,
                 password,

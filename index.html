@@ -41,6 +41,13 @@
                         </div>
                     </div>
 
+                    <div id="loginEmailCodeStep" class="hidden space-y-2" aria-live="polite">
+                        <label for="loginEmailCode" class="block text-sm font-medium text-slate-700">Email verification code</label>
+                        <input id="loginEmailCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" class="block w-full rounded-md border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="6-digit code">
+                        <p id="loginEmailCodeStatus" class="text-xs text-slate-600" role="status">We sent a sign-in code to your email.</p>
+                        <button id="resendLoginEmailCode" type="button" class="text-sm text-indigo-600 hover:underline">Send a new code</button>
+                    </div>
+
                     <div class="flex items-center justify-between text-sm">
                         <label class="inline-flex items-center gap-2 text-slate-600"><input type="checkbox" id="rememberMe" class="rounded"> Remember me</label>
                         <a href="#" class="text-indigo-600 hover:underline">Forgot password?</a>
@@ -58,9 +65,9 @@
         </div>
 
     <script src="js/utils.js?v=20260121.1"></script>
-    <script src="js/api.js?v=20260923.1"></script>
+    <script src="js/api.js?v=20261010.1"></script>
     <script src="js/auth.js?v=20260915.1"></script>
-    <script src="js/login.js?v=20260915.1"></script>
+    <script src="js/login.js?v=20261010.1"></script>
         <script src="js/ui.js?v=20260121.1"></script>
     <script>
         // Toggle password visibility

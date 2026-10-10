@@ -42,8 +42,9 @@ window.apiClient = window.apiClient || {
             const data = await response.json().catch(() => ({}));
 
             // Login/register 401 responses are credential errors, not expired sessions.
-            if (response.status === 401 && !endpoint.startsWith('/auth/')) {
+            if (response.status === 401 && !['/auth/login', '/auth/register'].includes(endpoint)) {
                 this.removeToken();
+                if (!window.location.pathname.endsWith('/index.html')) window.location.href = '/index.html';
                 const sessionError = new Error('Session expired. Please login again.');
                 sessionError.status = 401;
                 throw sessionError;
@@ -100,8 +101,8 @@ const authAPI = {
         return response;
     },
 
-    async login(email, password) {
-        const response = await apiClient.post('/auth/login', { email, password });
+    async login(email, password, deviceId, emailCode) {
+        const response = await apiClient.post('/auth/login', { email, password, deviceId, ...(emailCode ? { emailCode } : {}) });
         if (response.token) {
             apiClient.setToken(response.token);
         }

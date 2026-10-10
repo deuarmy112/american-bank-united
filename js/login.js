@@ -12,6 +12,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
     const togglePassword = document.querySelector('.toggle-password');
     const passwordInput = document.getElementById('password');
+    const emailCodeStep = document.getElementById('loginEmailCodeStep');
+    const emailCodeInput = document.getElementById('loginEmailCode');
+    const emailCodeStatus = document.getElementById('loginEmailCodeStatus');
+
+    function getLoginDeviceId() {
+        let deviceId = localStorage.getItem('abuLoginDeviceId');
+        if (!deviceId || !/^[a-zA-Z0-9-]{20,80}$/.test(deviceId)) {
+            const bytes = new Uint8Array(16);
+            window.crypto.getRandomValues(bytes);
+            deviceId = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+            localStorage.setItem('abuLoginDeviceId', deviceId);
+        }
+        return deviceId;
+    }
+
+    async function requestLoginEmailCode(email, password) {
+        try {
+            const result = await authAPI.login(email, password, getLoginDeviceId());
+            if (emailCodeStatus) emailCodeStatus.textContent = result.message || 'Check your email for the sign-in code.';
+        } catch (error) {
+            if (emailCodeStatus) emailCodeStatus.textContent = error.message || 'Could not send a sign-in code.';
+        }
+    }
 
     // Password visibility toggle
     if (togglePassword) {
@@ -30,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
         const rememberMe = document.getElementById('rememberMe')?.checked;
+        const emailCode = emailCodeInput?.value.trim() || '';
         
         // Validate inputs
         if (!email || !password) {
@@ -45,7 +69,16 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.disabled = true;
 
             // Call login API
-            const response = await authAPI.login(email, password);
+            const response = await authAPI.login(email, password, getLoginDeviceId(), emailCode);
+            if (response.requiresEmailVerification) {
+                emailCodeStep.classList.remove('hidden');
+                emailCodeInput.required = true;
+                emailCodeInput.focus();
+                emailCodeStatus.textContent = response.message || 'Check your email for the sign-in code.';
+                submitBtn.textContent = 'Verify email and sign in';
+                submitBtn.disabled = false;
+                return;
+            }
 
             // Store remember me preference
             if (rememberMe) {
@@ -70,9 +103,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Reset button
             const submitBtn = loginForm.querySelector('button[type="submit"]');
-            submitBtn.textContent = 'Login';
+            submitBtn.textContent = emailCodeStep.classList.contains('hidden') ? 'Login' : 'Verify email and sign in';
             submitBtn.disabled = false;
         }
+    });
+
+    document.getElementById('resendLoginEmailCode')?.addEventListener('click', () => {
+        requestLoginEmailCode(document.getElementById('email').value.trim(), passwordInput.value);
     });
 
     // Pre-fill email if remembered

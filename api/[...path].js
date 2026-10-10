@@ -6,6 +6,7 @@ const { admin, getDb, getBucket } = require('../lib/firebase');
 const GUEST_ID = 'guest-user';
 const JWT_SECRET = () => process.env.JWT_SECRET || process.env.FIREBASE_PROJECT_ID || 'development-only-secret';
 const CHAT_ATTACHMENT_MAX_BYTES = 512 * 1024;
+const LOGIN_DEVICE_IDLE_MS = 48 * 60 * 60 * 1000;
 const PROFILE_GENDERS = new Set(['female', 'male', 'other', 'prefer_not_to_say']);
 let guestCheckedAt = 0;
 
@@ -205,8 +206,12 @@ function cleanCustomerTransaction(data) {
     return cleaned;
 }
 
-function makeToken(user) {
-    return jwt.sign({ userId: user.id, email: user.email, role: user.role || 'customer', sessionVersion: Number(user.session_version || 0) }, JWT_SECRET(), { expiresIn: '7d' });
+function loginDeviceKey(userId, deviceId) {
+    return createHash('sha256').update(`${userId}:${deviceId}`).digest('hex');
+}
+
+function makeToken(user, deviceKey) {
+    return jwt.sign({ userId: user.id, email: user.email, role: user.role || 'customer', sessionVersion: Number(user.session_version || 0), deviceKey }, JWT_SECRET(), { expiresIn: '7d' });
 }
 
 function readBody(req) {
@@ -268,6 +273,17 @@ async function authenticate(req) {
                 err.status = 401;
                 throw err;
             }
+        }
+        if (!payload.deviceKey) throw new Error('Sign in again to verify this device');
+        const deviceRef = getDb().collection('login_devices').doc(String(payload.deviceKey));
+        const deviceSnapshot = await deviceRef.get();
+        const device = deviceSnapshot.exists ? deviceSnapshot.data() : null;
+        const lastActiveAt = Date.parse(device?.last_active_at || '');
+        if (!device || device.user_id !== payload.userId || !Number.isFinite(lastActiveAt) || Date.now() - lastActiveAt >= LOGIN_DEVICE_IDLE_MS) {
+            throw new Error('This session has been inactive. Sign in again to verify by email.');
+        }
+        if (Date.now() - lastActiveAt >= 5 * 60 * 1000) {
+            await deviceRef.set({ last_active_at: now() }, { merge: true });
         }
         return payload;
     } catch (error) {
@@ -516,14 +532,8 @@ async function authRegister(body) {
     const existingPhone = await getDb().collection('users').where('phone', '==', phone).limit(1).get();
     if (!existingPhone.empty) return { status: 400, body: { error: 'Phone number already registered' } };
 
-    let phoneVerified = false;
-    let phoneVerificationMethod = 'email_fallback';
-    if (body.firebasePhoneAuthToken) {
-        if (!(await verifyFirebasePhoneToken(body.firebasePhoneAuthToken, phone))) return { status: 403, body: { error: 'Phone verification did not match this number. Request a new code.' } };
-        phoneVerified = true;
-        phoneVerificationMethod = 'firebase_auth';
-    } else if (!(await consumePhoneEmailProof(body.emailPhoneProof, { scope: 'register', email: normalizedEmail, phone }))) {
-        return { status: 403, body: { error: 'Verify your phone or confirm the email verification code before registering' } };
+    if (!(await consumePhoneEmailProof(body.emailPhoneProof, { scope: 'register', email: normalizedEmail, phone }))) {
+        return { status: 403, body: { error: 'Verify your email with the code we sent before registering' } };
     }
 
     const id = randomUUID();
@@ -540,9 +550,9 @@ async function authRegister(body) {
         gender,
         address,
         phone,
-        phone_verified: phoneVerified,
-        phone_verification_method: phoneVerificationMethod,
-        ...(phoneVerified ? { phone_verified_at: timestamp } : { email_verified_at: timestamp }),
+        phone_verified: false,
+        phone_verification_method: 'email',
+        email_verified_at: timestamp,
         date_of_birth: dateOfBirth || null,
         password_hash: await bcrypt.hash(password, 10),
         role: 'customer',
@@ -680,10 +690,11 @@ async function consumePhoneEmailProof(token, expected) {
 }
 
 async function authLogin(body) {
-    const { email, password } = body;
+    const { password } = body;
+    const email = String(body.email || '').trim().toLowerCase();
     let snapshot;
     try {
-        snapshot = await getDb().collection('users').where('email', '==', String(email || '').toLowerCase()).limit(1).get();
+        snapshot = await getDb().collection('users').where('email', '==', email).limit(1).get();
     } catch (error) {
         if (String(error.code) === '8' || String(error.message || '').includes('RESOURCE_EXHAUSTED')) {
             return { status: 503, body: { error: 'Login is temporarily unavailable because the database quota has been reached. Please try again later.' } };
@@ -694,8 +705,69 @@ async function authLogin(body) {
     const user = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
     if (user.status && !['active', 'suspended'].includes(user.status)) return { status: 403, body: { error: 'Account is inactive' } };
     if (!(await bcrypt.compare(password || '', user.password_hash || ''))) return { status: 401, body: { error: 'Invalid email or password' } };
-    await getDb().collection('users').doc(user.id).set({ last_login: now() }, { merge: true });
-    return { body: { message: 'Login successful', token: makeToken(user), user: { id: user.id, email: user.email, firstName: user.first_name, lastName: user.last_name, role: user.role || 'customer' } } };
+    const deviceId = String(body.deviceId || '').trim();
+    if (!/^[a-zA-Z0-9-]{20,80}$/.test(deviceId)) return { status: 400, body: { error: 'This device could not be identified. Refresh the page and try again.' } };
+
+    const database = getDb();
+    const deviceKey = loginDeviceKey(user.id, deviceId);
+    const deviceRef = database.collection('login_devices').doc(deviceKey);
+    const deviceSnapshot = await deviceRef.get();
+    const device = deviceSnapshot.exists ? deviceSnapshot.data() : null;
+    const lastActiveAt = Date.parse(device?.last_active_at || '');
+    const requiresEmailVerification = !device || device.user_id !== user.id || !Number.isFinite(lastActiveAt) || Date.now() - lastActiveAt >= LOGIN_DEVICE_IDLE_MS;
+
+    if (requiresEmailVerification) {
+        const verificationRef = database.collection('login_verifications').doc(deviceKey);
+        const emailCode = String(body.emailCode || '').trim();
+        if (!emailCode) {
+            const existing = await verificationRef.get();
+            const challenge = existing.exists ? existing.data() : null;
+            if (challenge?.requested_at && Date.now() - Date.parse(challenge.requested_at) < 60 * 1000) {
+                return { body: { requiresEmailVerification: true, message: `A sign-in code was sent to ${email.replace(/(^.).*(@.*$)/, '$1***$2')}.` } };
+            }
+
+            const code = String(randomInt(0, 1000000)).padStart(6, '0');
+            const subject = 'Verify your new device sign-in';
+            await verificationRef.set({ user_id: user.id, email, device_key: deviceKey, code_hash: await bcrypt.hash(code, 12), expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), attempts: 0, requested_at: now(), consumed: false });
+            const delivery = await sendTransactionalEmail({
+                email,
+                subject,
+                text: `Hello ${user.first_name || 'there'},\n\nYour six-digit sign-in code is: ${code}\n\nThis code expires in 10 minutes and can only be used once. If you did not try to sign in, contact American Bank United support immediately. Never share this code with anyone.`,
+                html: verificationEmailMarkup({ firstName: user.first_name, label: 'new device sign-in', code, subject })
+            });
+            if (delivery.status !== 'sent') {
+                await verificationRef.delete();
+                return { status: 503, body: { error: 'Unable to send the sign-in code. Please try again later.' } };
+            }
+            return { body: { requiresEmailVerification: true, message: `A sign-in code was sent to ${email.replace(/(^.).*(@.*$)/, '$1***$2')}.` } };
+        }
+
+        const challengeSnapshot = await verificationRef.get();
+        const challenge = challengeSnapshot.exists ? challengeSnapshot.data() : null;
+        if (!challenge || challenge.consumed || challenge.user_id !== user.id || challenge.email !== email || challenge.device_key !== deviceKey || Date.now() > Date.parse(challenge.expires_at || '')) {
+            return { status: 410, body: { error: 'That sign-in code has expired. Sign in again to request a new one.' } };
+        }
+        if (Number(challenge.attempts || 0) >= 5) return { status: 429, body: { error: 'Too many incorrect codes. Sign in again to request a new one.' } };
+        if (!/^\d{6}$/.test(emailCode) || !(await bcrypt.compare(emailCode, challenge.code_hash))) {
+            await verificationRef.set({ attempts: Number(challenge.attempts || 0) + 1 }, { merge: true });
+            return { status: 403, body: { error: 'Incorrect sign-in code' } };
+        }
+        const consumed = await database.runTransaction(async transaction => {
+            const currentSnapshot = await transaction.get(verificationRef);
+            const current = currentSnapshot.exists ? currentSnapshot.data() : null;
+            if (!current || current.consumed || current.user_id !== user.id || current.email !== email || current.device_key !== deviceKey || current.code_hash !== challenge.code_hash || Number(current.attempts || 0) >= 5 || Date.now() > Date.parse(current.expires_at || '')) return false;
+            transaction.update(verificationRef, { consumed: true, verified_at: now(), code_hash: admin.firestore.FieldValue.delete() });
+            return true;
+        });
+        if (!consumed) return { status: 410, body: { error: 'That sign-in code has expired. Sign in again to request a new one.' } };
+    }
+
+    const timestamp = now();
+    await Promise.all([
+        deviceRef.set({ user_id: user.id, last_active_at: timestamp, ...(device?.created_at ? {} : { created_at: timestamp }) }, { merge: true }),
+        database.collection('users').doc(user.id).set({ last_login: timestamp }, { merge: true })
+    ]);
+    return { body: { message: 'Login successful', token: makeToken(user, deviceKey), user: { id: user.id, email: user.email, firstName: user.first_name, lastName: user.last_name, role: user.role || 'customer' } } };
 }
 
 async function reserveUniqueAccountNumber(database) {
@@ -1934,17 +2006,12 @@ async function route(req) {
                     const registeredPhone = await getDb().collection('users').where('phone', '==', phone).limit(2).get();
                     if (registeredPhone.docs.some(doc => doc.id !== user.userId)) return { status: 409, body: { error: 'Phone number already registered' } };
 
-                    if (body.firebasePhoneAuthToken) {
-                        if (!(await verifyFirebasePhoneToken(body.firebasePhoneAuthToken, phone))) return { status: 403, body: { error: 'Phone verification did not match this number. Request a new code.' } };
-                        updates.phone_verified = true;
-                        updates.phone_verification_method = 'firebase_auth';
-                        updates.phone_verified_at = now();
-                    } else if (await consumePhoneEmailProof(body.emailPhoneProof, { scope: 'profile', userId: user.userId, email: String(currentProfile?.email || '').trim().toLowerCase(), phone })) {
+                    if (await consumePhoneEmailProof(body.emailPhoneProof, { scope: 'profile', userId: user.userId, email: String(currentProfile?.email || '').trim().toLowerCase(), phone })) {
                         updates.phone_verified = false;
-                        updates.phone_verification_method = 'email_fallback';
+                        updates.phone_verification_method = 'email';
                         updates.phone_verified_at = admin.firestore.FieldValue.delete();
                     } else {
-                        return { status: 403, body: { error: 'Verify the new phone number or confirm the email verification code before saving' } };
+                        return { status: 403, body: { error: 'Confirm the verification code sent to your email before saving a new phone number' } };
                     }
                     updates.phone = phone;
                 }
