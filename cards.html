@@ -107,13 +107,8 @@
 
                 <div id="cardsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div class="text-center py-12 col-span-full text-slate-500">
-                        <i class="fas fa-inbox text-4xl text-slate-300 mb-3"></i>
-                        <p class="text-lg">No cards yet</p>
-                        <p class="text-sm mb-4">Request a card to get started</p>
-                        <button onclick="showRequestCardModal()" class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
-                            <i class="fas fa-plus"></i>
-                            Request Card
-                        </button>
+                        <i class="fas fa-spinner fa-spin text-3xl text-slate-400 mb-3"></i>
+                        <p class="text-sm">Loading your cards...</p>
                     </div>
                 </div>
             </div>
@@ -266,37 +261,48 @@
         });
 
         async function initializePage() {
-            try {
-                if (typeof getCurrentUser === 'function') {
-                    currentUser = await getCurrentUser();
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    currentUser = {
+                        id: payload.userId || payload.id,
+                        firstName: payload.firstName || payload.first_name || 'User',
+                        lastName: payload.lastName || payload.last_name || '',
+                        email: payload.email || 'user@abu.com'
+                    };
+                } catch (error) {
+                    console.warn('Could not read the signed-in user from the session token', error);
                 }
-                if (!currentUser) {
-                    const token = localStorage.getItem('authToken');
-                    if (token) {
-                        const payload = JSON.parse(atob(token.split('.')[1]));
-                        currentUser = {
-                            id: payload.userId || payload.id,
-                            firstName: payload.firstName || payload.first_name || 'User',
-                            lastName: payload.lastName || payload.last_name || '',
-                            email: payload.email || 'user@abu.com'
-                        };
-                    }
-                }
-
-                // Load user's accounts for the dropdown
-                if (typeof accountsAPI !== 'undefined' && accountsAPI.getAll) {
-                    const accounts = await accountsAPI.getAll() || [];
-                    populateAccountDropdown(accounts);
-                }
-
-                userCards = typeof cardsAPI.getAll === 'function' ? await cardsAPI.getAll() : [];
-                cardRequests = typeof cardsAPI.getRequests === 'function' ? await cardsAPI.getRequests() : [];
-                displayCards();
-                displayCardRequests();
-                setupEventListeners();
-            } catch (e) {
-                console.error('Initialization error:', e);
             }
+
+            setupEventListeners();
+            const profilePromise = typeof getCurrentUser === 'function'
+                ? getCurrentUser().catch(error => { console.warn('Unable to load profile details', error); return null; })
+                : Promise.resolve(null);
+            const accountsPromise = typeof accountsAPI !== 'undefined' && accountsAPI.getAll
+                ? accountsAPI.getAll().catch(error => { console.warn('Unable to load accounts', error); return []; })
+                : Promise.resolve([]);
+            const requestsPromise = typeof cardsAPI.getRequests === 'function'
+                ? cardsAPI.getRequests().catch(error => { console.warn('Unable to load card requests', error); return []; })
+                : Promise.resolve([]);
+
+            try {
+                const cards = typeof cardsAPI.getAll === 'function' ? await cardsAPI.getAll() : [];
+                userCards = Array.isArray(cards) ? cards : (Array.isArray(cards?.cards) ? cards.cards : []);
+                displayCards();
+            } catch (error) {
+                console.error('Failed to load cards:', error);
+                document.getElementById('cardsList').innerHTML = '<p class="text-center py-12 col-span-full text-red-600">Unable to load your cards. Please refresh to try again.</p>';
+                showAlert(error.message || 'Failed to load cards', 'error');
+            }
+
+            const [profile, accounts, requests] = await Promise.all([profilePromise, accountsPromise, requestsPromise]);
+            currentUser = profile || currentUser;
+            populateAccountDropdown(accounts || []);
+            cardRequests = Array.isArray(requests) ? requests : [];
+            displayCards();
+            displayCardRequests();
         }
 
         function populateAccountDropdown(accounts) {

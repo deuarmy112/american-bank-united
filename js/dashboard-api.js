@@ -5,12 +5,9 @@
 document.addEventListener('DOMContentLoaded', async function() {
     // Check authentication
     if (!requireAuth()) return;
-    
-    // Display user info
-    await displayUserName();
-    
-    // Load dashboard data
-    await loadDashboardData();
+
+    displayUserName();
+    loadDashboardData();
 });
 
 function revealDashboardData() {

@@ -2,8 +2,8 @@
 
 document.addEventListener('DOMContentLoaded', async function(){
     if (typeof requireAuth === 'function' && !requireAuth()) return;
-    if (typeof displayUserName === 'function') await displayUserName();
-    await loadWallets();
+    if (typeof displayUserName === 'function') displayUserName();
+    loadWallets();
 });
 
 async function loadWallets(){

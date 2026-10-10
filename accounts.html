@@ -184,23 +184,24 @@
         });
 
         async function initializePage() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    currentUser = {
+                        id: payload.userId || payload.id,
+                        firstName: payload.firstName || payload.first_name || 'User',
+                        lastName: payload.lastName || payload.last_name || '',
+                        email: payload.email || 'user@abu.com'
+                    };
+                } catch (error) {
+                    console.warn('Could not read the signed-in user from the session token', error);
+                }
+            }
+            if (typeof getCurrentUser === 'function') {
+                getCurrentUser().then(profile => { if (profile) currentUser = profile; }).catch(error => console.warn('Unable to load profile details', error));
+            }
             try {
-                if (typeof getCurrentUser === 'function') {
-                    currentUser = await getCurrentUser();
-                }
-                if (!currentUser) {
-                    const token = localStorage.getItem('authToken');
-                    if (token) {
-                        const payload = JSON.parse(atob(token.split('.')[1]));
-                        currentUser = {
-                            id: payload.userId || payload.id,
-                            firstName: payload.firstName || payload.first_name || 'User',
-                            lastName: payload.lastName || payload.last_name || '',
-                            email: payload.email || 'user@abu.com'
-                        };
-                    }
-                }
-
                 if (typeof accountsAPI !== 'undefined' && accountsAPI.getAll) {
                     userAccounts = await accountsAPI.getAll() || [];
                 }

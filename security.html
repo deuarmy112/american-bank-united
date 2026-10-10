@@ -48,18 +48,20 @@
         if(card) location.href=`security-card-pin.html?cardId=${encodeURIComponent(card.id)}`;
       });
       try {
-        const [profile, pin, preferences] = await Promise.all([authAPI.getProfile(), apiClient.get('/transfer-pin').catch(()=>({configured:false})), preferencesAPI.get()]);
-        try {
-          const cards=await cardsAPI.getAll();
-          activeCards=Array.isArray(cards)?cards:(Array.isArray(cards?.cards)?cards.cards:[]);
-          cardPinSelect.replaceChildren(new Option(activeCards.length?'Select a card':'No cards available', ''));
-          activeCards.forEach(card=>cardPinSelect.add(new Option(`${String(card.card_type||'Card').toUpperCase()} ending in ${String(card.card_number||'').slice(-4)}`,card.id)));
-          cardPinSelect.dispatchEvent(new Event('change'));
-        } catch(error) {
+        const cardRequest=cardsAPI.getAll().then(cards=>({cards})).catch(error=>({error}));
+        const [profile, pin, preferences, cardResult] = await Promise.all([authAPI.getProfile(), apiClient.get('/transfer-pin').catch(()=>({configured:false})), preferencesAPI.get(), cardRequest]);
+        if (cardResult.error) {
+          const error=cardResult.error;
           cardPinSelect.replaceChildren(new Option('Unable to load cards', ''));
           cardPinLink.disabled=true;
           cardPinStatus.textContent=error.message||'Unable to sync your cards. Refresh the page to try again.';
           cardPinStatus.setAttribute('role','alert');
+        } else {
+          const cards=cardResult.cards;
+          activeCards=Array.isArray(cards)?cards:(Array.isArray(cards?.cards)?cards.cards:[]);
+          cardPinSelect.replaceChildren(new Option(activeCards.length?'Select a card':'No cards available', ''));
+          activeCards.forEach(card=>cardPinSelect.add(new Option(`${String(card.card_type||'Card').toUpperCase()} ending in ${String(card.card_number||'').slice(-4)}`,card.id)));
+          cardPinSelect.dispatchEvent(new Event('change'));
         }
         const twoStepEnabled = Boolean(profile?.two_factor_enabled);
         twoStepLink.textContent = twoStepEnabled ? 'Turn off' : 'Turn on';

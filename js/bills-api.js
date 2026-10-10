@@ -4,9 +4,8 @@
 
 document.addEventListener('DOMContentLoaded', async function() {
     if (!requireAuth()) return;
-    await displayUserName();
-    await loadBillers();
-    await loadRecentPayments();
+    displayUserName();
+    await Promise.all([loadBillers(), loadRecentPayments()]);
 });
 
 async function loadBillers() {

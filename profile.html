@@ -707,6 +707,19 @@
         // Profile functions
         async function loadProfile() {
             try {
+                const accountsPromise = accountsAPI.getAll().catch(error => {
+                    console.warn('Failed to load accounts for profile', error);
+                    return [];
+                });
+                const activityPromise = Promise.all([
+                    transactionsAPI.getAll(),
+                    fetch(`${API_BASE_URL}/external-transfers/external`, {
+                        headers: { 'Authorization': `Bearer ${apiClient.getToken()}` }
+                    }).then(response => response.json()).catch(() => [])
+                ]).catch(error => {
+                    console.warn('Failed to load recent profile activity', error);
+                    return [[], []];
+                });
                 const user = await authAPI.getProfile();
                 const nameEl = document.getElementById('profileName');
                 if (nameEl) nameEl.textContent = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User';
@@ -719,7 +732,7 @@
                 }
                 // Balance calculation moved to enhanceProfile after accounts are loaded
                 window.__currentUser = user || {};
-                try{ enhanceProfile(window.__currentUser); }catch(e){}
+                enhanceProfile(window.__currentUser, accountsPromise, activityPromise);
                 loadVerificationStatus(window.__currentUser);
             } catch (err) {
                 console.error('Failed to load profile', err);
@@ -727,16 +740,22 @@
         }
 
         // enhance profile rendering for redesigned layout
-        const enhanceProfile = async (user)=>{
-            let accounts = (user.accounts && user.accounts.length) ? user.accounts : [];
-            if (accounts.length === 0) {
-                try {
-                    accounts = await accountsAPI.getAll() || [];
-                } catch (err) {
-                    console.warn('Failed to load accounts for profile', err);
-                    accounts = [];
-                }
-            }
+        const enhanceProfile = async (user, accountsPromise, activityPromise)=>{
+            const accountDataPromise = accountsPromise || accountsAPI.getAll().catch(error => {
+                console.warn('Failed to load accounts for profile', error);
+                return [];
+            });
+            const profileActivityPromise = activityPromise || Promise.all([
+                transactionsAPI.getAll(),
+                fetch(`${API_BASE_URL}/external-transfers/external`, {
+                    headers: { 'Authorization': `Bearer ${apiClient.getToken()}` }
+                }).then(response => response.json()).catch(() => [])
+            ]).catch(error => {
+                console.warn('Failed to load recent profile activity', error);
+                return [[], []];
+            });
+            const [loadedAccounts, [transactions, externalTransfers]] = await Promise.all([accountDataPromise, profileActivityPromise]);
+            const accounts = user.accounts?.length ? user.accounts : loadedAccounts;
 
             const acctNameEl = document.getElementById('accountName');
             if (acctNameEl) acctNameEl.textContent = ((user.first_name||'') + ' ' + (user.last_name||'')).trim() || '—';
@@ -782,43 +801,30 @@
                 }
             }
 
-            // fetch real transactions and render into the profile recent list
-            try{
-                const [transactions, externalTransfers] = await Promise.all([
-                    transactionsAPI.getAll(),
-                    fetch(`${API_BASE_URL}/external-transfers/external`, {
-                        headers: { 'Authorization': `Bearer ${apiClient.getToken()}` }
-                    }).then(r => r.json()).catch(() => [])
-                ]);
-                
-                // Merge transactions with external transfers
-                const externalTxs = (externalTransfers || []).map(transfer => ({
-                    ...transfer,
-                    type: transfer.direction === 'outgoing' ? 'external_out' : 'external_in',
-                    amount: transfer.amount,
-                    description: `${transfer.transfer_type.toUpperCase()}: ${transfer.recipient_name || 'Unknown'} ${transfer.bank_name ? '('+transfer.bank_name+')' : ''}`,
-                    createdAt: transfer.created_at,
-                    created_at: transfer.created_at,
-                    isExternal: true
-                }));
-                
-                const allTransactions = [...transactions, ...externalTxs].sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
-                const recent = (allTransactions && allTransactions.length) ? allTransactions.slice(0,5) : [];
-                const txEl = document.getElementById('recentTxList');
-                if (txEl) {
-                    // use shared renderer from dashboard-api.js if available
-                    if (typeof renderRecentTransactions === 'function') renderRecentTransactions(recent, txEl);
-                    else {
-                        txEl.innerHTML = '';
-                        recent.forEach(i=>{
-                            const li = document.createElement('li');
-                            li.className = 'p-3 border rounded flex items-center justify-between';
-                            li.innerHTML = `<div><div class="font-medium">${i.title || i.description || 'Transaction'}</div><div class="text-xs text-slate-500">${formatDate(i.created_at || i.createdAt || i.date || i.timestamp)}</div></div><div class="text-sm font-medium">${formatCurrency(i.amount||0)}</div>`;
-                            txEl.appendChild(li);
-                        });
-                    }
+            const externalTxs = (externalTransfers || []).map(transfer => ({
+                ...transfer,
+                type: transfer.direction === 'outgoing' ? 'external_out' : 'external_in',
+                amount: transfer.amount,
+                description: `${transfer.transfer_type.toUpperCase()}: ${transfer.recipient_name || 'Unknown'} ${transfer.bank_name ? '('+transfer.bank_name+')' : ''}`,
+                createdAt: transfer.created_at,
+                created_at: transfer.created_at,
+                isExternal: true
+            }));
+            const allTransactions = [...transactions, ...externalTxs].sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
+            const recent = allTransactions.slice(0, 5);
+            const txEl = document.getElementById('recentTxList');
+            if (txEl) {
+                if (typeof renderRecentTransactions === 'function') renderRecentTransactions(recent, txEl);
+                else {
+                    txEl.innerHTML = '';
+                    recent.forEach(item => {
+                        const li = document.createElement('li');
+                        li.className = 'p-3 border rounded flex items-center justify-between';
+                        li.innerHTML = `<div><div class="font-medium">${item.title || item.description || 'Transaction'}</div><div class="text-xs text-slate-500">${formatDate(item.created_at || item.createdAt || item.date || item.timestamp)}</div></div><div class="text-sm font-medium">${formatCurrency(item.amount || 0)}</div>`;
+                        txEl.appendChild(li);
+                    });
                 }
-            }catch(e){ console.warn('failed to load recent transactions', e); }
+            }
         };
 
         function openEditModal() {
@@ -978,13 +984,6 @@
             renderQuickActions();
             loadProfile();
 
-            // after profile loaded, enhance layout
-            document.addEventListener('readystatechange', ()=>{
-                if (document.readyState === 'complete') {
-                    if (window.__currentUser) enhanceProfile(window.__currentUser);
-                }
-            });
-
             const editBtn = document.getElementById('editProfileBtn');
             if (editBtn) editBtn.addEventListener('click', openEditModal);
             document.getElementById('profilePhotoButton')?.addEventListener('click', () => {
@@ -1091,8 +1090,6 @@
                     window.__currentUser = updated;
                     closeEditModal();
                     await loadProfile();
-                    // refresh enhanced fields
-                    if (window.__currentUser) enhanceProfile(window.__currentUser);
                 } catch (err) {
                     console.error('Profile update failed', err);
                     setEditProfileStatus(err.message || 'Profile update failed. Please try again.');
