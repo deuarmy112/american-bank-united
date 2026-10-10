@@ -329,11 +329,12 @@ async function transferPinRoutes(method, parts, user, body) {
 const securityCodeSettings = {
     password: { label: 'password reset', subject: 'Your American Bank United password reset code' },
     'transfer-pin': { label: 'Transfer PIN reset', subject: 'Your American Bank United Transfer PIN code' },
+    'card-pin': { label: 'Card PIN setup or reset', subject: 'Your American Bank United Card PIN code' },
     'two-step': { label: 'two-step verification', subject: 'Your American Bank United verification code' }
 };
 
-function securityCodeId(userId, purpose) {
-    return `${userId}_${purpose}`;
+function securityCodeId(userId, purpose, resourceId = '') {
+    return `${userId}_${purpose}${resourceId ? `_${resourceId}` : ''}`;
 }
 
 async function recordSecurityEvent(user, action, purpose, metadata = {}) {
@@ -350,7 +351,12 @@ async function securityCodeRoutes(method, parts, user, body) {
     const action = parts[1];
     const settings = securityCodeSettings[purpose];
     if (!settings || !['request', 'confirm'].includes(action)) return { status: 404, body: { error: 'Security verification route not found' } };
-    const verificationRef = getDb().collection('security_verifications').doc(securityCodeId(user.userId, purpose));
+    const cardId = purpose === 'card-pin' ? String(body.cardId || '').trim() : '';
+    if (purpose === 'card-pin' && !/^[a-zA-Z0-9-]{1,80}$/.test(cardId)) return { status: 400, body: { error: 'Select a valid card' } };
+    const card = purpose === 'card-pin' ? await getDoc('cards', cardId) : null;
+    if (purpose === 'card-pin' && (!card || card.user_id !== user.userId)) return { status: 404, body: { error: 'Card not found' } };
+    if (purpose === 'card-pin' && card.status !== 'active') return { status: 409, body: { error: 'Only active cards can have a PIN set' } };
+    const verificationRef = getDb().collection('security_verifications').doc(securityCodeId(user.userId, purpose, cardId));
 
     if (method === 'POST' && action === 'request') {
         const profile = await userProfile(user.userId);
@@ -361,12 +367,14 @@ async function securityCodeRoutes(method, parts, user, body) {
             return { status: 429, body: { error: 'Please wait before requesting another verification code' } };
         }
         const code = String(randomInt(0, 1000000)).padStart(6, '0');
-        await verificationRef.set({ purpose, code_hash: await bcrypt.hash(code, 12), expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), attempts: 0, requested_at: now(), created_at: now() });
+        const cardSuffix = purpose === 'card-pin' ? ` for card ending in ${String(card.card_number || '').slice(-4)}` : '';
+        const emailLabel = purpose === 'card-pin' ? `${settings.label}${cardSuffix}` : settings.label;
+        await verificationRef.set({ purpose, ...(cardId ? { card_id: cardId } : {}), code_hash: await bcrypt.hash(code, 12), expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), attempts: 0, requested_at: now(), created_at: now() });
         const delivery = await sendTransactionalEmail({
             email: profile.email,
-            subject: settings.subject,
-            text: `Hello ${profile.first_name || 'there'},\n\nYour six-digit ${settings.label} code is: ${code}\n\nThis code expires in 10 minutes and can be used once. If you did not request this, contact American Bank United support immediately. Never share this code with anyone.`,
-            html: verificationEmailMarkup({ firstName: profile.first_name, label: settings.label, code, subject: settings.subject })
+            subject: purpose === 'card-pin' ? `${settings.subject}${cardSuffix}` : settings.subject,
+            text: `Hello ${profile.first_name || 'there'},\n\nYour six-digit ${emailLabel} code is: ${code}\n\nThis code expires in 10 minutes and can be used once. If you did not request this, contact American Bank United support immediately. Never share this code with anyone.`,
+            html: verificationEmailMarkup({ firstName: profile.first_name, label: emailLabel, code, subject: purpose === 'card-pin' ? `${settings.subject}${cardSuffix}` : settings.subject })
         });
         if (delivery.status !== 'sent') {
             await verificationRef.delete();
@@ -379,7 +387,7 @@ async function securityCodeRoutes(method, parts, user, body) {
     if (method !== 'POST' || action !== 'confirm') return { status: 405, body: { error: 'Security verification method not allowed' } };
     const verification = await verificationRef.get();
     const record = verification.exists ? verification.data() : null;
-    if (!record || !record.expires_at || Date.now() > Date.parse(record.expires_at)) return { status: 410, body: { error: 'That verification code has expired. Request a new code.' } };
+    if (!record || record.purpose !== purpose || (cardId && record.card_id !== cardId) || !record.expires_at || Date.now() > Date.parse(record.expires_at)) return { status: 410, body: { error: 'That verification code has expired. Request a new code.' } };
     if (Number(record.attempts || 0) >= 5) return { status: 429, body: { error: 'Too many incorrect codes. Request a new code.' } };
     if (!/^\d{6}$/.test(String(body.code || '')) || !(await bcrypt.compare(String(body.code), record.code_hash))) {
         await verificationRef.set({ attempts: Number(record.attempts || 0) + 1 }, { merge: true });
@@ -397,11 +405,15 @@ async function securityCodeRoutes(method, parts, user, body) {
         const pin = String(body.pin || '');
         if (!/^\d{4}$/.test(pin)) return { status: 400, body: { error: 'Transfer PIN must be exactly 4 digits' } };
         await userRef.set({ transfer_pin_hash: await bcrypt.hash(pin, 12), transfer_pin_failures: 0, transfer_pin_locked: false, updated_at: now() }, { merge: true });
+    } else if (purpose === 'card-pin') {
+        const pin = String(body.pin || '');
+        if (!/^\d{4}$/.test(pin)) return { status: 400, body: { error: 'Card PIN must be exactly 4 digits' } };
+        await getDb().collection('cards').doc(cardId).set({ card_pin_hash: await bcrypt.hash(pin, 12), updated_at: now() }, { merge: true });
     } else {
         await userRef.set({ two_factor_enabled: body.enabled !== false, updated_at: now() }, { merge: true });
     }
     await verificationRef.delete();
-    await recordSecurityEvent(user, 'SECURITY_SETTING_CHANGED', purpose, purpose === 'two-step' ? { enabled: body.enabled !== false } : {});
+    await recordSecurityEvent(user, 'SECURITY_SETTING_CHANGED', purpose, purpose === 'two-step' ? { enabled: body.enabled !== false } : (purpose === 'card-pin' ? { card_id: cardId } : {}));
     return { body: { message: `${settings.label} updated successfully` } };
 }
 
@@ -1089,7 +1101,13 @@ async function chatRoutes(method, parts, user, body, query = {}) {
 
 async function cardRoutes(method, parts, user, body) {
     if (method === 'GET' && parts[0] === 'requests') return { body: clean(await listDocs('card_requests', 'user_id', user.userId, 'created_at', 100)) };
-    if (method === 'GET') return { body: clean(await listDocs('cards', 'user_id', user.userId)) };
+    if (method === 'GET') {
+        const cards = await listDocs('cards', 'user_id', user.userId);
+        return { body: clean(cards.map(card => {
+            const { card_pin_hash, ...safeCard } = card;
+            return { ...safeCard, pin_configured: Boolean(card_pin_hash) };
+        })) };
+    }
     if (method === 'POST') {
         if (!['debit', 'credit'].includes(body.cardType)) return { status: 400, body: { error: 'Invalid card type' } };
         const account = await getDoc('accounts', body.linkedAccountId);
