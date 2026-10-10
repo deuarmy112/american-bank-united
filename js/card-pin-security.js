@@ -85,17 +85,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         const cards = await cardsAPI.getAll();
-        const activeCards = cards.filter(card => String(card.status || 'active').toLowerCase() !== 'blocked');
-        cardSelect.replaceChildren(new Option(activeCards.length ? 'Select a card' : 'No cards available', ''));
-        activeCards.forEach(card => {
+        const userCards = Array.isArray(cards) ? cards : (Array.isArray(cards?.cards) ? cards.cards : []);
+        cardSelect.replaceChildren(new Option(userCards.length ? 'Select a card' : 'No cards found', ''));
+        userCards.forEach(card => {
             const suffix = String(card.card_number || '').slice(-4);
             const option = new Option(`${String(card.card_type || 'Card').toUpperCase()} ending in ${suffix}`, card.id);
             option.card = card;
             cardSelect.add(option);
         });
-        if (initialCardId && activeCards.some(card => card.id === initialCardId)) cardSelect.value = initialCardId;
+        if (initialCardId && userCards.some(card => card.id === initialCardId)) cardSelect.value = initialCardId;
         updateTitle();
-        if (!activeCards.length) setStatus('You need an available card before you can set a card PIN.', 'error');
+        if (!userCards.length) setStatus('No cards were returned for your account.', 'error');
     } catch (error) {
         cardSelect.replaceChildren(new Option('Unable to load cards', ''));
         setStatus(error.message || 'Unable to load your cards.', 'error');
