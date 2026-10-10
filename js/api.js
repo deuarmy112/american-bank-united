@@ -218,6 +218,10 @@ const cardsAPI = {
         return apiClient.get('/cards/requests');
     },
 
+    async getDetails(cardId, pin) {
+        return apiClient.post(`/cards/${cardId}/details`, { pin });
+    },
+
     async updateStatus(cardId, status) {
         return apiClient.patch(`/cards/${cardId}/status`, { status });
     },

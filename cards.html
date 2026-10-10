@@ -251,7 +251,7 @@
 
     <script src="js/bottom-nav.js?v=20260121.1"></script>
     <script src="js/sidebar.js?v=20260121.1"></script>
-    <script src="js/api.js?v=20260121.2"></script>
+    <script src="js/api.js?v=20261010.4"></script>
     <script src="js/auth.js?v=20260121.2"></script>
     <script src="js/storage.js"></script>
 
@@ -334,8 +334,8 @@
                 const cardType = card.card_type || card.type || 'debit';
                 const cardClass = cardType === 'credit' ? 'credit' : cardType === 'virtual' ? 'virtual' : 'debit';
                 const holderName = currentUser ? `${currentUser.firstName || currentUser.first_name || ''} ${currentUser.lastName || currentUser.last_name || ''}`.trim().toUpperCase() || 'CARDHOLDER' : 'CARDHOLDER';
-                const cardNumber = card.card_number ? card.card_number.match(/.{1,4}/g).join(' ') : '4000 XXXX XXXX XXXX';
-                const expiry = formatExpiry(card.expiry_date);
+                const cardNumber = `**** **** **** ${card.card_last4 || '****'}`;
+                const expiry = '--/--';
                 const isLocked = card.status === 'blocked';
 
                 return `
@@ -367,7 +367,7 @@
                         </div>
                         <div class="card-back mt-3">
                             <div class="card-magnetic-strip"></div>
-                            <div class="card-signature-strip mb-5">CVV ${card.cvv || '***'}</div>
+                            <div class="card-signature-strip mb-5">CVV ***</div>
                             <div class="flex items-end justify-between gap-4">
                                 <p class="text-xs opacity-80">Authorized use only. If found, return to American Bank United.</p>
                                 <div class="card-hologram" aria-hidden="true"></div>
@@ -386,7 +386,7 @@
                             </div>
                             <div class="flex gap-2 pt-3 border-t border-slate-200">
                                 <button onclick="viewCardDetails('${card.id}')" class="flex-1 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 rounded-lg transition-colors">
-                                    <i class="fas fa-eye mr-1"></i> Details
+                                    <i class="fas fa-${card.pin_locked ? 'rotate' : card.pin_configured ? 'eye' : 'key'} mr-1"></i> ${card.pin_locked ? 'Reset PIN' : card.pin_configured ? 'Details' : 'Set PIN'}
                                 </button>
                                 <button onclick="toggleCardStatus('${card.id}')" class="flex-1 text-sm ${isLocked ? 'bg-green-50 hover:bg-green-100 text-green-700' : 'bg-red-50 hover:bg-red-100 text-red-700'} font-medium py-2 rounded-lg transition-colors">
                                     <i class="fas fa-${isLocked ? 'unlock' : 'lock'} mr-1"></i> ${isLocked ? 'Unlock' : 'Lock'}
@@ -476,13 +476,71 @@
             document.getElementById('requestCardForm').reset();
         }
 
-        function viewCardDetails(cardId) {
+        async function viewCardDetails(cardId) {
             const card = userCards.find(c => c.id === cardId);
             if (!card) return;
             const modal = document.createElement('div');
             modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4';
-            modal.innerHTML = `<div class="bg-white rounded-lg shadow-2xl p-6 max-w-sm w-full"><div class="flex items-center justify-between mb-4"><h2 class="text-lg font-bold text-slate-900">Card Details</h2><button class="text-slate-500" aria-label="Close" onclick="this.closest('.fixed').remove()"><i class="fas fa-times"></i></button></div><dl class="space-y-3 text-sm"><div class="flex justify-between"><dt class="text-slate-500">Card number</dt><dd class="font-semibold">${card.card_number || 'Unavailable'}</dd></div><div class="flex justify-between"><dt class="text-slate-500">Cardholder</dt><dd class="font-semibold">${currentUser?.firstName || currentUser?.first_name || ''} ${currentUser?.lastName || currentUser?.last_name || ''}</dd></div><div class="flex justify-between"><dt class="text-slate-500">Expires</dt><dd class="font-semibold">${formatExpiry(card.expiry_date)}</dd></div><div class="flex justify-between"><dt class="text-slate-500">CVV</dt><dd class="font-semibold">${card.cvv || 'Unavailable'}</dd></div><div class="flex justify-between"><dt class="text-slate-500">Status</dt><dd class="font-semibold">${card.status || 'active'}</dd></div></dl></div>`;
+            modal.innerHTML = `<div class="bg-white rounded-lg shadow-2xl p-6 max-w-sm w-full"><div class="flex items-center justify-between mb-4"><h2 class="text-lg font-bold text-slate-900">Card Details</h2><button type="button" class="text-slate-500" aria-label="Close"><i class="fas fa-times"></i></button></div><p id="cardDetailsStatus" class="mb-3 text-sm text-slate-600" role="status"></p><form id="cardDetailsPinForm" class="space-y-3"><label for="cardDetailsPin" class="block text-sm font-medium text-slate-700">Enter this card's four-digit PIN</label><input id="cardDetailsPin" type="password" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]{4}" required class="w-full rounded-md border border-slate-300 px-3 py-2" placeholder="4-digit card PIN"><button type="submit" class="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white">View details</button></form><div id="cardDetailsContent"></div></div>`;
             document.body.appendChild(modal);
+            modal.querySelector('button[aria-label="Close"]').addEventListener('click', () => modal.remove());
+            modal.addEventListener('click', event => { if (event.target === modal) modal.remove(); });
+            const status = modal.querySelector('#cardDetailsStatus');
+            const form = modal.querySelector('#cardDetailsPinForm');
+            const pinInput = modal.querySelector('#cardDetailsPin');
+            if (!card.pin_configured || card.pin_locked) {
+                form.hidden = true;
+                status.textContent = card.pin_locked ? 'This card PIN is locked. Reset it from Security to view card details.' : 'Set this card PIN in Security before viewing its details.';
+                const securityLink = document.createElement('a');
+                securityLink.href = 'security.html';
+                securityLink.className = 'mt-3 inline-block text-sm font-semibold text-slate-900 underline';
+                securityLink.textContent = card.pin_locked ? 'Reset card PIN' : 'Set card PIN';
+                modal.querySelector('#cardDetailsContent').appendChild(securityLink);
+                return;
+            }
+            pinInput.focus();
+            form.addEventListener('submit', async event => {
+                event.preventDefault();
+                const pin = pinInput.value.trim();
+                const submit = form.querySelector('button[type="submit"]');
+                submit.disabled = true;
+                status.textContent = 'Verifying card PIN...';
+                try {
+                    const response = await cardsAPI.getDetails(cardId, pin);
+                    const details = response.details;
+                    const fullName = `${currentUser?.firstName || currentUser?.first_name || ''} ${currentUser?.lastName || currentUser?.last_name || ''}`.trim();
+                    const rows = [
+                        ['Card number', details.card_number || 'Unavailable'],
+                        ['Cardholder', fullName || 'Unavailable'],
+                        ['Expires', formatExpiry(details.expiry_date)],
+                        ['CVV', details.cvv || 'Unavailable'],
+                        ['Card PIN', pin],
+                        ['Status', card.status || 'active']
+                    ];
+                    const list = document.createElement('dl');
+                    list.className = 'space-y-3 text-sm';
+                    rows.forEach(([label, value]) => {
+                        const row = document.createElement('div');
+                        row.className = 'flex justify-between gap-4';
+                        const term = document.createElement('dt');
+                        term.className = 'text-slate-500';
+                        term.textContent = label;
+                        const detail = document.createElement('dd');
+                        detail.className = 'font-semibold text-right';
+                        detail.textContent = value;
+                        row.append(term, detail);
+                        list.appendChild(row);
+                    });
+                    form.remove();
+                    status.textContent = '';
+                    modal.querySelector('#cardDetailsContent').appendChild(list);
+                } catch (error) {
+                    status.textContent = error.message || 'Unable to verify this card PIN.';
+                    if (error.status === 429) card.pin_locked = true;
+                } finally {
+                    if (submit.isConnected) submit.disabled = false;
+                }
+            });
         }
 
         async function toggleCardStatus(cardId) {

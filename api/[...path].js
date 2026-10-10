@@ -407,7 +407,7 @@ async function securityCodeRoutes(method, parts, user, body) {
     } else if (purpose === 'card-pin') {
         const pin = String(body.pin || '');
         if (!/^\d{4}$/.test(pin)) return { status: 400, body: { error: 'Card PIN must be exactly 4 digits' } };
-        await getDb().collection('cards').doc(cardId).set({ card_pin_hash: await bcrypt.hash(pin, 12), updated_at: now() }, { merge: true });
+        await getDb().collection('cards').doc(cardId).set({ card_pin_hash: await bcrypt.hash(pin, 12), card_pin_failures: 0, card_pin_locked: false, updated_at: now() }, { merge: true });
     } else {
         await userRef.set({ two_factor_enabled: body.enabled !== false, updated_at: now() }, { merge: true });
     }
@@ -1103,8 +1103,8 @@ async function cardRoutes(method, parts, user, body) {
     if (method === 'GET') {
         const cards = await listDocs('cards', 'user_id', user.userId);
         return { body: clean(cards.map(card => {
-            const { card_pin_hash, ...safeCard } = card;
-            return { ...safeCard, pin_configured: Boolean(card_pin_hash) };
+            const { card_pin_hash, card_number, cvv, card_pin_failures, card_pin_locked, ...safeCard } = card;
+            return { ...safeCard, card_last4: String(card_number || '').slice(-4), pin_configured: Boolean(card_pin_hash), pin_locked: Boolean(card_pin_locked) };
         })) };
     }
     if (method === 'POST') {
@@ -1117,6 +1117,25 @@ async function cardRoutes(method, parts, user, body) {
         }
         const request = await save('card_requests', { user_id: user.userId, linked_account_id: body.linkedAccountId, card_type: body.cardType, design: body.design || 'classic', status: 'pending', requested_at: now() });
         return { status: 201, body: { message: 'Your card request has been received and is under process. Your card will be ready in 3 working days.', request: clean(request) } };
+    }
+    if (method === 'POST' && parts[1] === 'details') {
+        const cardId = String(parts[0] || '');
+        if (!/^[a-zA-Z0-9-]{1,80}$/.test(cardId)) return { status: 400, body: { error: 'Select a valid card' } };
+        const card = await getDoc('cards', cardId);
+        if (!card || card.user_id !== user.userId) return { status: 404, body: { error: 'Card not found' } };
+        if (!card.card_pin_hash) return { status: 409, body: { error: 'Set a card PIN in Security before viewing its details', code: 'CARD_PIN_NOT_SET' } };
+        if (card.card_pin_locked) return { status: 429, body: { error: 'Card PIN is locked after too many attempts. Reset it from Security.' } };
+        const pin = String(body.pin || '');
+        if (!/^\d{4}$/.test(pin)) return { status: 400, body: { error: 'Enter your four-digit card PIN' } };
+        if (!(await bcrypt.compare(pin, card.card_pin_hash))) {
+            const policy = await getApprovalPolicy();
+            const failures = Number(card.card_pin_failures || 0) + 1;
+            const locked = failures >= policy.maxPinAttempts;
+            await getDb().collection('cards').doc(cardId).set({ card_pin_failures: failures, card_pin_locked: locked, updated_at: now() }, { merge: true });
+            return { status: locked ? 429 : 403, body: { error: locked ? 'Card PIN is locked after too many attempts. Reset it from Security.' : `Incorrect card PIN. ${policy.maxPinAttempts - failures} attempt(s) remaining.`, attemptsRemaining: Math.max(0, policy.maxPinAttempts - failures) } };
+        }
+        await getDb().collection('cards').doc(cardId).set({ card_pin_failures: 0, updated_at: now() }, { merge: true });
+        return { body: { details: { card_number: card.card_number, expiry_date: card.expiry_date, cvv: card.cvv } } };
     }
     if (method === 'PATCH' && parts[1] === 'status') {
         if (!['active', 'blocked'].includes(body.status)) return { status: 400, body: { error: 'Invalid status' } };

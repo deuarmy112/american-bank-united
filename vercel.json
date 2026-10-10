@@ -27,6 +27,10 @@
       "destination": "/api/[...path]?path=cards/:id/status"
     },
     {
+      "source": "/api/cards/:id/details",
+      "destination": "/api/[...path]?path=cards/:id/details"
+    },
+    {
       "source": "/api/storage/upload-url",
       "destination": "/api/[...path]?path=storage/upload-url"
     },
