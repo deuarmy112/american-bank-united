@@ -1998,10 +1998,12 @@ async function route(req) {
                 if (nickname.length > 50) return { status: 400, body: { error: 'Nickname must be 50 characters or fewer' } };
                 if (gender && !PROFILE_GENDERS.has(gender)) return { status: 400, body: { error: 'Select a valid gender option' } };
                 if (address.length > 300) return { status: 400, body: { error: 'Address must be 300 characters or fewer' } };
-                const phoneChanged = requestedPhone !== String(currentProfile?.phone || '').trim();
+                const currentPhone = normalizePhoneNumber(currentProfile?.phone);
+                const requestedNormalizedPhone = normalizePhoneNumber(requestedPhone);
+                const phoneChanged = requestedNormalizedPhone !== currentPhone;
                 const updates = { first_name: firstName, last_name: lastName, email, nickname, gender, address, ...(avatar ? { avatar } : {}), updated_at: now() };
                 if (phoneChanged) {
-                    const phone = normalizePhoneNumber(requestedPhone);
+                    const phone = requestedNormalizedPhone;
                     if (!phone) return { status: 400, body: { error: 'Enter a phone number in international format, such as +12025550123' } };
                     const registeredPhone = await getDb().collection('users').where('phone', '==', phone).limit(2).get();
                     if (registeredPhone.docs.some(doc => doc.id !== user.userId)) return { status: 409, body: { error: 'Phone number already registered' } };
