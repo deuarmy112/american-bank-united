@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.textContent = 'Preparing verification documents...';
             submitBtn.disabled = true;
 
-            const [identity, address] = await Promise.all([
+            const [identityDocument, addressDocument] = await Promise.all([
                 uploadVerificationFile(document.getElementById('registrationIdentityFile').files[0]),
                 uploadVerificationFile(document.getElementById('registrationAddressFile').files[0])
             ]);
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 address,
                 tier: selectedTier,
                 identityType: document.getElementById('registrationIdentityType').value,
-                documents: { identity, address },
+                documents: { identity: identityDocument, address: addressDocument },
                 emailPhoneProof: emailPhoneProof || undefined,
                 dateOfBirth: dateOfBirth || null,
                 password,
