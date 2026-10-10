@@ -25,7 +25,7 @@ npm run seed-admin
 After migration, you can log in to the admin portal with:
 
 - **URL**: https://americanbankunited.com/admin-login.html
-- **Email**: admin@americanbankunited.com
+- **Email**: `americanbankunitedus@gmail.com`
 - **Password**: Set during the admin seed/reset process. Do not store it in the repository.
 
 ## Admin Portal Features

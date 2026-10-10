@@ -40,7 +40,9 @@ if (serviceAccountPath) {
     });
 }
 
-const email = (process.env.ADMIN_EMAIL || 'admin@americanbankunited.com').toLowerCase();
+const DEFAULT_ADMIN_EMAIL = 'americanbankunitedus@gmail.com';
+const LEGACY_ADMIN_EMAIL = 'admin@americanbankunited.com';
+const email = (process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL).trim().toLowerCase();
 const password = process.env.ADMIN_PASSWORD;
 if (!password) {
     console.error('ADMIN_PASSWORD is required. Set a strong password before seeding the admin user.');
@@ -53,6 +55,11 @@ const app = admin.initializeApp({
 async function seedAdmin() {
     const db = admin.firestore();
     const snapshot = await db.collection('users').where('email', '==', email).limit(1).get();
+    let existingAdmin = snapshot.docs[0] || null;
+    if (!existingAdmin && email === DEFAULT_ADMIN_EMAIL) {
+        const legacyAdmins = await db.collection('users').where('email', '==', LEGACY_ADMIN_EMAIL).limit(10).get();
+        existingAdmin = legacyAdmins.docs.find(doc => ['admin', 'super_admin'].includes(doc.data().role)) || null;
+    }
     const passwordHash = await bcrypt.hash(password, 10);
     const data = {
         email,
@@ -64,13 +71,12 @@ async function seedAdmin() {
         updated_at: new Date().toISOString()
     };
 
-    if (snapshot.empty) {
+    if (!existingAdmin) {
         const ref = db.collection('users').doc();
         await ref.set({ id: ref.id, ...data, created_at: new Date().toISOString() });
         console.log(`Created Firestore admin: ${email}`);
     } else {
-        const ref = snapshot.docs[0].ref;
-        await ref.set(data, { merge: true });
+        await existingAdmin.ref.set(data, { merge: true });
         console.log(`Updated Firestore admin: ${email}`);
     }
 }

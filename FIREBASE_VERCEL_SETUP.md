@@ -91,9 +91,11 @@ npx vercel env pull .env.local --environment=production
 npm run seed-admin
 ```
 
-The command creates or updates `admin@americanbankunited.com` with the password
-from `ADMIN_PASSWORD`. Always set a strong password explicitly before running
-the command; do not rely on a default password.
+The command creates or updates `americanbankunitedus@gmail.com` with the password
+from `ADMIN_PASSWORD`. If the legacy `admin@americanbankunited.com` admin record
+exists and the new email does not, the seed command updates that record's email.
+Always set a strong password explicitly before running the command; do not rely
+on a default password.
 
 ## 5. Firebase CLI rules and indexes
 
